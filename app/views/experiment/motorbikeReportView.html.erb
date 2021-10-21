@@ -1,0 +1,153 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+
+  .motorbike-report {
+    padding: 0.5rem 0;
+    transition: background-color 0.1s ease-in-out;
+  }
+  .motorbike-report:hover {
+    background-color: papayawhip;
+  }
+  .report-item-index {
+    text-align: left;
+    flex-basis: 5%;
+  }
+  .report-item-spec {
+    text-align: right;
+    flex-basis: 12%;
+  }
+  .report-item-content {
+    text-align: center;
+    flex-basis: 35%;
+  }
+  .report-item-reporter {
+    text-align: center;
+    flex-basis: 17%;
+  }
+  .report-item-state {
+    text-align: center;
+    flex-basis: 12%;
+  }
+  .report-item-delete {
+    text-align: center;
+    flex-basis: 12%;
+  }
+  .report-item-bike {
+    text-align: right;
+    padding-right: 0.25rem;
+    flex-basis: 7%;
+  }
+</style>
+
+<script>
+    motorbikeReportReader = {limit: 4, offset: 0, loading: false, readAll: false};
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        readMotorbikeReports(motorbikeReportReader);
+
+        $('#motorbike-report-list').on('scroll', function () {
+            let diff = $(this)[0].scrollHeight - $(this).height();
+            if(diff - $(this).scrollTop() <= 0) {
+                console.log('end of scroll report-list');
+                if(!report.reader.readAll && !report.reader.loading) {
+                    readReports(report.kind, report.reader)
+                }
+            }
+        });
+    });
+
+    function deleteReport(reportId, reportKind, obj) {
+        console.log('reportKind =', reportKind)
+        buttonSpinner(obj, true, false);
+        requestPost('deleteReport', {reportKind: reportKind, reportId: reportId}, data => {
+            buttonSpinner(obj, false, false);
+            if(data.result) {
+                console.log('%c deleted report successfully!', 'background: red; color: yellow');
+                let reportItem = $('#report-' + reportId);
+                reportItem.next('hr').remove();
+                reportItem.remove();
+            }
+        });
+    }
+    function appendReport(report, reportKind, parent) {
+        let listArea = $('<div id="report-' + report.id + '" class="motorbike-report" style="display: flex; flex-direction: row; align-items: center;"></div>');
+        listArea.append('<div class="report-item-index" style="text-align: center">' + report.id + '</div>');
+        listArea.append('<div class="report-item-spec">' + report.specName + '</div>');
+        listArea.append('<div class="report-item-content">' + report.content + '</div>');
+        listArea.append('<div class="report-item-reporter">' + report.reporter + '</div>');
+
+        let state = $('<div class="report-item-state"></div>');
+        let selector = $('<select class="custom-select custom-select-sm" style="width: inherit">');
+        console.log('report id = ' + report.id + ', state = ' + report.state);
+        let stateKinds = [{value: 1, title: '접수'}, {value: 2, title: '보류'}, {value: 3, title: '완료'}];
+        stateKinds.forEach(kind => {
+            if(report.state == kind.title) {
+                selector.append('<option value="' + kind.value + '" selected>' + kind.title + '</option>');
+            } else {
+                selector.append('<option value="' + kind.value + '">' + kind.title + '</option>');
+            }
+        });
+        selector.change(function () {
+            console.log('report id =', report.id);
+            let state = {value: 0, title: 'unknown'};
+            $(this).children('select option:selected').each(function () {
+                console.log('change =', $(this).text());
+                state = {value: $(this).attr('value'), title: $(this).text()};
+            });
+            if(state.value != 0) {
+                console.log('changed state =', state);
+                requestPost('updateReportState', {reportKind: reportKind, reportId: report.id, state: state.value}, data => {
+                    if(data.result) {
+                        console.log('%c updated state successfully!', 'background: red; color: white');
+                    }
+                });
+            }
+        });
+        state.append(selector);
+        listArea.append(state);
+
+        listArea.append('<div class="report-item-delete"><button type="button" class="btn btn-danger btn-sm" onclick="deleteReport(' + report.id + ', \'' + reportKind + '\', this)">삭제</button></div>');
+        parent.append('<hr style="margin: 0">');
+
+        let url = 'editMotorbike?motorbikeId=' + report.motorbikeId;
+        listArea.append('<div class="report-item-bike" style="cursor: pointer;" onclick="window.open(\'' + url + '\', \'_blank\')">' + report.motorbikeId + '</div>');
+        parent.append(listArea);
+    }
+    function readMotorbikeReports(reader) {
+        requestPost('readMotorbikeReports', {limit: reader.limit, offset: reader.offset}, data => {
+            console.log('readMotorbikeReports result =', data);
+            if(data.result) {
+                data.reports.forEach(report => {
+                    appendReport(report, 'motorbike', $('#motorbike-report-list'));
+                })
+            }
+        })
+    }
+
+</script>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; text-align: center; margin: auto">
+    <h2>motorbike report view</h2>
+  </div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; text-align: center; margin: auto">
+    <div id="motorbike-reports">
+      <div style="display: flex; flex-direction: row; background-color: #EFEFEF; padding: 0.5rem 0;">
+        <div class="report-item-index" style="text-align: center">Id</div>
+        <div class="report-item-spec">스펙</div>
+        <div class="report-item-content">내용</div>
+        <div class="report-item-reporter">리포터</div>
+        <div class="report-item-state">상태</div>
+        <div class="report-item-delete">삭제</div>
+        <div class="report-item-bike">바이크</div>
+      </div>
+      <div id="motorbike-report-list" style="width: 100%; height: 400px; display: flex; flex-direction: column; margin-top: 0.125rem; overflow: auto">
+      </div>
+    </div>
+  </div>
+</div>

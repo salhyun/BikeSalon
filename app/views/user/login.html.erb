@@ -1,0 +1,290 @@
+<style>
+	body {
+		background-color:floralwhite;
+		width: 100%;
+		margin: auto
+	}
+</style>
+
+<meta name="google-signin-scope" content="profile email">
+<meta name="google-signin-client_id" content="<%= ENV['google_client_id'] %>">
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+<script src="//developers.kakao.com/sdk/js/kakao.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        $('#emailId').on('change keyup paste', function () {
+            let small = $(this).next('small');
+            if(small.length > 0) {
+                small.remove();
+            }
+        });
+        $('#password').on('change keyup paste', function () {
+            let small = $(this).next('small');
+            if(small.length > 0) {
+                small.remove();
+            }
+        });
+        $('#password').keyup(function (event) {
+            if(event.keyCode == 13) {//press enter key
+                $('#btn-login').trigger('click');
+            }
+        });
+
+        $('#modal-findPassword').on('show.bs.modal', function (event) {
+            let modalBody = $(this).find('.modal-body');
+            modalBody.empty();
+            let form = $("<form></form>");
+            let div = $("<div class=\"form-group\" style=\"margin-bottom: 5px\">");
+            div.append("<input style=\"width: 75%; vertical-align:bottom; display: inline-block\" type=\"text\" class=\"form-control\" id=\"email\" placeholder=\"가입한 계정의 이메일을 입력하세요\">");
+            div.append("<small id=\"email-confirm-msg\" style=\"display: none; color: red\">이메일을 확인해 주세요</small>");
+            form.append(div);
+            modalBody.append(form);
+
+            let modalFooter = $(this).find('.modal-footer');
+            modalFooter.empty();
+            modalFooter.append("<button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">취소</button>");
+            modalFooter.append("<button type=\"button\" class=\"btn btn-primary\" onclick=\"confirmFindPassword(this)\">확인</button>");
+        });
+        $('#modal-resendVerify').on('show.bs.modal', function (event) {
+            let modalBody = $(this).find('.modal-body');
+            modalBody.empty();
+            let form = $("<form></form>");
+            let div = $("<div class=\"form-group\" style=\"margin-bottom: 5px\">");
+            div.append("<input style=\"width: 75%; vertical-align:bottom; display: inline-block\" type=\"text\" class=\"form-control\" id=\"email\" placeholder=\"가입한 계정의 이메일을 입력하세요\">");
+            div.append("<small id=\"email-confirm-msg\" style=\"display: none; color: red\">이메일을 확인해 주세요</small>");
+            form.append(div);
+            modalBody.append(form);
+
+            let modalFooter = $(this).find('.modal-footer');
+            modalFooter.empty();
+            modalFooter.append("<button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">취소</button>");
+            modalFooter.append("<button type=\"button\" class=\"btn btn-primary\" onclick=\"confirmResendVerify(this)\">확인</button>");
+        });
+    });
+    function firebaseSignin(account, callback) {
+        requestPost('/user/getFirebasePassword', {account: account}, data => {
+            if(data.result) {
+                firebase.auth().signInWithEmailAndPassword(account, data.password).then(auth => {
+                    console.log('login successfully uid = ', auth.user.uid);
+                    callback(auth.user);
+                }).catch(error => {
+                    console.error('signInWithEmailAndPassword error =', error);
+                })
+            }
+        });
+    }
+    function confirmLogin(obj) {
+        let account = $('#emailId').val();
+        let password = $('#password').val();
+        if(account.length > 0 && password.length > 0) {
+            buttonSpinner(obj, true);
+            $(obj).next('button').attr('disabled', true);
+            requestPost('/user/login', {account: account, password: password}, data => {
+                console.log('login data =', data);
+                if(data.result == true) {
+                    firebaseSignin(data.account, (user) => {
+                        window.location.href = '/';
+                    });
+                } else {
+                    buttonSpinner(obj, false);
+                    $(obj).next('button').attr('disabled', false);
+                    showAlert('danger', data.message, $('.content'));
+                }
+            });
+        } else {
+            if(account.length <= 0) {
+                if($('#emailId').parent().children('small').length <= 0) {
+                    $('#emailId').after("<small style=\"display: block; color: red\">이메일을 입력하세요</small>");
+                }
+            } else if(password.length <= 0) {
+                if($('#password').parent().children('small').length <= 0) {
+                    $('#password').after("<small style=\"display: block; color: red\">비밀번호를 입력하세요</small>");
+                }
+            }
+        }
+    }
+    function confirmLoginWithSNS(kind, email, uid) {
+        $('.wrap-loading').removeClass('display-none');
+        requestPost('/user/loginWithSNS', {kind: kind, uid: uid}, data => {
+            console.log('confirmLoginWithSNS = ', data);
+            if(data.result == true) {
+                firebaseSignin(email, (user) => {window.location.href = '/'});
+            } else {
+                $('.wrap-loading').addClass('display-none');
+                showAlert('danger', data.message, $('.content'));
+            }
+        });
+    }
+    function confirmFindPassword(obj) {
+        let email = $('#email').val();
+        if(email.indexOf('@') != -1) {
+            buttonSpinner(obj, true, true);
+            requestPost('/user/sendResetPassword', {email: email}, data => {
+                console.log('checkEmail data =', data);
+                if(data.result == true) {
+                    let modalBody = $('#modal-findPassword').find('.modal-body');
+                    modalBody.empty();
+                    modalBody.append('<p>비밀번호 재설정 이메일을 보냈습니다<br>이메일을 확인을 해주세요</p>');
+                    let modalFooter = $('#modal-findPassword').find('.modal-footer');
+                    modalFooter.empty();
+                    modalFooter.append("<button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\">확인</button>");
+                } else {
+                    $('#email-confirm-msg').text(data.message);
+                    $('#email-confirm-msg').css('display', 'block');
+                }
+                buttonSpinner(obj, false, true);
+            });
+        } else {
+            $('#email-confirm-msg').text('올바른 이메일 형식이 아닙니다');
+            $('#email-confirm-msg').css('display', 'block');
+        }
+    }
+    function confirmResendVerify(obj) {
+        let email = $('#email').val();
+        if(email.indexOf('@') != -1) {
+            buttonSpinner(obj, true, true);
+            requestPost('/user/resendVerify', {email: email}, data => {
+                console.log('resendVerify data =', data);
+                if(data.result == true) {
+                    let modalBody = $('#modal-resendVerify').find('.modal-body');
+                    modalBody.empty();
+                    modalBody.append('<p>인증메일이 발송되었습니다<br>이메일을 확인을 해주세요</p>');
+                    let modalFooter = $('#modal-resendVerify').find('.modal-footer');
+                    modalFooter.empty();
+                    modalFooter.append("<button type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\">확인</button>");
+                } else {
+                    $('#email-confirm-msg').text(data.message);
+                    $('#email-confirm-msg').css('display', 'block');
+                }
+                buttonSpinner(obj, false, true);
+            });
+        } else {
+            $('#email-confirm-msg').text('올바른 이메일 형식이 아닙니다');
+            $('#email-confirm-msg').css('display', 'block');
+        }
+    }
+</script>
+<div class="content">
+	<div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: <%= @mobileDevice ? 95 : 45 %>%; max-width: 500px; height:auto; text-align: center; margin: auto">
+		<div style="width: auto; margin: auto; text-align: left;">
+			<form>
+				<h3>로그인</h3>
+				<div class="form-group">
+					<label style="display: block;" for="emailId" class="col-form-label">이메일</label>
+					<input type="email" class="form-control" id="emailId" placeholder="이메일을 입력하세요">
+				</div>
+
+				<div class="form-group" style="margin-bottom: 1px">
+					<label for="password" class="col-form-label">비밀번호</label>
+					<input type="password" class="form-control" id="password"></input>
+				</div>
+			</form>
+
+			<button type="button" id="btn-login" class="btn btn-primary" style="width: 100%; margin-top: 20px" onclick="confirmLogin(this)">로그인</button>
+			<button type="button" class="btn btn-secondary" style="width: 100%; margin: auto; margin-top: 5px" onclick="javascript:history.back()">취소</button>
+      <div style="text-align: right">
+        <a href="javascript:void(0)" data-toggle="modal" data-target="#modal-resendVerify">인증코드 재발송</a>
+      </div>
+      <div style="text-align: right">
+        <a href="javascript:void(0)" data-toggle="modal" data-target="#modal-findPassword">비밀번호 찾기</a>
+      </div>
+      <div id="sns-signin-area" style="display: flex; flex-direction: column; align-items: center; margin-top: 50px;">
+        <div style="margin-top: 10px">
+          <div class="g-signin2" style="width: 240px; height: 50px;" data-onsuccess="onGoogleSignIn" data-longtitle="true" data-theme="dark"></div>
+        </div>
+        <div style="margin-top: 10px">
+          <a id="custom-login-btn" href="javascript:loginWithKakao()">
+            <img src="//mud-kage.kakao.com/14/dn/btqbjxsO6vP/KPiGpdnsubSq3a0PHEGUK1/o.jpg" width="238"/>
+          </a>
+        </div>
+      </div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="modal-findPassword" tabindex="-1" role="dialog" aria-labelledby="findPassword-Label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModal-Label">비밀번호 찾기</h5>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-resendVerify" tabindex="-1" role="dialog" aria-labelledby="findPassword-Label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModal-Label">인증코드 재발송</h5>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+    function onGoogleSignIn(googleUser) {
+        let profile = googleUser.getBasicProfile();
+        console.log('Logged in as: ' + profile.getName());
+        // console.log('idToken =', googleUser.getAuthResponse().id_token);
+        jQuery.ajax({
+            url: '/user/decodeJWT',
+            type: 'post',
+            data: {
+                token: googleUser.getAuthResponse().id_token
+            },
+            success: function(data) {
+                console.log(data);
+                if(data.result == true) {
+                    console.log(data.decoded_token[0].sub);
+                    confirmLoginWithSNS('google', profile.getEmail(), data.decoded_token[0].sub);
+                } else {
+                }
+            },
+            error: function(request, status, error) {
+                console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+            }
+        });
+
+        // confirmLoginWithSNS('google', googleUser.getAuthResponse().id_token);
+        googleSignOut();
+    }
+    function googleSignOut() {
+        var auth2 = gapi.auth2.getAuthInstance();
+        auth2.signOut().then(function () {
+            console.log('User signed out.');
+        });
+    }
+
+    //Kakao Login
+    Kakao.init('<%= ENV['kakao_app_key'] %>');
+    function loginWithKakao() {
+        // 로그인 창을 띄웁니다.
+        Kakao.Auth.login({
+            success: function(authObj) {
+                Kakao.API.request({
+                    url: '/v2/user/me',
+                    success: function(res) {
+                        console.log(res);
+                        confirmLoginWithSNS('kakao', res.kakao_account.email, res.id);
+                    },
+                    fail: function(error) {
+                        alert(JSON.stringify(error));
+                    }
+                });
+            },
+            fail: function(err) {
+                alert(JSON.stringify(err));
+            }
+        });
+    };
+</script>

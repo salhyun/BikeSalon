@@ -1,0 +1,1279 @@
+<style>
+	body {
+		background-color:floralwhite;
+		width: 100%;
+		margin: auto
+	}
+  .warning-color {
+    color: #ffc107;
+  }
+
+  #add-bike-button{
+    position:fixed;
+    width:60px;
+    height:60px;
+    bottom:20px;
+    right:20px;
+    background-color: #007bff;
+    color:#FFF;
+    border-radius:50px;
+    text-align:center;
+    box-shadow: 2px 2px 3px #999;
+    z-index: 10;
+    transition: all 200ms ease-in-out;
+  }
+  #add-bike-button:hover {
+    color: #343A40;
+  }
+
+  .mybike-dm:hover {
+    color: antiquewhite;
+    text-decoration: none;
+  }
+
+  .card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  }
+
+  .card:hover {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  }
+
+  .modal-dialog .modal-content {
+    background-color: #333C42;
+    color: ghostwhite;
+  }
+  .modal-dialog .modal-header {
+    border-bottom-color: dimgray
+  }
+  .modal-dialog .modal-body {
+    background-color: #333C42;
+    color: ghostwhite;
+  }
+  .modal-dialog .modal-footer {
+    border-top-color: dimgray
+  }
+  .form-control {
+    background-color: #333C42;
+    border-color: #505973;
+    color: ghostwhite;
+  }
+  .form-control:focus {
+    background-color: #333C42;
+    border-color: #9099b5;
+    color: ghostwhite;
+  }
+
+  .scrollable-menu {
+    height: auto;
+    max-height: 200px;
+    overflow-x: hidden;
+  }
+  .public-tag {
+    background-color: #007bff;
+    border-radius: 0.2rem;
+    font-size: 0.8rem;
+    padding: 0.125rem;
+    margin-right: 0.2rem;
+  }
+  .private-tag {
+    background-color: mediumvioletred;
+    border-radius: 0.2rem;
+    font-size: 0.8rem;
+    padding: 0.125rem;
+    margin-right: 0.2rem;
+  }
+
+  .carousel-inner > .carousel-item > img {
+    max-width: <%= @mobileDevice ? 100 : 80 %>%;
+    margin: auto;
+  }
+  <% unless @mobileDevice %>
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-image: none;
+  }
+  .carousel-control-next-icon:after {
+    position: absolute;
+    right: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f105";
+    font-size: 55px;
+  }
+  .carousel-control-prev-icon:after {
+    position: absolute;
+    left: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f104";
+    font-size: 55px;
+  }
+  <% end %>
+
+  #notification-checkbox {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    cursor: pointer;
+    transition: opacity 80ms ease-in-out;
+    opacity: 0.75;
+    padding-top: 0.75rem;
+  }
+  #notification-checkbox:hover {
+    opacity: 1;
+  }
+  #notification-checkbox > i {
+    transition: opacity 80ms ease-in-out;
+  }
+</style>
+
+<script type="text/javascript">
+    commentSize = 6;
+    commentOffset = 0;
+    opendTimelineModal = false;
+    currentTimelineId = 0;
+    ajaxCommentLoading = true;
+    allLoadingComment = false;
+
+    replyReaders = new Map();
+
+    notificationReader = {limit: 8, offset: 0, loading: false, readAll: false};
+    mySubscribeReader = {limit: 8, offset: 0, loading: false, readAll: false};
+    getMybikes();
+
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 10);
+        documentReady();
+
+        $('#notification-checkbox').click(function () {
+            let check = !$(this).data('check');
+            console.log('check =', check);
+            $(this).data('check', check);
+            $(this).children('i').first().css('opacity', check ? $(this).css('opacity') : 0);
+        });
+
+        $('#input_imgs').on('change', function() {
+            selectImageFiles(this);
+        });
+
+        $('#createBike-bikeName').on('change keyup paste', function () {
+            if($(this).next('small').is(':visible')) {
+                $(this).next('small').hide();
+            }
+        });
+
+        $('#modal-createMybike').on('show.bs.modal', function (event) {
+            $('#thumbs').css('display', 'none');
+
+            selectedFiles = [];
+            var button = $(event.relatedTarget);
+            var kind = button.data('kind');
+            console.log('kind = ' + kind);
+            var bikeid = button.data('bikeid');
+            console.log('bikeid = ' + bikeid);
+
+            $('#select-bike-model').next('small').hide();
+            $('#createBike-bikeName').next('small').hide();
+            $('#input_imgs').next('small').hide();
+
+            if(kind == 'modify') {
+                $('#createMybike-Label').text('바이크 수정');
+                $(this).find('.modal-footer').children().last().text('수정');
+                $(this).find('.modal-footer').children().last().attr('onclick', 'confirmModifyMybike(' + bikeid + ', this)');
+
+                $('.imgs_wrap').empty();
+
+                var selectedBike = gMybikes.get(bikeid);
+                if(selectedBike) {
+                    initializeSelectBikeModelDropdowns(selectedBike.brandId, selectedBike.styleId, selectedBike.modelId);
+
+                    $('#createBike-bikeName').val(selectedBike.name);
+                    $('#createBike-bikeDescription').val(selectedBike.desc);
+                    if(selectedBike.public == false) {
+                        $('#input-public').parent().removeClass('active');
+                        $('#input-private').parent().addClass('active');
+                    }
+
+                    $('#thumbs').css('display', 'block');
+                    var html = "<img style=\"max-width: 100%; height: auto; margin: 2px\" src=" + selectedBike.url + ">";
+                    $('.imgs_wrap').append(html);
+                }
+            }
+            else if(kind == 'create') {
+                initializeSelectBikeModelDropdowns();
+
+                $('#createMybike-Label').text('바이크 등록');
+                $(this).find('.modal-footer').children().last().text('등록');
+                $(this).find('.modal-footer').children().last().attr('onclick', 'confirmCreateMybike(this)');
+
+                $('#createBike-bikeName').val("");
+                $('#createBike-bikeDescription').val("");
+            }
+        });
+
+        $('#modal-deleteMybike').on('show.bs.modal', function (event) {
+
+            var button = $(event.relatedTarget);
+            var bikeid = button.data('bikeid');
+            console.log('bikeid = ' + bikeid);
+
+            var modal = $(this);
+            modal.find('.modal-footer').html("");
+            modal.find('.modal-footer').append("<button type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">취소</button>");
+            modal.find('.modal-footer').append("<button type=\"button\" class=\"btn btn-primary\" onclick=\"confirmDeleteMybike(" + bikeid + ", this)\">삭제</button>");
+        });
+
+        $('#mysubscribes').children().first().empty();
+        readMySubscribes();
+
+        $('#notification-list').on('scroll', function () {
+            let diff = $(this)[0].scrollWidth - $(this).width();
+            if(diff - $(this).scrollLeft() <= 0) {
+                console.log('end of scroll notification-list');
+                if(!notificationReader.readAll && !notificationReader.loading) {
+                    readNotifications();
+                }
+            }
+        });
+        <% if @totalNotificationCount > 0 %>
+        $('#notifications-tab').append('<span class="badge" style="background-color: #F6402C; color: white; margin-left: 2px;">' + <%= @totalNotificationCount %> + '</span>');
+        <% end %>
+        $('#notification-list').empty();
+        // readNotifications();
+
+        // buildMybikeHtml($('#mybikes').children().first(), gMybikes.get(4));
+
+    });
+    $(window).scroll(function () {
+        if($('#mysubscribes-tab').hasClass('active')) {
+            if(!mySubscribeReader.readAll && !mySubscribeReader.loading) {
+                let diff = $(document).height() - $(window).height();
+                // console.log(`diff=${diff}, scrollTop=${$(window).scrollTop()}`);
+                if($(window).scrollTop() >= diff) {
+                    readMySubscribes();
+                }
+            }
+        }
+    });
+
+    function getMybikes() {
+        gMybikes = new Map();
+        <% @mybikes.each do |bike| %>
+        var selectedBike = {userId: "", name: "", desc: "", url: "", public: true, brandId: 0, styleId: 0, modelId: 0};
+        selectedBike.brandId = <%= bike.motorbike.brand.id %>;
+        selectedBike.styleId = <%= bike.motorbike.style.id %>;
+        selectedBike.modelId = <%= bike.motorbike.id %>;
+        selectedBike.userId = '<%= bike.user_id %>';
+        selectedBike.name = '<%= bike.name %>';
+
+        <% desc = bike.desc.gsub("\n", "<br>") %>
+        <% unless desc.nil? %>
+        selectedBike.desc = '<%= desc %>';
+        selectedBike.desc = selectedBike.desc.replace(/&lt;br&gt;/gi, '\n');
+        <% else %>
+        selectedBike.desc = '<%= bike.desc %>';
+        <% end %>
+
+        selectedBike.public = <%= bike.public %>;
+        selectedBike.url = '<%= bike.url %>';
+        gMybikes.set(<%= bike.id %>, selectedBike);
+        <% end %>
+        console.log('gMybikes =', gMybikes);
+    }
+    function setMybike(mybike, motorbike) {
+        var selectedBike = {userId: "", name: "", desc: "", url: "", public: true, brandId: 0, styleId: 0, modelId: 0};
+        selectedBike.brandId = motorbike.brandId;
+        selectedBike.styleId = motorbike.styleId;
+        selectedBike.modelId = motorbike.modelId;
+        selectedBike.userId = motorbike.userId;
+        selectedBike.name = mybike.name;
+        selectedBike.desc = mybike.desc;
+        selectedBike.public = mybike.public;
+        selectedBike.url = mybike.url;
+        gMybikes.set(mybike.id, selectedBike);
+        return gMybikes.get(mybike.id);
+    }
+
+    function onClickTimeline(obj) {
+        console.log('click Timeline');
+        console.log(obj);
+    }
+
+    function fileUploadAction() {
+        console.log('fileUploadAction');
+        $('#input_imgs').trigger('click');
+    }
+
+    function selectImageFiles(e) {
+        var files = e.files;
+        var filesAr = Array.prototype.slice.call(files);
+
+        if(filesAr.length) {
+            selectedFiles.length = 0;
+            $('.imgs_wrap').empty();
+        }
+
+        var index = 0;
+        for(var i=0; i<filesAr.length; i++) {
+            var f = filesAr[i];
+            if(!f.type.match("image.*")) {
+                showAlert('danger', '이미지파일만 가능합니다.', $('.content'));
+                return;
+            }
+
+            if($('#thumbs').css('display') == 'none') {
+                $('#thumbs').css('display', 'block');
+            }
+
+            selectedFiles.push(f);
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var html = "<a href=\"javascript:void(0)\" onclick=\"deleteImageAction(" + index + ")\" id=\"img_id_" + index + "\"><img style=\"max-width: 100%; margin: 2px\" src=\"" + e.target.result + "\" data-file='" + f.name + "' class='selProductFile' title='Click to remove'></a>";
+                $('.imgs_wrap').append(html);
+                index++;
+                $('.imgs_wrap').focus();
+                if($('#input_imgs').next('small').is(':visible')) {
+                    $('#input_imgs').next('small').hide();
+                }
+            }
+            reader.readAsDataURL(f);
+        }
+    }
+    function deleteImageAction(index) {
+        selectedFiles.splice(index, 1);
+        $("#img_id_" + index).remove();
+    }
+
+    function modalOpenCreateMyBike() {
+        $('#thumbs').prev('small').css('display', 'none');
+        $('#thumbs').css('display', 'none');
+
+        $('#modal-createMybike').modal('toggle');
+    }
+
+    function getNotificationColors(kind) {
+        if(kind == 'timeline') {
+        } else if(kind == 'comment') {
+            return {primary: '#17A4B8', secondary: '#ACE0E7', hover: '#117a88'}
+        } else if(kind == 'reply') {
+            return {primary: '#28A744', secondary: '#C1E8CA', hover: '#1e7b32'}
+        } else if(kind == 'like') {
+            return {primary: '#c82e61', secondary: '#ffc0cb', hover: '#9e244d'}
+        } else if(kind == 'subscribe') {
+            return {primary: '#EE2121', secondary: '#FFADAD', hover: '#c11a1a'}
+        } else if(kind == 'levelup') {
+            return {primary: '#EE2121', secondary: '#f9e818', hover: '#c11a1a'}
+        }
+        return null;
+    }
+    function getNotificationTexts(notification, kinds) {
+        let texts = null;
+        if(kinds[0] == 'new' && kinds[1] == 'comment') {
+            texts = {header: '새로운 댓글', body: '님의 타임라인 댓글', content: notification.content, footer: '확인하기', icon: 'far fa-comment'};
+        }
+        else if(kinds[0] == 'new' && kinds[1] == 'reply') {
+            if(kinds[2] == 'comment') {
+                texts = {header: '새로운 답글', body: '님의 타임라인 답글', content: notification.content, footer: '확인하기', icon: 'far fa-comments'};
+            }
+            else if(kinds[2] == 'bikeComment') {
+                texts = {header: '새로운 답글', body: '님의 바이크 답글', content: notification.content, footer: '확인하기', icon: 'far fa-comments'};
+            }
+            else if(kinds[2] == 'comparisonComment') {
+                texts = {header: '새로운 답글', body: '님의 바이크비교 답글', content: notification.content, footer: '확인하기', icon: 'far fa-comments'};
+            }
+        }
+        else if(kinds[0] == 'new' && kinds[1] == 'like') {
+            if(kinds[2] == 'timeline') {
+                texts = {header: '타임라인 좋아요', body: '님이 다음 타임라인에 좋아요를 표시 했습니다.', footer: '확인하기', icon: 'far fa-heart'};
+            }
+            else if(kinds[2] == 'comment' || kinds[2] == 'bikeComment' || kinds[2] == 'comparisonComment') {
+                texts = {header: '댓글 좋아요', body: '님이 다음 댓글에 좋아요를 표시 했습니다.', content: notification.content, footer: '확인하기', icon: 'far fa-heart'};
+            }
+            else if(kinds[2] == 'reply' || kinds[2] == 'bikeReply' || kinds[2] == 'comparisonReply') {
+                texts = {header: '답글 좋아요', body: '님이 다음 답글에 좋아요를 표시 했습니다.', content: notification.content, footer: '확인하기', icon: 'far fa-heart'};
+            }
+        }
+        else if(kinds[0] == 'new' && kinds[1] == 'subscribe' && kinds[2] == 'mybike') {
+            texts = {header: '새로운 구독', body: '님이 내 바이크에 구독을 했습니다.', footer: '확인하기', icon: 'far fa-thumbs-up'};
+        }
+        else if(kinds[0] == 'update' && kinds[1] == 'levelup' && kinds[2] == 'user') {
+            let titles = notification.content.split('-');
+            let content = titles[0] + '<i class="fas fa-arrow-right" style="margin: 0 0.25rem"></i>' + titles[1] + ' 라이더';
+            texts = {header: '레벨 업', body: '당신은 레벨업 되었습니다!', content: content, footer: '확인하기', icon: 'fas fa-arrow-up'};
+        }
+        return texts;
+    }
+    function closeNotificationAfterCheck(notificationId) {
+        if($('#notification-checkbox').data('check')) {
+            onCloseNotification(notificationId);
+        }
+    }
+    function buildNotificationHtml(notification, parent) {
+        let kinds = notification.kind.split('-');
+        let colors = getNotificationColors(kinds[1]);
+        let texts = getNotificationTexts(notification, kinds);
+
+        let notificationCard = $('<div class="notification-card" id="notification-' + notification.id + '">');
+        let header = $('<div class="noti-card-header">');
+        header.append('<i class="fas fa-times" style="color: ' + colors.primary + '; font-size: 1.25rem; visibility: hidden;"></i>');
+        header.append('<div style="color: ' + colors.primary + '; font-size: 1.3rem">' + texts.header + '</div>');
+        // header.append('<i class="fas fa-times" style="position: relative; bottom: 15px; left: 40px; color: ' + colors.primary + '; font-size: 1.25rem; cursor: pointer" onclick="onCloseNotification(' + notification.id + ')"></i>');
+        header.append('<i class="fas fa-times" style="color: ' + colors.primary + '; font-size: 1.25rem; cursor: pointer" onclick="onCloseNotification(' + notification.id + ')"></i>');
+        notificationCard.append(header);
+        let body = $('<div class="noti-card-body">');
+        body.append('<div class="noti-card-icon" style="background-color: ' + colors.secondary + '"><i class="' + texts.icon + '" style="margin: auto; font-size: 3.8rem; color: ' + colors.primary + '"></i></div>')
+        let playerName = notification.player.length > 4 ? (notification.player.substr(0, 3) + '...') : notification.player;
+        body.append('<div style="color: ' + colors.primary + '"><span style="color: black; font-weight: bold;">' + playerName + '</span>' + texts.body + '</div>');
+        if(typeof texts.content == 'string') {
+            body.append('<div class="text-ellipsis" style="color: dimgray">' + texts.content + '</div>');
+        }
+        notificationCard.append(body);
+        let footer = $('<div class="noti-card-footer" style="background-color: ' + colors.primary + ';">');
+        <% unless @mobileDevice %>
+        footer.hover(function () {
+            footer.css('background-color', colors.hover);
+        }, function () {
+            footer.css('background-color', colors.primary);
+        })
+        <% end %>
+
+        let checkDetailViewModal = function () {
+            footer.attr('data-toggle', 'modal');
+            footer.attr('data-timelineid', notification.reference.split('-')[1]);
+            footer.attr('data-target', '#DetailViewModal');
+            footer.click(function () {
+                closeNotificationAfterCheck(notification.id);
+            });
+        }
+        let checkTimeline = function () {
+            footer.click(function () {
+                closeNotificationAfterCheck(notification.id);
+                window.open('/user/timeline?bikeId=' + notification.reference.split('-')[1], '_blank');
+            })
+        };
+        let checkBikeview = function () {
+            footer.click(function () {
+                closeNotificationAfterCheck(notification.id);
+                window.open('/main/bikeview?bikeId=' + notification.reference.split('-')[1], '_blank');
+            })
+        }
+        let checkComparisonBike = function () {
+            requestPost('/compare/readBikeComparison', {userId: <%= session[:user]['id'] %>, bikeComparisonId: notification.reference.split('-')[1]}, data => {
+                console.log('readBikeComparison result =', data.result);
+                footer.click(function () {
+                    if(data.result) {
+                        //compare/compareView?bikeNo0=110&bikeNo1=111
+                        let ar = data.bikeComparison.bikeIds.split('-');
+                        let bikeIds = 'bikeNo0=' + ar[0];
+                        for(let i=1; i<ar.length; i++) {
+                            bikeIds += ('&bikeNo' + i + '=' + ar[i]);
+                        }
+                        closeNotificationAfterCheck(notification.id);
+                        window.open('/compare/compareView?' + bikeIds, '_blank');
+                    }
+                })
+            })
+        }
+
+        if(kinds[0] == 'new') {
+            if(kinds[1] == 'subscribe') {
+                checkTimeline();
+            } else {
+                if(kinds[1] == 'like') {
+                    if(kinds[2] == 'bikeComment' || kinds[2] == 'bikeReply') {
+                        checkBikeview();
+                    } else if(kinds[2] == 'comparisonComment' || kinds[2] == 'comparisonReply') {
+                        checkComparisonBike();
+                    } else {
+                        checkDetailViewModal();
+                    }
+                }
+                else if(kinds[1] == 'reply') {
+                    if(kinds[2] == 'bikeComment') {
+                        checkBikeview();
+                    } else if(kinds[2] == 'comparisonComment') {
+                        checkComparisonBike();
+                    } else {
+                        checkDetailViewModal();
+                    }
+                } else {
+                    checkDetailViewModal();
+                }
+            }
+        }
+        else if(kinds[0] == 'update') {
+            if(kinds[1] == 'levelup' && kinds[2] == 'user') {
+                footer.click(function () {
+                    closeNotificationAfterCheck(notification.id);
+                    window.open('/user/myinfo', '_blank');
+                })
+            }
+        }
+
+        footer.append('<div style="background-color: transparent; color: whitesmoke">' + texts.footer + '</div>');
+        notificationCard.append(footer);
+        parent.append(notificationCard);
+    }
+    function decreaseNotificationCounter(x) {
+        let notificationCounter = $('#notifications-tab').children('span').first();
+        let count = parseInt(notificationCounter.text());
+        if(typeof count === 'number') {
+            count = count-x;
+            if(count > 0) {
+                notificationCounter.text(count);
+            } else {
+                let text = $('#notifications-tab').text().replace(/[0-9]/g,"");
+                $('#notifications-tab').text(text);
+            }
+        } else {
+            console.log('WTF?');
+        }
+    }
+    function onCloseNotification(notificationId) {
+        let notification = $('#notification-' + notificationId);
+        notification.empty();
+        notification.css({'visibility': 'hidden', 'padding': 0, 'min-width': 0});
+        notification.addClass('squash');
+        requestPost('/user/deleteNotification', {userId: <%= session[:user]['id'] %>, notificationId: notificationId}, data => {
+            if(data.result) {
+                decreaseNotificationCounter(1);
+            }
+        })
+        notification[0].addEventListener('animationend', e => {
+            notification.remove();
+            if(!notificationReader.readAll && !notificationReader.loading) {
+                readNotifications();
+            }
+        }, false);
+    }
+    function readNotifications() {
+        let params = {userId: <%= session[:user]['id']%>, limit: notificationReader.limit, offset: notificationReader.offset};
+        notificationReader.loading = true;
+        requestPost('/user/readNotifications', params, data => {
+            if(data.result) {
+                console.log('readNotifications data =', data);
+                if(data.notifications.length > 0) {
+                    let parent = $('#notification-list');
+                    data.notifications.forEach(notification => {
+                        buildNotificationHtml(notification, parent);
+                    })
+                    notificationReader.offset += data.notifications.length;
+                    if(data.deleteCount > 0) {
+                        decreaseNotificationCounter(data.deleteCount);
+                    }
+                    setTimeout(function () {
+                        if($('#notification-list')[0].scrollWidth <= $('#notifications').width()) {//스크롤이 없을경우는 로드 한번 더
+                            readNotifications();
+                        } else {
+                            notificationReader.loading = false;
+                        }
+                    }, 500);
+                } else {
+                    notificationReader.readAll = true;
+                    let notificationCount = $('#notification-list').children('.notification-card').length;
+                    if(notificationCount > 0) {
+                        $('#notifications-tab').children('.badge').replaceWith('<span class="badge" style="background-color: #F6402C; color: white; margin-left: 2px;">' + notificationCount + '</span>');
+                    } else {
+                        $('#notifications-tab').children('.badge').remove();
+                    }
+                    notificationReader.loading = false;
+                }
+            }
+        })
+    }
+    function gotoTimelines(mybikeId) {
+        window.open('/user/timeline?bikeId=' + mybikeId, '_blank');
+        // window.open('/user/timeline?bikeId=' + mySubscribe.bikeId + ', \'_blank\');
+    }
+    function buildMySubscribe(mySubscribe, parent) {
+        let newTimelineCount = mySubscribe.timelineCount - mySubscribe.readTimelineCount;
+        console.log('newTimelineCount =', newTimelineCount)
+        let width = $('.container').outerWidth();
+        console.log('container rect =', width/3);
+
+        let subscribeCard = $('<div class="card text-right" style="display: inline-block; width: 250px; margin: 10px; background-color: #2d3338">');
+        let header = $('<div style="position: relative;">');
+        header.append('<img class="card-img-top" src="' + mySubscribe.url + '" alt="Card image cap">');
+        let headerText = $('<div style="position: absolute; width: 100%; bottom: 0px; left: 0px; font-weight: bold; text-align: right; margin: 0; padding: 5px; color: #fff; background-color: #2B343A60;"></div>');
+        // headerText.append('<div style="font-size: 1.25rem">' + mySubscribe.name + '<span class="badeg" style="background-color: #F6402C; border-radius: 0.5rem; margin-left: 0.5rem; padding: 0 0.45rem">' + newTimelineCount + '</span></div>');
+        if(newTimelineCount > 0) {
+            if(newTimelineCount > 100)  newTimelineCount = '100+';
+            headerText.append('<div style="font-size: 1.25rem"><span class="badeg" style="background-color: #F6402C; font-size: 0.9rem; border-radius: 0.4rem; vertical-align: text-top; margin-right: 0.25rem; padding-left: 0.25rem; padding-right: 0.25rem; padding-bottom: 0.2rem;">' + newTimelineCount + '</span>' + mySubscribe.name + '</div>');
+        } else {
+            headerText.append('<div style="font-size: 1.25rem">' + mySubscribe.name + '</div>');
+        }
+        header.append(headerText);
+        // header.append('<h5 style="position: absolute; width: 100%; bottom: 0px; left: 0px; font-weight: bold; text-align: right; margin: 0; padding: 10px; color: #fff; background-color: #2B343A60;">' + mySubscribe.name + '</h5>');
+        subscribeCard.append(header);
+        let body = $('<div class="card-body">');
+        body.append('<p class="card-text" style="color: white; margin-bottom: 0.25rem;">' + mySubscribe.desc + '</p>');
+        let bodyAbove = $('<div style="display: flex; flex-direction: row-reverse; align-items: flex-end; margin-bottom: 0.5rem;">');
+        let avatar = mySubscribe.userAvatar === null ? "/motorcyclist.jpg" : mySubscribe.userAvatar;
+        bodyAbove.append('<img class="img-thumbnail" src="' + avatar + '" style="width: 45px; height: 45px; background-color: transparent; border-color: dimgray;">');
+        let userName = $('<div style="color: white; margin-right: 0.25rem;">' + mySubscribe.userName + '</div>');
+        userName.append(buildUserLevel(mySubscribe.titleOfLevel, '0.9rem'));
+        bodyAbove.append(userName);
+        body.append(bodyAbove);
+        let bodyBelow = $('<div style="display: flex; justify-content: space-between; align-items: flex-end">');
+        bodyBelow.append('<div style="color: white; font-size: 0.9rem;">구독수: ' + numberWithCommas(mySubscribe.subscribeCount) + '</div>');
+        // bodyBelow.append('<a href="javascript:void(0)" onclick="window.open(\'/user/timeline?bikeId=' + mySubscribe.bikeId + '\', \'_blank\')" class="btn btn-primary">타임라인 <i class="fas fa-angle-double-right"></i></a>');
+        bodyBelow.append('<a href="javascript:void(0)" onclick="gotoTimelines(' + mySubscribe.bikeId + ')" class="btn btn-primary">타임라인 <i class="fas fa-angle-double-right"></i></a>');
+        body.append(bodyBelow);
+        subscribeCard.append(body);
+        // subscribeCard.append('<div class="badge" style="position: absolute; right: 0; top: 0; background-color: #F6402C; padding: 5px; font-size: 1rem; color: whitesmoke;">' + newTimelineCount + '</div>');
+        parent.append(subscribeCard);
+    }
+    function readMySubscribes() {
+        params = {
+            userId: <%= session[:user]['id']%>,
+            limit: mySubscribeReader.limit,
+            offset: mySubscribeReader.offset};
+        mySubscribeReader.loading = true;
+        requestPost('/user/readMySubscribes', params, data => {
+            if(data.result) {
+                console.log('mySubscribes =', data.mySubscribes);
+                if(data.mySubscribes.length > 0) {
+                    data.mySubscribes.forEach(mySubscribe => {
+                        buildMySubscribe(mySubscribe, $('#mysubscribes').children().first());
+                    });
+
+                    mySubscribeReader.offset += data.mySubscribes.length;
+                } else {
+                    mySubscribeReader.readAll = true;
+                }
+            } else {
+                showAlert('danger', data.message, $('.content'));
+            }
+            mySubscribeReader.loading = false;
+        })
+    }
+
+    function buildMybikeHtml(parent, mybike) {
+        let card = $('<div id="mybike-' + mybike.id + '" class="card text-right" style="display: inline-block; width: 250px; margin: 10px; background-color: #333C42">');
+        let above = $('<div style="position: relative;"></div>');
+        above.append('<img class="card-img-top" src="' + mybike.url + '" alt="Card image cap">');
+        let h5 = $('<h5 style="position: absolute; width: 100%; bottom: 0px; left: 0px; font-weight: bold; text-align: right; margin: 0; padding: 10px; color: #fff; background-color: #2B343A60;">' + mybike.name + '</h5>');
+        if(mybike.public) {
+            h5.prepend('<span class="public-tag">공개</span>');
+        } else {
+            h5.prepend('<span class="private-tag">비공개</span>');
+        }
+        above.append(h5);
+        card.append(above);
+        let body = $('<div class="card-body"></div>');
+        let bodyButtons = $('<div style="display: block; text-align: left;"></div>');
+        bodyButtons.append('<a class="mybike-dm" style="font-size: 80%; text-decoration: none" data-toggle="modal" data-bikeid="4" data-kind="modify" href="#modal-createMybike">수정</a>');
+        bodyButtons.append('<a class="mybike-dm" style="font-size: 80%; text-decoration: none" data-toggle="modal" data-bikeid="4" href="#modal-deleteMybike">삭제</a>');
+        body.append(bodyButtons);
+        body.append('<p class="card-text" style="color: white;">' + mybike.desc + '</p>');
+        let bodyBelow = $('<div style="display: flex; justify-content: space-between; align-items: flex-end"></div>');
+        bodyBelow.append('<div style="color: white; font-size: 0.9rem;">구독수: 0</div>');
+        bodyBelow.append('<a href="javascript:void(0)" onclick="window.location=\'/user/timeline?bikeId=' + mybike.id + '\'" class="btn btn-primary">타임라인 <i class="fas fa-angle-double-right"></i></a>');
+        body.append(bodyBelow);
+        card.append(body);
+        parent.append(card);
+    }
+    function uploadPhotoToFireStorage(file, mybikeId, callback) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            resizeOriginalThumb2(e.target.result, 1024, 450, (originalBlob, thumbBlob) => {
+                var user = firebase.auth().currentUser;
+                if(user) {
+                    let metadata = {cacheControl: 'public,max-age=2628000'};//one month
+                    firebase.storage().ref('<%= @firebase_users_path %>' + user.uid + '/' + mybikeId + '/').child('mybike' + mybikeId + '_thumb').put(thumbBlob, metadata).then(thumbSnapshot => {
+                        console.log('Uploaded a thumb blob or file!');
+                        thumbSnapshot.ref.getDownloadURL().then(thumbURL => {
+                            console.log('File available at ' + thumbURL);
+                            let url = {thumb: thumbURL, original: ''};
+                            firebase.storage().ref('<%= @firebase_users_path %>' + user.uid + '/' + mybikeId + '/').child('mybike' + mybikeId).put(originalBlob, metadata).then(snapShot => {
+                                console.log('Uploaded a blob or file!');
+                                snapShot.ref.getDownloadURL().then(originalURL => {
+                                    url.original = originalURL;
+                                    params = {mybikeId: mybikeId, ...url};
+                                    callback(params);
+                                })
+                            });
+                        });
+                    })
+                } else {
+                    console.error('로그인 되어 있지 않습니다.');
+                }
+            });
+        }
+        reader.readAsDataURL(file);
+    }
+    function confirmCreateMybike(obj) {
+        let bikeName = $('#createBike-bikeName').val();
+        let smalls = [
+            {valid: bikeName.length > 0, element: $('#createBike-bikeName').next('small')},
+            {valid: selectedFiles.length > 0, element: $('#input_imgs').next('small')},
+            {valid: selectedModelId > 0, element: $('#select-bike-model').next('small')}
+        ];
+        if(bikeName.length > 0 && selectedFiles.length > 0 && selectedModelId > 0) {
+            let params ={userId: <%= session[:user]['id'] %>, name: bikeName, desc: $('#createBike-bikeDescription').val(), public: $('#input-public').prop('checked'), motorbikeId: selectedModelId};
+            buttonSpinner(obj, true, true);
+            requestPost('/user/createMybike', params, data => {
+                uploadPhotoToFireStorage(selectedFiles[0], data.mybike.id, params => {
+                    requestPost('/user/updateMybikeUrl', params, data => {
+                        console.log('create mybike successfully data =', data);
+                        if(obj !== undefined) {
+                            buttonSpinner(obj, false, true);
+                            $('#modal-createMybike').modal('toggle');
+                            location.reload();
+                        }
+                    })
+                })
+            })
+        } else {
+            smalls.forEach(small => {
+                if(small.valid) {small.element.hide()}
+                else {small.element.show()}
+            })
+        }
+    }
+    function updateMybikeCard(mybike, motorbike) {
+        let card = $('#mybike-' + mybike.id);
+        console.log('updateMybike mybike =', mybike);
+        console.log('updateMybike motorbike =', motorbike);
+        mybike = setMybike(mybike, motorbike);
+        if(card.length > 0) {
+            let above = card.children().eq(0);
+            let children = above.children();
+            children.eq(0).attr('src', mybike.url);
+            children.eq(1).text(mybike.name);
+            if(mybike.public) {
+                children.eq(1).prepend('<span class="public-tag">' + '공개' + '</span>');
+            } else {
+                children.eq(1).prepend('<span class="private-tag">' + '비공개' + '</span>');
+            }
+            let below = card.children().eq(1);
+            below.children().eq(1).html(mybike.desc.replace(/\n/gi, '<br>'));
+            showAlert('success', '내 바이크가 성공적으로 수정되었습니다!', $('.content'));
+        }
+    }
+    function confirmModifyMybike(bikeId, obj) {
+        let params = {
+            userId: <%= session[:user]['id'] %>,
+            bikeId: bikeId,
+            name: $('#createBike-bikeName').val(),
+            desc: $('#createBike-bikeDescription').val(),
+            public: $('#input-public').prop('checked'),
+            motorbikeId: selectedModelId,
+            deletePhoto: selectedFiles.length > 0 ? true : false
+        };
+        buttonSpinner(obj, true, true);
+        console.log('params =', params);
+        requestPost('/user/modifyMybike', params, data => {
+            if(data.result) {
+                if(selectedFiles.length > 0) {
+                    uploadPhotoToFireStorage(selectedFiles[0], bikeId, params => {
+                        requestPost('/user/updateMybikeUrl', params, data => {
+                            console.log('create mybike successfully data =', data);
+                            buttonSpinner(obj, false, true);
+                            $('#modal-createMybike').modal('hide');
+                            updateMybikeCard(data.mybike, data.motorbike);
+                        })
+                    });
+                } else {
+                    buttonSpinner(obj, false, true);
+                    $('#modal-createMybike').modal('hide');
+                    updateMybikeCard(data.mybike, data.motorbike);
+                }
+            }
+        });
+    }
+    function confirmDeleteMybike(bikeId, obj) {
+        let currentUser = firebase.auth().currentUser;
+        if(currentUser) {
+            buttonSpinner(obj, true, true);
+            requestPost('/user/deleteMybike', {userId: "<%= session[:user]['id'] %>", firebaseUsersPath: '<%= @firebase_users_path %>', firebaseUid: currentUser.uid, bikeId: bikeId}, data => {
+                if(data.result) {
+                    $('#mybike-' + bikeId).remove();
+                    buttonSpinner(obj, false, true);
+                    $('#modal-deleteMybike').modal('toggle');
+                    showAlert('success', '내 바이크가 성공적으로 삭제되었습니다!', $('.content'));
+                } else {
+                    buttonSpinner(obj, false, true);
+                    $('#modal-deleteMybike').modal('toggle');
+                    showAlert('danger', '유저 혹은 내바이크를 찾을 수 없습니다.', $('.content'));
+                }
+            });
+        }
+    }
+    function onClickTab(obj) {
+        let addMybikeButton = $('#add-bike-button');
+        if(addMybikeButton.length > 0) {
+            var tabId = $(obj).attr('id');
+            if(tabId == 'mybikes-tab') {
+                $('#add-bike-button').css('display', 'flex');
+            } else {
+                $('#add-bike-button').css('display', 'none');
+                if(tabId == 'notifications-tab') {
+                    console.log('click notifications-tab');
+                    if(!notificationReader.loading && !notificationReader.readAll) {
+                        readNotifications();
+                    }
+                }
+            }
+        }
+    }
+    function setBikeModels(brandId, styleId, modelId) {
+        if(brandId > 0 && styleId > 0) {
+            // console.log('model button =', $('#model-dropdown').children('button').first().text());
+            let modelButton = $('#model-dropdown').children('button').first();
+            modelButton.attr('disabled', true);
+            modelButton.text(' ' + '모델명');
+            modelButton.prepend("<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span>");
+            requestPost('/user/readModels', {userId: <%= session[:user]['id'] %>, brandId: brandId, styleId: styleId}, data => {
+                models = data.models;
+                let dropdownMenu = $('#model-dropdown').children('.dropdown-menu').first();
+                dropdownMenu.css('max-height', document.documentElement.clientHeight*0.3);
+                dropdownMenu.empty();
+                let modelIndex=0;
+                models.forEach((item, index) => {
+                    dropdownMenu.append("<a class='dropdown-item' data-id='" + item.id + "' href='javascript:void(0)'>" + item.name + "</a>");
+                    if(modelId > 0 && modelId == item.id) {
+                        modelIndex = index;
+                    }
+                })
+                dropdownMenu.on('click', 'a', function () {
+                    modelButton.text($(this).text());
+                    selectedModelId = $(this).data('id');
+                    $('#model-dropdown').children('small').first().hide();
+                    if($('#select-bike-model').next('small').is(':visible')) {
+                        $('#select-bike-model').next('small').hide();
+                    }
+                    console.log('selectedModelId =', selectedModelId);
+                })
+                modelButton.children('span').remove();
+                modelButton.attr('disabled', false);
+                selectedModelId = modelId;
+                if(selectedModelId > 0) {
+                    console.log('modelIndex =', modelIndex);
+                    modelButton.text(models[modelIndex].name);
+                }
+            })
+        }
+    }
+    function initializeDropdown(selector, items) {
+        let obj = selector.children('.dropdown-menu').first();
+        obj.css({'max-height': $(document).outerHeight()/2 + 'px', 'overflow-y': 'scroll'});
+        if(obj.children().length <= 0) {
+            items.forEach(item => {
+                obj.append("<a class='dropdown-item' data-id='" + item.id + "' href='javascript:void(0)'>" + item.name + "</a>");
+            })
+            let btn = selector.children('button').first();
+            obj.on('click', 'a', function () {
+                btn.text($(this).text());
+                if(selector.attr('id') == 'brand-dropdown') {
+                    $('#style-dropdown').children('button').first().attr('disabled', false);
+                    selectedBrandId = $(this).data('id');
+                } else if(selector.attr('id') == 'style-dropdown') {
+                    console.log('request models')
+                    selectedStyleId = $(this).data('id');
+                }
+                setBikeModels(selectedBrandId, selectedStyleId, 0);
+            })
+        }
+    }
+    function initializeSelectBikeModelDropdowns(brandId=0, styleId=0, modelId=0) {
+        if($('#brand-dropdown').children('.dropdown-menu').first().children('a').length <= 0) {
+            let brandButton = $('#brand-dropdown').children('button').first();
+            brandButton.attr('disabled', true);
+            brandButton.text(' 브랜드');
+            brandButton.prepend("<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span>");
+            requestPost('/user/readBrands', {userId: <%= session[:user]['id'] %>}, data => {
+                brands = data.brands;
+                initializeDropdown($('#brand-dropdown'), brands);
+                selectedBrandId = brandId;
+                brandButton.children('span').remove();
+                brandButton.attr('disabled', false);
+                if(selectedBrandId > 0) {
+                    console.log('selectedBrandId =', selectedBrandId);
+                    console.log('data.brands =', brands);
+                    brandButton.text(brands[selectedBrandId-1].name);
+                }
+            })
+        } else {
+            selectedBrandId = brandId;
+            let brandButton = $('#brand-dropdown').children('button').first();
+            if(selectedBrandId > 0) {
+                brandButton.text(brands[selectedBrandId-1].name);
+            } else {
+                brandButton.text('브랜드');
+            }
+        }
+        if($('#style-dropdown').children('.dropdown-menu').first().children('a').length <= 0) {
+            $('#style-dropdown').children('button').first().attr('disabled', true);
+            let styleButton = $('#style-dropdown').children('button').first();
+            styleButton.text(' 스타일');
+            styleButton.prepend("<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span>");
+            requestPost('/user/readStyles', {userId: <%= session[:user]['id'] %>}, data => {
+                styles = data.styles;
+                initializeDropdown($('#style-dropdown'), styles);
+                selectedStyleId = styleId;
+                styleButton.children('span').remove();
+                if(selectedStyleId > 0) {
+                    styleButton.text(styles[selectedStyleId-1].name);
+                    styleButton.attr('disabled', false);
+                }
+            });
+        } else {
+            selectedStyleId = styleId;
+            let styleButton = $('#style-dropdown').children('button').first();
+            if(selectedStyleId > 0) {
+                styleButton.text(styles[selectedStyleId-1].name);
+                styleButton.attr('disabled', false);
+            } else {
+                styleButton.text('스타일');
+                styleButton.attr('disabled', true);
+            }
+        }
+        if($('#model-dropdown').children('.dropdown-menu').first().children('a').length <= 0) {
+            let modelButton = $('#model-dropdown').children('button').first();
+            modelButton.attr('disabled', true);
+            if(modelId > 0) {
+                setBikeModels(brandId, styleId, modelId);
+            } else {
+                selectedModelId = modelId;
+            }
+        } else {
+            let modelButton = $('#model-dropdown').children('button').first();
+            if(modelId > 0) {
+                setBikeModels(brandId, styleId, modelId);
+            } else {
+                selectedModelId = modelId;
+                modelButton.text('모델명');
+                modelButton.attr('disabled', true);
+            }
+        }
+    }
+    function testHttp() {
+        requestPost('/user/testHttp', {path: 'images/styles/'}, data => {
+            console.log('testHttp data =', data);
+        })
+    }
+    function tt() {
+        //https://asia-northeast1-bikesalon-d86d9.cloudfunctions.net/helloWorld?path=images/8TGmLWCjc1hU3zYesiKleXdtAgJ3/
+
+        // fetch('https://asia-northeast1-bikesalon-d86d9.cloudfunctions.net/helloWorld?path=images/styles/').then(response => {
+        //     return response.json();
+        // }).then(json => {
+        //     console.log('response text =', json);
+        // });
+
+        // let url = 'https://asia-northeast1-bikesalon-d86d9.cloudfunctions.net/';
+        // url += 'deleteFile?';
+        // url += 'path=images/tt/&';
+        // url += 'filename=daldal01.png';
+        // fetch(url).then(response => {
+        //     return response.json()
+        // }).then(json => {
+        //     console.log('response text =', json);
+        // });
+
+        // fetch('https://asia-northeast1-bikesalon-d86d9.cloudfunctions.net/deletePath?path=images/tt/').then(response => {
+        //     return response.text();
+        // }).then(text => {
+        //     console.log('response text =', text);
+        // });
+    }
+</script>
+
+<!--<a class="float" style="text-decoration: none; display: flex; align-items: center; justify-content: center;" data-toggle="modal" href="javascript:" onclick="modalOpenCreateMyBike()">-->
+<% if @mybikes.count < session[:user]['maxCountMybike'] %>
+<a class="float" id="add-bike-button" style="text-decoration: none; display: flex; align-items: center; justify-content: center;" data-toggle="modal" data-index="0" data-kind="create" href="#modal-createMybike">
+  <i class="fa fa-plus" style="font-size: 200%;"></i>
+</a>
+<% end %>
+
+<div class="modal fade" id="modal-createMybike" tabindex="-1" role="dialog" aria-labelledby="createMybikeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createMybike-Label">바이크 등록</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color: ghostwhite; text-shadow: black;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div id="select-bike-model" style="display: flex; flex-wrap: nowrap;">
+            <div id="brand-dropdown" class="btn-group" style="margin-right: 0.5rem">
+              <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">브랜드</button>
+              <div class="dropdown-menu"></div>
+            </div>
+            <div id="style-dropdown" class="btn-group" style="margin-right: 0.5rem">
+              <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled="true">스타일</button>
+              <div class="dropdown-menu"></div>
+            </div>
+            <div id="model-dropdown" class="btn-group">
+              <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled="true">모델명</button>
+              <div class="dropdown-menu scrollable-menu"></div>
+            </div>
+          </div>
+          <small style="display: none; color: red;">바이크 모델이 있어야 합니다.</small>
+          <div style="display: flex; align-items: flex-end">
+            <div class="btn-group btn-group-toggle" data-toggle="buttons" style="margin: 0.5rem 0 0.5rem 0;">
+              <label class="btn btn-outline-primary btn-sm active">
+                <input type="radio" name="options" id="input-public" autocomplete="off" checked>공개
+              </label>
+              <label class="btn btn-outline-primary btn-sm">
+                <input type="radio" name="options" id="input-private" autocomplete="off">비공개
+              </label>
+            </div>
+            <small style="color: silver; margin-left: 0.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem">비공개(또는 공개) 선택시<br>모든 타임라인도 비공개(또는 공개)가 됩니다.</small>
+          </div>
+          <div class="input-wrap">
+            <div style="margin-bottom: 5px">
+              <input type="text" class="form-control" id="createBike-bikeName" placeholder="바이크 이름" maxlength="12"/>
+              <small style="display: none; color: red">바이크 이름이 있어야 합니다.</small>
+            </div>
+            <textarea class="form-control rounded-3" id="createBike-bikeDescription" style="resize: none" rows="5" placeholder="바이크 설명" maxlength="256"></textarea>
+
+            <button type="button" class="btn btn-outline-primary btn-sm" style="margin-top: 5px; margin-bottom: 5px" onclick="fileUploadAction()">사진업로드</button>
+            <input style="display: none" type="file" id="input_imgs"/>
+            <small style="display: none; color: red">바이크 대표이미지가 있어야 합니다.</small>
+          </div>
+        </div>
+<!--        <small>이미지 클릭시 삭제</small>-->
+        <div id="thumbs" style="border: 1px solid #505973; border-radius: 3px; padding: 10px;">
+          <div class="imgs_wrap" style="text-align: center">
+            <img style="max-width: 100%; height: auto" id="img"/>
+          </div>
+        </div>
+        <small>내바이크 남은 생성 갯수: <%= @mybikes.count.to_s + '/' + session[:user]['maxCountMybike'].to_s %></small>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" onclick="confirmCreateMybike(this)">변경</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modal-deleteMybike" tabindex="-1" role="dialog" aria-labelledby="deleteMybikeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteMybike-Label">내 바이크 삭제</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true" style="color: ghostwhite; text-shadow: black;">&times;</span>
+          </button>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>삭제이후에는 돌이킬 수 없습니다.<br>정말 삭제 할까요?</p>
+        <small style="color: silver">타임라인 내용에 따라 다소 시간이 소요될 수 있습니다.</small>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" onclick="confirmDeleteMybike()">변경</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .dark-nav-link#mybikes-tab {
+    border-bottom-color: dimgray;
+  }
+  .dark-nav-link#mybikes-tab:hover {
+    border: 1px solid #69696980;
+  }
+  .dark-nav-link#mybikes-tab.active {
+    color: ghostwhite;
+    background-color: #2B343A;
+    border-color: dimgray dimgray transparent dimgray;
+  }
+  .dark-nav-link#mysubscribes-tab {
+    border-bottom-color: dimgray;
+  }
+  .dark-nav-link#mysubscribes-tab:hover {
+    border: 1px solid #69696980;
+  }
+  .dark-nav-link#mysubscribes-tab.active {
+    color: ghostwhite;
+    background-color: #2B343A;
+    border-color: dimgray dimgray transparent dimgray;
+  }
+  .dark-nav-link#notifications-tab {
+    border-bottom-color: dimgray;
+  }
+  .dark-nav-link#notifications-tab:hover {
+    border: 1px solid #69696980;
+  }
+  .dark-nav-link#notifications-tab.active {
+    color: ghostwhite;
+    background-color: #2B343A;
+    border-color: dimgray dimgray transparent dimgray;
+  }
+  :root {
+    --noti-like-color1: #c82e61;
+    --noti-like-color2: #ffc0cb;
+    --noti-like-color3: #d52e61;
+
+    --noti-comment-color1: #17A4B8;
+    --noti-comment-color2: #ACE0E7;
+
+    --noti-reply-color1: #28A744;
+    --noti-reply-color2: #C1E8CA;
+
+    --noti-subscribe-color1: #DC3545;
+    --noti-subscribe-color2: #FCD1D5;
+  }
+
+  @keyframes animation-squash {
+    from {width: 230px;}
+    to {width: 0px;}
+  }
+  .squash {
+    animation: animation-squash 0.4s;
+    animation-duration: 0.35s;
+    animation-timing-function: ease-in-out;
+  }
+  .notification-card {
+    min-width: 230px;
+    width: 230px;
+    height: calc(230px * 1.61803398875);
+    border-radius: 0.5rem;
+    background-color: whitesmoke;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    margin: 0 0.125rem;
+  }
+  .noti-card-header {
+    flex-grow: 2;
+    display: flex;
+    justify-content: space-between;
+  }
+  .noti-card-body {
+    flex-grow: 6;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .noti-card-footer {
+    flex-grow: 2;
+    border-radius: 0.125rem;
+    margin-top: 0.75rem;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 200ms ease-in-out;
+  }
+  .noti-card-icon {
+    border-radius: 50%;
+    width: 125px;
+    height: 125px;
+    margin: auto;
+    box-shadow: 2px 2px 8px #bababa;
+    display: flex;
+    align-items: center;
+  }
+</style>
+
+<div class="content">
+  <div class="container" style="width: 100%; height: auto; text-align: center">
+<!--    <button type="button" class="btn btn-success" onclick="tt()">tt</button>-->
+    <div class="shadow-sm p-3 mb-5 rounded" style="width:100%; height:auto; text-align: center; margin: auto; background-color: #2B343A">
+      <ul class="nav nav-tabs nav-justified" id="mybike-tab" style="border-bottom: 1px solid #2a343a;" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link dark-nav-link active" id="mybikes-tab" data-toggle="tab" href="#mybikes" role="tab" aria-controls="brand" aria-selected="true" onclick="onClickTab(this)">내 바이크</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link dark-nav-link" id="mysubscribes-tab" data-toggle="tab" href="#mysubscribes" role="tab" aria-controls="style" aria-selected="false" onclick="onClickTab(this)">나의 구독</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link dark-nav-link" id="notifications-tab" data-toggle="tab" href="#notifications" role="tab" aria-controls="notifications" aria-selected="false" onclick="onClickTab(this)">알림</a>
+        </li>
+      </ul>
+      <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="mybikes" role="tabpanel" aria-labelledby="brand-tab">
+          <% if @mobileDevice %>
+          <div style="width: auto; display: flex; flex-direction: column; align-items: center">
+          <% else %>
+          <div style="width: auto; text-align: left">
+          <% end %>
+            <% if @mybikes.count == 0 %>
+              <div class="card" style="display: flex; align-items: center; justify-content: center; width: 300px; height: 260px; margin: 10px;">
+                <a style="text-decoration: none; text-align: center;" data-toggle="modal" data-index="0" data-kind="create" href="#modal-createMybike">
+                  <i class="fa fa-plus" style="font-size: 150px; color: #CED4DA;"></i>
+                  <div style="color: #CED4DA;">자신의 바이크를 추가해주세요!</div>
+                </a>
+              </div>
+            <% else %>
+              <% @mybikes.each do |bike| %>
+                <div id="mybike-<%= bike.id %>" class="card text-right" style="display: inline-block; width: 250px; margin: 10px; background-color: #333C42">
+                  <div style="position: relative;">
+                    <img class="card-img-top" src="<%= bike.url.length > 0 ? bike.url : '/NoImageAvailable.png' %>" alt="Card image cap">
+                    <% if bike.public %>
+                    <h5 style="position: absolute; width: 100%; bottom: 0px; left: 0px; font-weight: bold; text-align: right; margin: 0; padding: 10px; color: #fff; background-color: #2B343A60;"><span class="public-tag">공개</span><%= bike.name %></h5>
+                    <% else %>
+                    <h5 style="position: absolute; width: 100%; bottom: 0px; left: 0px; font-weight: bold; text-align: right; margin: 0; padding: 10px; color: #fff; background-color: #2B343A60;"><span class="private-tag">비공개</span><%= bike.name %></h5>
+                    <% end %>
+                  </div>
+                  <div class="card-body">
+                    <div style="display: block; text-align: left;">
+                      <a class="mybike-dm" style="font-size: 80%; text-decoration: none" data-toggle="modal" data-bikeid="<%= bike.id %>" data-kind="modify" href="#modal-createMybike">수정</a>
+                      <a class="mybike-dm" style="font-size: 80%; text-decoration: none" data-toggle="modal" data-bikeid="<%= bike.id %>" href="#modal-deleteMybike">삭제</a>
+                    </div>
+                    <% desc = bike.desc.gsub("\n", "<br>") %>
+                    <% unless desc.nil? %>
+                      <p class="card-text" style="color: white;"><%= raw(desc) %></p>
+                    <% else %>
+                      <p class="card-text" style="color: white"><%= bike.desc %></p>
+                    <% end %>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end">
+                      <div style="color: white; font-size: 0.9rem;">구독수: <%= number_with_delimiter(bike.subscribeCount) %></div>
+                      <a href="javascript:void(0)" onclick="window.location='/user/timeline?bikeId=<%= bike.id.to_s %>'" class="btn btn-primary">타임라인 <i class="fas fa-angle-double-right"></i></a>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="mysubscribes" role="tabpanel" aria-labelledby="style-tab">
+          <% if @mobileDevice %>
+          <div style="width: 100%; display: flex; flex-direction: column; align-items: center; flex-wrap: wrap;">
+          <% else %>
+          <div style="width: 100%; display: flex; flex-direction: row; justify-content: center; flex-wrap: wrap;">
+          <% end %>
+          </div>
+        </div>
+        <div class="tab-pane fade" id="notifications" role="tabpanel" aria-labelledby="notifications-tab">
+          <div style="display: flex; flex-direction: row; justify-content: flex-end; margin: 0.5rem 0.5rem 0 0.5rem">
+            <div id="notification-checkbox" data-check="false">
+              <i class="fas fa-check" style="color: lawngreen; font-size: 1.25rem; margin-right: 0.25rem; opacity: 0"></i>
+              <span style="color: whitesmoke; font-size: 0.9rem">확인시 알림삭제</span>
+            </div>
+          </div>
+          <div id="notification-list" style="display: flex; flex-direction: row; width: 100%; height: 100%; overflow: auto; margin-top: 1rem">
+            <div class="notification-card" id="notification-1">
+              <div class="noti-card-header">
+                <div style="color: #c82e61; font-size: 1.3rem">좋아요!</div>
+              </div>
+              <div class="noti-card-body">
+                <div class="noti-card-icon" style="background-color: #ffc0cb"><i class="far fa-heart" style="margin: auto; font-size: 3.8rem; color: #c82e61"></i></div>
+                <div style="color: #c82e61;">엔요님 다음 타임라인 좋아요를 표시하였습니다.</div>
+                <div style="color: dimgray">How old are you?</div>
+              </div>
+              <div class="noti-card-footer" style="background-color: #d52e61;">
+                <div style="background-color: #d52e61; color: ghostwhite">확인하기</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

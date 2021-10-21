@@ -1,0 +1,1082 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  @keyframes animation-slidingDown {
+    from {
+      top: -80px;
+      opacity: 0;
+    }
+    to {
+      top: 0;
+      opacity: 1;
+    }
+  }
+  @keyframes animation-slidingUp {
+    from {
+      top: 0;
+      opacity: 1;
+    }
+    to {
+      top: -80px;
+      opacity: 0;
+    }
+  }
+
+  .sliding-down {
+    animation: animation-slidingDown 0.4s;
+    animation-duration: 0.35s;
+    top: 0;
+  }
+  .sliding-up {
+    animation: animation-slidingUp 0.4s;
+    animation-duration: 0.35s;
+    top: -80px;
+  }
+  th {
+    width: 25%;
+  }
+  .bike-spec-item {
+    background-color: #f9f9f9;
+    font-weight: bold;
+  }
+</style>
+
+<script>
+    let compareItems = {//itemName: greater
+        '연식': true, '가격': false, '배기량': true, '최고 출력': true, '최고 토크': true, '보어 스트로크': true, '압축비': true, '밸브': true, '기어 타입': true,
+        '앞 디스크': true, '뒤 디스크': true, '앞 타이어': true, '뒤 타이어': true, '앞 서스펜션 트래블': true, '뒤 서스펜션 트래블': true,
+        '건조 중량': false, '공차 중량': false, '시트고': true, '연료 탱크': true, '리저브 연료': true, '전장': true, '전장': true, '전폭': true, '전고': true, '휠베이스': true, 'Trail Size': true, 'Ground Clearance': true,
+        '최고 속력': true, '연비': true, 'CO2 배출': false,
+    };
+
+    commentSize = 6;
+    commentOffset = 0;
+    ajaxCommentLoading = true;
+    allLoadingComment = false;
+
+    replyReaders = new Map();
+
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 50);
+        documentReady();
+
+        <% if @mobileDevice %>
+        $('.bike-spec').each(function (index, item) {
+            let specName = $(item).prev('.bike-spec-item').children('td').first().text();
+            let th = compareItems[specName];
+            if(typeof th === "boolean") {
+                highlightColumn(specName, item, th);
+            }
+        });
+        <% else %>
+        $('.bike-spec').each(function (index, item) {
+            let specName = $(item).children('th').first().text();
+            let th = compareItems[specName];
+            if(typeof th === "boolean") {
+                highlightColumn(specName, item, th);
+            }
+        });
+        <% end %>
+
+        $('#comment').on('change keyup paste', function () {
+            $(this).next('button').attr('disabled', $(this).val() == "" ? true : false);
+            $(this).css('height', 'auto').css('height', this.scrollHeight);
+            scrollToElement($(this).parent(), $([document.documentElement, document.body]), 0, 3);
+        });
+        $('#registerComment').hover(function () {
+            if($('#comment').is(':focus')) {
+                $('#comment').blur();
+            }
+        })
+
+        <% if @bikeComparison %>
+        readComments(<%= @bikeComparison.id %>);
+        $(window).scroll(function () {
+            var diff = $(document).height() - $(window).height();
+            if(ajaxCommentLoading == false && allLoadingComment == false) {
+                if($(window).scrollTop() > diff*95/100) {
+                    console.log('%c reach bottom', 'background-color: yellow; color: brown');
+                    readComments(<%= @bikeComparison.id %>);
+                }
+            } else {
+            }
+        });
+        <% end %>
+    });
+
+    window.onload = function () {//document ready 보다 늦게 호출됨
+        resizeFloatingTitle();
+
+        let navbarHeight = $('.navbar')[0].clientHeight;
+        let floatingTitle = $('#floating-title');
+        floatingTitle.css('margin-top', navbarHeight);
+        let checkRectFloatingTitle = function() {
+            let titles = [].slice.call(document.querySelectorAll(".head-bike-title"));
+            let rect = titles[0].getBoundingClientRect();
+            // console.log('floatingTitle rect =', rect.bottom-navbarHeight);
+            if(rect.bottom-navbarHeight < 0) {
+                floatingTitle.removeClass('sliding-up');
+                floatingTitle.addClass('sliding-down');
+            } else {
+                if(floatingTitle.hasClass('sliding-down')) {
+                    floatingTitle.addClass('sliding-up');
+                }
+            }
+        }
+
+        document.addEventListener("scroll", checkRectFloatingTitle);
+        window.addEventListener("resize", checkRectFloatingTitle);
+        window.addEventListener("orientationchange", checkRectFloatingTitle);
+
+        console.log('%c window.onload', 'color: yellow');
+    }
+
+    function resizeFloatingTitle() {
+        let tableWidth = $('#compare-table')[0].clientWidth;
+        let thWidth = $('#compare-table').find('thead').children('tr').first().children('th').first().outerWidth();
+        console.log('thWidth =', thWidth);
+
+        $('#floating-title').css('margin-top', $('.navbar')[0].clientHeight);
+        let floatingChild = $('#floating-title').children('div').first();
+        // floatingChild.css('background-color', 'white');
+        floatingChild.css('width', tableWidth);
+
+        let thWidths = new Array();
+        $('#compare-table').find('thead').children('tr').first().children('th').each(function (index, item) {
+            thWidths.push($(item)[0].clientWidth);
+        });
+        console.log('thWidths =', thWidths);
+
+        $('#floating-table').find('thead').children('tr').first().children('th').each(function (index, item) {
+            $(item).css('width', thWidths[index]);
+        })
+
+        // let thElement = $('#floating-table').find('thead').children('tr').first().children('th').first();
+        // thElement.css('width', thWidth);
+    }
+
+    function highlightColumn(specName, elements, greater) {
+        let items = new Array();
+        let selected={value: greater ? Number.MIN_SAFE_INTEGER : Number.MAX_SAFE_INTEGER, element: null};
+        $(elements).children('td').each(function (index, item) {
+            let value = $(item).text();
+            if(!value.includes('정보 없음') && !value.includes('정보없음')) {
+                if(specName == '최고 출력' || specName == '최고 토크') {
+                    console.log('최고출력&토크 value =', value);
+                    value = value.substring(0, /[a-z]/g.exec(value).index);
+                } else if(specName == '보어 스트로크') {
+                    value = value.split('x');
+                    let bore = parseFloat(value[0].replace(/[a-z]/g, ''));
+                    let stroke = parseFloat(value[1].replace(/[a-z]/g, ''));
+                    // console.log(`보어=${bore}, 스트로크=${stroke}`);
+                    value = (bore*stroke).toString();
+                    // console.log('bore x stroke =', value);
+                } else if(specName == '압축비') {
+                    value = value.split(':');
+                    let ratio = parseFloat(value[0].replace(/[a-z]/g, ''));
+                    value = ratio.toString();
+                    console.log('압축비 =', value)
+                } else if(specName == '기어 타입') {
+                    value = value.replace(/단/gi, '').replace(/[^0-9]/g,"");
+                } else if(specName == '앞 타이어' || specName == '뒤 타이어') {
+                    value = value.substring(0, value.indexOf('/')).replace(/[^0-9]/g,"");
+                } else if(specName == '최고 속력') {
+                    if(value.includes('정보없음') || value.includes('정보 없음')) {
+                        value = 0;
+                    } else {
+                        value = value.substring(0, /[a-z]/g.exec(value).index);
+                    }
+                }
+                else {
+                    value = value.replace(/[^0-9]/g,"");
+                }
+                console.log(`${$(item).text()}, value=${value}`);
+                if(value.length > 0) {
+                    value = value.includes('.') ? parseFloat(value) : parseInt(value);
+                    // console.log('finally value =', value);
+                    items.push({value: value, element: $(item)});
+                    if(greater) {
+                        if(value > selected.value) {
+                            selected = {value: value, element: $(item)};
+                        }
+                    } else {
+                        if(value < selected.value) {
+                            selected = {value: value, element: $(item)};
+                        }
+                    }
+                }
+            }
+        });
+        console.log('children =', $(elements).children('td').length);
+        let index = items.length;
+        if(index > 0) {
+            while(index--) {
+                if(greater) {
+                    if(items[index].value < selected.value) {
+                        items.splice(index, 1);
+                    }
+                } else {
+                    if(items[index].value > selected.value) {
+                        items.splice(index, 1);
+                    }
+                }
+            }
+            items.forEach(item => {
+                let text = item.element.text();
+                item.element.text('');
+                item.element.prepend('<mark style="border-radius: 0.125rem; background-color: gold">' + text + '</mark>');
+            })
+        }
+    }
+
+    function getParamsFromUrl() {
+        var vars = {};
+        var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+            vars[key] = value;
+        });
+        return vars;
+    }
+</script>
+
+<% if @mobileDevice %>
+  <div class="content">
+    <div class="shadow-sm p-3 mb-5 bg-white rounded" style="max-width: 970px; height:auto; text-align: center; margin: auto">
+      <table id="compare-table" class="table table-hover" style="color: dimgray;">
+        <thead>
+        <tr>
+<!--          <th scope="col" style="border-top: transparent">항목</th>-->
+          <% @compareBikes.each do |bike| %>
+            <th class="head-bike-title" scope="col" style="border-top: transparent; vertical-align: top;" onclick="window.open('/main/bikeview?bikeId=<%= bike.id %>', '_blank')">
+              <div style="display: flex; flex-direction: column;">
+                <img src="<%= bike.url %>" style="max-width: 100%; height: auto" />
+                <div style="color: #2E2F30; font-size: 1.2rem; font-weight: bold; margin-top: 0.2rem"><%= bike.name %></div>
+              </div>
+            </th>
+          <% end %>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="bike-spec-item">
+          <td scope="row">평점</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% def colorRating(rating) %>
+            <% if rating >= 10 %>
+              <% return {'backgroundColor': '#000000', 'color': 'white'} %>
+            <% elsif rating > 6 %>
+              <% return {'backgroundColor': '#dc3545', 'color': 'white'} %>
+            <% elsif rating > 3 %>
+              <% return {'backgroundColor': '#ffc107', 'color': 'black'} %>
+            <% else %>
+              <% return {'backgroundColor': '#A0DE21', 'color': 'black'} %>
+            <% end %>
+          <% end %>
+          <% @compareBikes.each do |bike| %>
+            <% style = colorRating(bike.totalRating) %>
+            <td><span style="padding: 0.125rem; border-radius: 0.125rem; background-color: <%= style[:backgroundColor] %>; color: <%= style[:color] %>;"><%= bike.totalRating.round(1) %></span></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">연식</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.year %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">가격</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.price %></td>
+          <% end %>
+        </tr>
+        <tr style="background-color: oldlace">
+          <td scope="row" colspan="2" style="font-size: 1.1rem; font-weight: bold; color: black; text-align: left">엔진 & 트렌스미션</td>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">배기량</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.displacement %>cc</td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">최고 출력</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.maxpower %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">최고 토크</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.maxtorque %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">보어 스트로크</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.bore_stroke %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">압축비</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.compression_ratio %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">밸브</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.valves %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">연료 분사</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.fuel_delivery_system %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">연료 타입</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.fuel_type %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">점화</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.ignition_type %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">캠샤프트</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.camshaft %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">냉각 방식</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.cooling_system %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">윤활 방식</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.lubrication_system %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">기어 타입</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.gearbox_type %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">구동 방식</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.transmission_type %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">클러치</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.clutch %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">배기 시스템</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.exhaust_system %></td>
+          <% end %>
+        </tr>
+        <tr style="background-color: oldlace">
+          <td scope="row" colspan="2" style="font-size: 1.1rem; font-weight: bold; color: black; text-align: left">브레이크 & 서스펜션</td>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">앞 브레이크</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.front_brakes %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">앞 디스크</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.front_disk %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">뒤 브레이크</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.rear_brakes %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">뒤 디스크</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.rear_disk %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">앞 타이어</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.front_tyre %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">뒤 타이어</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.rear_tyre %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">앞 서스펜션</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.front_suspension %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">뒤 서스펜션</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.rear_suspension %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">앞 서스펜션 트래블</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.front_suspension_travel %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">뒤 서스펜션 트래블</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.rear_suspension_travel %></td>
+          <% end %>
+        </tr>
+        <tr style="background-color: oldlace">
+          <td scope="row" colspan="2" style="font-size: 1.1rem; font-weight: bold; color: black; text-align: left">사이즈 & 섀시</td>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">건조 중량</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.dry_weight %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">공차(Curb) 중량</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.curb_weight %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">연료 탱크</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.fueltank %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">리저브 연료</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.reserve_fuel %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">시트고</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.seat_height %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">전장</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.length %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">전폭</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.width %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">전고</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.height %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">휠베이스</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.wheelbase %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">프레임</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.frame_type %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">트레일</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.trail_size %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">지상고</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.ground_clearance %></td>
+          <% end %>
+        </tr>
+        <tr style="background-color: oldlace">
+          <td scope="row" colspan="2" style="font-size: 1.1rem; font-weight: bold; color: black; text-align: left">성능</td>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">최고 속력</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.top_speed %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">연비</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.gasmileage %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">CO2 배출</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.co2_emissions %></td>
+          <% end %>
+        </tr>
+        <tr class="bike-spec-item">
+          <td scope="row">배출 제어</td>
+          <td scope="row"></td>
+        </tr>
+        <tr class="bike-spec">
+          <% @compareBikes.each do |bike| %>
+            <td><%= bike.emissions %></td>
+          <% end %>
+        </tr>
+        </tbody>
+      </table>
+      <div id="floating-title" style="position: fixed; left: 0; width: 100%; display: flex; justify-content: center;">
+        <div>
+          <table id="floating-table" class="table table-bordered" style="background-color: white; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);">
+            <thead>
+            <tr>
+              <% @compareBikes.each do |bike| %>
+                <th scope="col" style="border-top: transparent; border-bottom-width: 1px">
+                  <div>
+                    <div style="color: #2E2F30; font-size: 1.2rem; font-weight: bold; margin-top: 0.2rem"><%= bike.name %></div>
+                  </div>
+                </th>
+              <% end %>
+            </tr>
+            </thead>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="shadow-sm p-3 mb-5 bg-white rounded" style="max-width: 970px; height:auto; text-align: center; margin: auto">
+      <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; margin-top: 5px;">
+          <textarea class="form-control autosize" id="comment" rows="1" placeholder="댓글을 입력하세요" maxlength="512"></textarea>
+          <button id="registerComment" type="button" class="btn btn-primary" style="margin-top: 5px;" disabled="" onclick="onClickComment(<%= @bikeComparison.id %>, <%= session[:user]['id'] %>)">등록</button>
+        </div>
+      <% end %>
+      <div id="comments-area" style="text-align: left; margin-top: 40px;"></div>
+    </div>
+  </div>
+<% else %>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="max-width: 970px; height:auto; text-align: center; margin: auto">
+    <table id="compare-table" class="table table-hover" style="color: dimgray;">
+      <thead>
+      <tr>
+        <th scope="col" style="border-top: transparent">항목</th>
+        <% @compareBikes.each do |bike| %>
+          <th class="head-bike-title" scope="col" style="border-top: transparent; cursor: pointer;" onclick="window.open('/main/bikeview?bikeId=<%= bike.id %>', '_blank')">
+            <div>
+              <img src="<%= bike.url %>" style="max-width: 14rem; height: auto" />
+              <div style="color: #2E2F30; font-size: 1.2rem; font-weight: bold; margin-top: 0.2rem"><%= bike.name %></div>
+            </div>
+          </th>
+        <% end %>
+      </tr>
+      </thead>
+      <tbody>
+      <tr class="bike-spec">
+        <th scope="row">평점</th>
+        <% def colorRating(rating) %>
+          <% if rating >= 10 %>
+            <% return {'backgroundColor': '#000000', 'color': 'white'} %>
+          <% elsif rating > 6 %>
+            <% return {'backgroundColor': '#dc3545', 'color': 'white'} %>
+          <% elsif rating > 3 %>
+            <% return {'backgroundColor': '#ffc107', 'color': 'black'} %>
+          <% else %>
+            <% return {'backgroundColor': '#A0DE21', 'color': 'black'} %>
+          <% end %>
+        <% end %>
+        <% @compareBikes.each do |bike| %>
+          <% style = colorRating(bike.totalRating) %>
+          <td><span style="padding: 0.125rem; border-radius: 0.125rem; background-color: <%= style[:backgroundColor] %>; color: <%= style[:color] %>;"><%= bike.totalRating.round(1) %></span></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">연식</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.year %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">가격</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.price %></td>
+        <% end %>
+      </tr>
+      <tr style="background-color: oldlace">
+        <th scope="row" style="font-size: 1.1rem; font-weight: bold; color: black">엔진 & 트렌스미션</th>
+        <% @compareBikes.each do |bike| %>
+          <td></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">배기량</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.displacement %>cc</td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">최고 출력</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.maxpower %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">최고 토크</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.maxtorque %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">보어 스트로크</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.bore_stroke %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">압축비</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.compression_ratio %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">밸브</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.valves %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">연료 분사</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.fuel_delivery_system %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">연료 타입</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.fuel_type %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">점화</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.ignition_type %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">캠샤프트</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.camshaft %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">냉각 방식</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.cooling_system %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">윤활 방식</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.lubrication_system %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">기어 타입</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.gearbox_type %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">구동 방식</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.transmission_type %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">클러치</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.clutch %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">배기 시스템</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.exhaust_system %></td>
+        <% end %>
+      </tr>
+      <tr style="background-color: oldlace">
+        <th scope="row" style="font-size: 1.1rem; font-weight: bold; color: black">브레이크 & 서스펜션</th>
+        <% @compareBikes.each do |bike| %>
+          <td></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">앞 브레이크</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.front_brakes %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">앞 디스크</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.front_disk %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">뒤 브레이크</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.rear_brakes %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">뒤 디스크</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.rear_disk %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">앞 타이어</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.front_tyre %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">뒤 타이어</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.rear_tyre %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">앞 서스펜션</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.front_suspension %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">뒤 서스펜션</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.rear_suspension %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">앞 서스펜션 트래블</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.front_suspension_travel %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">뒤 서스펜션 트래블</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.rear_suspension_travel %></td>
+        <% end %>
+      </tr>
+      <tr style="background-color: oldlace">
+        <th scope="row" style="font-size: 1.1rem; font-weight: bold; color: black">사이즈 & 프레임</th>
+        <% @compareBikes.each do |bike| %>
+          <td></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">건조 중량</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.dry_weight %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">공차 중량</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.curb_weight %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">연료 탱크</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.fueltank %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">리저브 연료</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.reserve_fuel %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">시트고</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.seat_height %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">전장</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.length %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">전폭</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.width %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">전고</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.height %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">휠베이스</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.wheelbase %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">프레임</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.frame_type %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">트레일</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.trail_size %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">지상고</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.ground_clearance %></td>
+        <% end %>
+      </tr>
+      <tr style="background-color: oldlace">
+        <th scope="row" style="font-size: 1.1rem; font-weight: bold; color: black">성능</th>
+        <% @compareBikes.each do |bike| %>
+          <td></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">최고 속력</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.top_speed %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">연비</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.gasmileage %></td>
+        <% end %>
+      </tr>
+      <tr class="bike-spec">
+        <th scope="row">CO2 배출</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.co2_emissions %></td>
+        <% end %>
+      </tr>
+      <tr>
+        <th scope="row">배출 제어</th>
+        <% @compareBikes.each do |bike| %>
+          <td><%= bike.emissions %></td>
+        <% end %>
+      </tr>
+      </tbody>
+    </table>
+
+    <div id="floating-title" style="position: fixed; left: 0; width: 100%; display: flex; justify-content: center;">
+      <div>
+        <table id="floating-table" class="table table-bordered" style="background-color: white; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);">
+          <thead>
+          <tr>
+            <th scope="col" style="border-top: transparent; border-bottom-width: 1px; color: dimgray">항목</th>
+            <% @compareBikes.each do |bike| %>
+              <th scope="col" style="border-top: transparent; border-bottom-width: 1px">
+                <div>
+<!--                  <img src="<%#= bike.url %>" style="max-width: 14rem; height: auto" />-->
+                  <div style="color: #2E2F30; font-size: 1.2rem; font-weight: bold; margin-top: 0.2rem"><%= bike.name %></div>
+                </div>
+              </th>
+            <% end %>
+          </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+  </div>
+  <% if @bikeComparison %>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="max-width: 970px; height:auto; text-align: center; margin: auto">
+    <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+    <div style="display: flex; flex-direction: column; align-items: flex-end; margin-top: 5px;">
+      <textarea class="form-control autosize" id="comment" rows="1" placeholder="댓글을 입력하세요" maxlength="512"></textarea>
+      <button id="registerComment" type="button" class="btn btn-primary" style="margin-top: 5px;" disabled="" onclick="onClickComment(<%= @bikeComparison.id %>, <%= session[:user]['id'] %>)">등록</button>
+    </div>
+    <% end %>
+    <div id="comments-area" style="text-align: left; margin-top: 40px;"></div>
+  </div>
+  <% end %>
+</div>
+
+<% end %>
+<button type="button" class="btn btn-link scrollTop" style="width: 42px; border: 1px solid #ced4da;" onclick="scrollToTop()"><i class="fas fa-angle-double-up" style="font-size: 1.25rem;"></i></button>

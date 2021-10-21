@@ -1,0 +1,261 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  .spec-name {
+    flex-basis: 20%;
+    text-align: right;
+    margin-right: 0.5rem;
+  }
+  .spec-input {
+    flex-basis: 80%;
+  }
+</style>
+
+<script>
+    brands = new Array();
+    <% @Brands.each do |brand| %>
+    brands.push({id: <%= brand.id %>, name: '<%= brand.name %>', name_kr: '<%= brand.name_kr %>'});
+    <% end %>
+    styles = new Array();
+    <% @Styles.each do |style| %>
+    styles.push({id: <%= style.id %>, name: '<%= style.name %>'});
+    <% end %>
+
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        $('#modal-YmlString').on('show.bs.modal', function (event) {//화면에 로드되기 직전
+            let modalBody = $(this).find('.modal-body');
+            modalBody.empty();
+            let textArea = $('<textarea class="form-control" name="YmlString-content" rows="20" placeholder="New xx: 는 브랜드 입력하고, Category: 는 styleId 입력한다">');
+            modalBody.append(textArea);
+        });
+
+        $('input[name="yml-file"]').change(function () {
+            if(this.files) {
+                console.log('yml-file =', this.files);
+                readYml(this.files[0]);
+            }
+        });
+        $('input[name="image-file"]').change(function () {
+            if(this.files) {
+                console.log('image-file =', this.files);
+                let fileReader = new FileReader();
+                fileReader.onload = function () {
+                    appendMotorbikeUrl(fileReader.result, $('#motorbike-url'));
+                };
+                fileReader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        $(document).on('keyup', '.spec-input', function () {
+            changedSpecInputs($(this).attr('name'), $(this).val());
+        })
+    });
+    function confirmYmlString(obj) {
+        let content = $('textarea[name="YmlString-content"]').val();
+        requestPost('parseYmlString', {yml: content}, data => {
+            console.log('data =', data);
+            if(data.result) {
+                motorbike = data.motorbike
+                appendMotorbikeSpecification(motorbike, $('#motorbike-specification'));
+                $('#modal-YmlString').modal('hide');
+            } else {
+                showAlert('danger', data.message, $('.content'));
+            }
+        })
+    }
+    function readYml(file) {
+        let fileReader = new FileReader();
+        fileReader.onload = function () {
+            console.log('readYml result =', fileReader.result);
+            requestPost('parseYml', {yml: fileReader.result}, data => {
+                motorbike = data.motorbike;
+                appendMotorbikeSpecification(motorbike, $('#motorbike-specification'));
+            })
+        };
+        fileReader.readAsText(file)
+    }
+    function onClickFile(name) {
+        $('input[name="' + name + '"]').trigger('click');
+    }
+
+    function changedSpecInputs(name, value) {
+        console.log(`name=${name}, value=${value}`);
+        // if(name == 'displacement') {
+        //     motorbike.displacement = parseInt(value);
+        // } else {
+        //     motorbike[name] = value;
+        //     console.log(`motorbike[${name}] = value=${motorbike[name]}`);
+        // }
+    }
+    function appendMotorbikeSpecification(motorbike, parent) {
+        parent.empty();
+        let specifications = [
+            {name: 'brand', nameKr: '브랜드', value: 0, type: 'text', readonly: true},
+            {name: 'style', nameKr: '스타일', value: 0, type: 'text', readonly: true},
+            {name: 'year', nameKr: '연식', value: '2020', type: 'number'},
+            {name: 'name', nameKr: '모델명', value: '정보없음', type: 'text'},
+            {name: 'price', nameKr: '가격', value: '정보없음', type: 'text'},
+            {name: 'displacement', nameKr: '배기량', value: 0, type: 'number'},
+            {name: 'compression_ratio', nameKr: '압축비', value: '정보없음', type: 'text'},
+            {name: 'maxpower', nameKr: '최대출력', value: '정보없음', type: 'text'},
+            {name: 'maxtorque', nameKr: '최대토크', value: '정보없음', type: 'text'},
+            {name: 'engine_type', nameKr: '엔진타입', value: '정보없음', type: 'text'},
+            {name: 'engine_details', nameKr: '엔진상세', value: '정보없음', type: 'text'},
+            {name: 'bore_stroke', nameKr: '보어x스트로크', value: '정보없음', type: 'text'},
+            {name: 'valves', nameKr: '밸브', value: '정보없음', type: 'text'},
+            {name: 'fuel_delivery_system', nameKr: '연료분사', value: '정보없음', type: 'text'},
+            {name: 'fuel_type', nameKr: '연료타입', value: '정보없음', type: 'text'},
+            {name: 'ignition_type', nameKr: '점화', value: '정보없음', type: 'text'},
+            {name: 'camshaft', nameKr: '캠샤프트', value: '정보없음', type: 'text'},
+            {name: 'cooling_system', nameKr: '냉각장치', value: '정보없음', type: 'text'},
+            {name: 'lubrication_system', nameKr: '윤활방식', value: '정보없음', type: 'text'},
+            {name: 'gearbox_type', nameKr: '기어타입', value: '정보없음', type: 'text'},
+            {name: 'final_drive', nameKr: '구동방식', value: '정보없음', type: 'text'},
+            {name: 'clutch', nameKr: '클러치', value: '정보없음', type: 'text'},
+            {name: 'exhaust_system', nameKr: '배기시스템', value: '정보없음', type: 'text'},
+            {name: 'front_brakes', nameKr: '앞 브레이크', value: '정보없음', type: 'text'},
+            {name: 'front_disk', nameKr: '앞 디스크', value: '정보없음', type: 'text'},
+            {name: 'rear_brakes', nameKr: '뒤 브레이크', value: '정보없음', type: 'text'},
+            {name: 'rear_disk', nameKr: '뒤 디스크', value: '정보없음', type: 'text'},
+            {name: 'front_tyre', nameKr: '앞 타이어', value: '정보없음', type: 'text'},
+            {name: 'rear_tyre', nameKr: '뒤 타이어', value: '정보없음', type: 'text'},
+            {name: 'front_suspension', nameKr: '앞 서스펜션', value: '정보없음', type: 'text'},
+            {name: 'rear_suspension', nameKr: '뒤 서스펜션', value: '정보없음', type: 'text'},
+            {name: 'front_suspension_travel', nameKr: '앞 서스펜션 트레블', value: '정보없음', type: 'text'},
+            {name: 'rear_suspension_travel', nameKr: '뒤 서스펜션 트레블', value: '정보없음', type: 'text'},
+            {name: 'dry_weight', nameKr: '건조중량', value: '정보없음', type: 'text'},
+            {name: 'curb_weight', nameKr: '공차중량', value: '정보없음', type: 'text'},
+            {name: 'length', nameKr: '전장', value: '정보없음', type: 'text'},
+            {name: 'width', nameKr: '전폭', value: '정보없음', type: 'text'},
+            {name: 'height', nameKr: '전고', value: '정보없음', type: 'text'},
+            {name: 'trail_size', nameKr: '트레일', value: '정보없음', type: 'text'},
+            {name: 'wheelbase', nameKr: '휠베이스', value: '정보없음', type: 'text'},
+            {name: 'seat_height', nameKr: '시트고', value: '정보없음', type: 'text'},
+            {name: 'fueltank', nameKr: '연료탱크', value: '정보없음', type: 'text'},
+            {name: 'reserve_fuel', nameKr: '리저브연료', value: '정보없음', type: 'text'},
+            {name: 'frame_type', nameKr: '프레임', value: '정보없음', type: 'text'},
+            {name: 'ground_clearance', nameKr: '지상고', value: '정보없음', type: 'text'},
+            {name: 'top_speed', nameKr: '최고속력', value: '정보없음', type: 'text'},
+            {name: 'gasmileage', nameKr: '연비', value: '정보없음', type: 'text'},
+            {name: 'co2_emissions', nameKr: 'CO2 배출', value: '정보없음', type: 'text'},
+            {name: 'emissions', nameKr: '배출제어', value: '정보없음', type: 'text'},
+            {name: 'lights', nameKr: '라이트', value: '정보없음', type: 'text'},
+            {name: 'instruments', nameKr: '계기판', value: '정보없음', type: 'text'},
+        ];
+
+        specifications.forEach(spec => {
+            let item = $('<div style="display: flex; flex-direction: row; align-items: baseline; margin-bottom: 0.25rem"></div>');
+            item.append('<div class="spec-name text-ellipsis">' + spec.nameKr + '(' + spec.name + ')' + '</div>');
+            let value = motorbike[spec.name];
+            console.log('spec ' + spec.name + ', value = ' + value);
+            if(spec.name == 'brand') {
+                let brandId = typeof motorbike['brand_id'] !== 'number' ? parseInt(motorbike['brand_id']) : motorbike['brand_id'] ;
+                value = brands[brandId-1].name_kr;
+            } else if(spec.name == 'style') {
+                let styleId = typeof motorbike['style_id'] !== 'number' ? parseInt(motorbike['style_id']) : motorbike['style_id'];
+                value = styles[styleId-1].name;
+            }
+            if(value === undefined) {
+                value = '정보없음';
+            } else {
+                if(typeof value === 'string' && value.length <= 0) {
+                    value = '정보없음';
+                }
+            }
+
+            let inputElement = $('<input type="' + spec.type + '" name="' + spec.name + '" class="form-control spec-input" value="' + value + '">');
+            if(spec.readonly !== undefined) {
+                inputElement.attr('readonly', true);
+            }
+            item.append(inputElement);
+            parent.append(item);
+        });
+        $('#btn-create-motorbike').attr('disabled', false);
+    }
+    function appendMotorbikeUrl(url, parent) {
+        bikeImageDataUri = url;
+        parent.empty();
+        parent.append('<img src="' + url + '" style="width: 300px">');
+        parent.css({'margin': '1rem', 'padding': '1rem', 'border': '1px solid rgba(0, 0, 0, .1)', 'border-radius': '0.5rem'});
+    }
+    function onClickCreateMotorbike(obj) {
+        if(motorbike !== undefined && bikeImageDataUri !== undefined) {
+            buttonSpinner(obj, true, false);
+            requestPost('createMotorbike', {specs: motorbike}, data => {
+                console.log('createMotorbike data =', data);
+                if(data.result) {
+                    firebase.storage().ref('images/bikeThumbs/').child('No' + data.motorbikeId).getDownloadURL().then(downloadURL => {
+                        console.log('File available at ' + downloadURL);
+                        requestPost('/main/updateBikeThumb', {id: data.motorbikeId, url: downloadURL}, data => {
+                            console.log('thumb updated successfully!');
+                            buttonSpinner(obj, false, false);
+                            showAlert('success', '바이크가 성공적으로 등록 되었습니다!', $('.content'));
+                        });
+                    }).catch(error => {
+                        if(error.code == 'storage/object-not-found') {
+                            let metadata = {cacheControl: 'public,max-age=2628000'};//one month
+                            firebase.storage().ref('images/bikeThumbs/').child('No' + data.motorbikeId).put(dataURItoBlob(bikeImageDataUri), metadata).then(snapshot => {
+                                console.log('Uploaded file!');
+                                snapshot.ref.getDownloadURL().then(downloadURL => {
+                                    console.log('File available at ' + downloadURL);
+                                    requestPost('/main/updateBikeThumb', {id: data.motorbikeId, url: downloadURL}, data => {
+                                        console.log('thumb updated successfully!');
+                                        buttonSpinner(obj, false, false);
+                                        showAlert('success', '바이크가 성공적으로 등록 되었습니다!', $('.content'));
+                                    });
+                                })
+                            })
+                        } else {
+                            showAlert('danger', error.code, $('.content'));
+                        }
+                    })
+                } else {
+                    showAlert('danger', data.message, $('.content'));
+                }
+            });
+        }
+    }
+</script>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; text-align: center; margin: auto">
+    <h2>새로운 모터바이크 생성</h2>
+    <div>
+      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-YmlString">Yml String</button>
+      <button type="button" class="btn btn-primary" onclick="onClickFile('yml-file')">Yml File</button>
+      <input type="file" name="yml-file" accept=".yml" style="display: none">
+      <button type="button" class="btn btn-primary" onclick="onClickFile('image-file')">Image</button>
+      <input type="file" name="image-file" accept=".jpg, .png" style="display: none"/>
+      <button type="button" id="btn-create-motorbike" class="btn btn-danger" onclick="onClickCreateMotorbike(this)" disabled>Create</button>
+    </div>
+  </div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; text-align: center; margin: auto">
+    <div id="motorbike-url">
+    </div>
+    <div id="motorbike-specification">
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-YmlString" tabindex="-1" role="dialog" aria-labelledby="YmlStringModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document" style="max-width: 95%">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Yml String</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-info" onclick="confirmYmlString(this)">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>

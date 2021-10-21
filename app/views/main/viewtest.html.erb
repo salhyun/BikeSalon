@@ -1,0 +1,270 @@
+<script>
+    selectedYear='';
+    selectedBrand={name: '', id: 0};
+    brandList = new Array();
+    $(document).ready(function() {
+        documentReady();
+        for(let i=0; i<10; i++) {
+            let year = 2020-i;
+            $('#year-list').append('<a class="dropdown-item" href="javascript:void(0);" onclick="onClickYear(this)">' + year + '</a>');
+        }
+
+        <% @brands.each do |brand| %>
+        $('#brand-list').append('<a class="dropdown-item" href="javascript:void(0);" onclick="onClickBrand(this, ' + '<%= brand.id %>' + ')">' + '<%= brand.name %>' + '</a>');
+        brandList.push({name: '<%= brand.name %>', id: '<%= brand.id %>'});
+        <% end %>
+
+        $('#input_yamls').on('change', function() {
+            selectYamls(this);
+        });
+
+        //정규 표현식
+        // let dd = 'disp 749.41 cc';
+        // let enginesize = '321.00cc (19.59 입방 인치)';
+        // let blankPos = enginesize.indexOf('(');
+        // let qq = enginesize.substring(0, blankPos === -1 ? enginesize.length-1 : blankPos);
+        // console.log('qq =', qq);
+        //
+        // let value = qq.replace(/[a-z]|\s/g, '');
+        // console.log('value =', value)
+        // console.log('value =', parseFloat(value));
+
+        // console.log('value =', value.substring(0, value.indexOf('(')))
+
+        //firebase 메타데이타
+        // let ref = firebase.storage().ref('images/brandLogos/Aprilia.png');
+        // ref.getMetadata().then(function(metadata) {
+        //     // Metadata now contains the metadata for 'images/forest.jpg'
+        //     console.log('metadata =', metadata);
+        //     if(typeof metadata.cacheControl === 'undefined') {
+        //         ref.updateMetadata({cacheControl: 'public,max-age=300'}).then(function(metadata) {
+        //             console.log('updated metadata =', metadata);
+        //         }).catch(function(error) {
+        //             console.log('Uh-oh, an error occurred! error =', error);
+        //         });
+        //     }
+        // }).catch(function(error) {
+        //     // Uh-oh, an error occurred!
+        //     console.log('getMetadata error =', error);
+        // });
+    });
+    function onClickYear(obj) {
+        selectedYear = $(obj).text();
+        $('#year-list-button').text(selectedYear);
+    }
+    function onClickBrand(obj, id) {
+        selectedBrand = {name: $(obj).text(), id: id};
+        $('#brand-list-button').text(selectedBrand.name);
+    }
+
+    function calculateGasmileage(fuelConsumption) {
+        fuelConsumption = fuelConsumption.replace(/ /gi, '');
+        fuelConsumption = fuelConsumption.substring(0, fuelConsumption.indexOf('('));
+        fuelConsumption = fuelConsumption.split('/');
+        let litres = fuelConsumption[0].replace(/[a-z]/g,'');
+        let km = fuelConsumption[1].replace(/[a-z]/g,'');
+        console.log(`litres=${litres}, km=${km}`)
+        let gasmileage = 1.0/parseFloat(litres)*parseFloat(km);
+        return gasmileage.toFixed(2).toString() + 'km/리터';
+    }
+
+    function MayIHelpYou(obj) {
+        buttonSpinner(obj, true, false);
+        requestPostSync('/main/MayIHelpYou', {bikeId: 100}, data => {
+            console.log('%cMayIHelpYou', 'color: green');
+            console.log('data =', data);
+            buttonSpinner(obj, false, false);
+        });
+    }
+    function requestModels(brand, t) {
+        setTimeout(() => {
+            requestPost('/main/readIds', {year: selectedYear, brandId: brand.id}, data => {
+                console.log('readIds data =', data);
+
+                let content = "";
+                data.models.forEach(model => {
+                    content += model.id + ' ' + model.year + ' ' + model.name + '\n';
+                });
+
+                let blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                let fileURL = $('#downloadModels').get(0);
+                fileURL.href = window.URL.createObjectURL(blob);
+                fileURL.download = selectedYear + '_' + brand.name + '_models.txt';
+                fileURL.click();
+            })
+        }, t);
+    }
+    function readIds(obj) {
+        if(selectedYear.length > 0 && selectedBrand.id > 0) {
+            buttonSpinner(obj, true, false);
+            requestPost('/main/readIds', {year: selectedYear, brandId: selectedBrand.id}, data => {
+                console.log('readIds data =', data);
+
+                let content = "";
+                data.models.forEach(model => {
+                    content += model.id + ' ' + model.year + ' ' + model.name + '\n';
+                });
+
+                let blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                let fileURL = $('#downloadModels').get(0);
+                fileURL.href = window.URL.createObjectURL(blob);
+                fileURL.download = selectedYear + '_' + selectedBrand.name + '_models.txt';
+                fileURL.click();
+                buttonSpinner(obj, false, false);
+            })
+        }
+    }
+    function readAllIds() {
+        if(selectedYear.length > 0 && brandList.length > 0) {
+            brandList.forEach((brand, index) => {
+                requestModels(brand, 1000*index);
+            })
+        }
+    }
+    function removeBracket(model, name) {
+        let value = model[name];
+        if(value != null) {
+            if(value.includes('정보 없음') || value.includes('정보없음')) {
+                model[name] = value;
+            }
+            else if(name == 'Fuel Consumption - MPG - Economy - Efficiency') {
+                value = value.replace(/litres/gi, '리터');
+                value = value.replace(/ /gi, '');
+                model[name] = calculateGasmileage(value) + ' (' + value.substring(0, value.indexOf('(')) + ')';
+            }
+            else if(name == 'Engine size - Displacement - Engine capacity') {
+                let blankPos = value.indexOf('(');
+                value = value.substring(0, blankPos === -1 ? value.length-1 : blankPos);
+                value = value.replace(/[a-z]|\s/g, '');
+                model[name] = parseFloat(value);
+            }
+            else {
+                value = value.replace(/litres/gi, '리터');
+                value = value.replace(/ /gi, '');
+                model[name] = value.substring(0, value.indexOf('('));
+            }
+        }
+    }
+    function updateMotorbikes(models) {
+        models.forEach(model => {
+            removeBracket(model, 'Wheelbase');
+            removeBracket(model, 'Front Brakes Dimensions - Disc Dimensions');
+            removeBracket(model, 'Fuel Tank Capacity');
+            removeBracket(model, 'Dry Weight');
+            removeBracket(model, 'Fuel Consumption - MPG - Economy - Efficiency');
+            removeBracket(model, 'Engine size - Displacement - Engine capacity');
+            removeBracket(model, 'Rear Brakes Dimensions - Disc Dimensions');
+            removeBracket(model, 'Front Suspension Travel');
+            removeBracket(model, 'Rear Suspension Travel');
+            removeBracket(model, 'Top Speed');
+            removeBracket(model, 'Reserve Fuel Capacity');
+            removeBracket(model, 'Seat Height');
+            removeBracket(model, 'Height');
+            removeBracket(model, 'Width');
+            removeBracket(model, 'Curb Weight (including fluids)');
+            removeBracket(model, 'Length');
+            removeBracket(model, 'CO2 emissions');
+            removeBracket(model, 'Bore x Stroke');
+            removeBracket(model, 'Trail size');
+            removeBracket(model, 'Ground Clearance');
+        })
+        requestPostSync('/main/updateMotorbikes', {models: models}, data => {
+            console.log('updateMotorbikes successfully!');
+        })
+        console.log('finished updatedMotorbikes');
+    }
+    function readYaml(obj) {
+        console.log('readYaml');
+        buttonSpinner(obj, true, false);
+        requestPost('/main/readYaml', {filename: '2019_HONDA_models.yml'}, data => {
+            if(data.result) {
+                console.log('readYaml data =', data);
+                updateMotorbikes(data.models);
+                buttonSpinner(obj, false, false);
+            }
+        })
+    }
+    function readYamls(obj) {
+        console.log('readYamls');
+        buttonSpinner(obj, true, false);
+        if(Array.isArray(selectedYamlFileNames) && selectedYamlFileNames.length > 0) {
+            selectedYamlFileNames.forEach(fileName => {
+                let models;
+                requestPostSync('/main/readYaml', {filename: fileName}, data => {
+                    if(data.result) {
+                        console.log('readYaml data =', data);
+                        models = data.models;
+                    }
+                });
+                if(models.length > 0) {
+                    updateMotorbikes(models);
+                }
+                console.log('%c finished updateMotorbikes fileName = ' + fileName, 'color: yellow');
+            })
+        }
+        buttonSpinner(obj, false, false);
+    }
+    function fileUploadAction() {
+        console.log('fileUploadAction');
+        $('#input_yamls').trigger('click');
+    }
+    function selectYamls(e) {
+        var files = e.files;
+        var filesAr = Array.prototype.slice.call(files);
+        if(filesAr.length) {
+            selectedYamlFileNames = [];
+            filesAr.forEach(file => {
+                selectedYamlFileNames.push(file.name);
+            });
+            console.log('selectedYamlFileNames =', selectedYamlFileNames);
+        }
+    }
+    function readBikezModels(obj) {
+        requestPost('/main/readBikezModels', {path: 'public/bikezModels/*.yml'}, data => {
+            console.log('findfiles result data =', data)
+        })
+    }
+</script>
+
+<h1>
+	ViewTest Page
+</h1>
+<div>
+	<div style="text-align: center; margin-top: 3rem">
+    view for test
+  </div>
+  <div style="display: flex; flex-direction: column">
+    <div style="margin: 0.5rem; display: flex; justify-content: center">
+      <button type="button" class="btn btn-primary" style="margin: auto;" onclick="MayIHelpYou(this)">may I help you?</button>
+    </div>
+    <div style="margin: 0.5rem; display: flex; flex-direction: row; justify-content: space-evenly">
+      <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="year-list-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">year</button>
+        <div id="year-list" class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="z-index: 2000">
+        </div>
+      </div>
+      <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="brand-list-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">brand</button>
+        <div id="brand-list" class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="z-index: 2000">
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="readIds(this)">save</button>
+      <button type="button" class="btn btn-primary" onclick="readAllIds(this)">saveAll</button>
+    </div>
+    <div style="margin: 0.5rem; display: flex; justify-content: center">
+      <button type="button" class="btn btn-primary" style="margin: auto;" onclick="readYaml(this)">readYaml</button>
+    </div>
+    <div style="margin: 0.5rem; display: flex; justify-content: center">
+      <button type="button" class="btn btn-outline-primary" style="margin-right: 5px" onclick="fileUploadAction()">select yamls</button>
+      <input style="display: none" type="file" multiple="multiple" id="input_yamls"/>
+      <button type="button" class="btn btn-primary" style="margin: auto;" onclick="readYamls(this)">readYamls In year</button>
+    </div>
+  </div>
+  <div style="margin: 0.5rem; display: flex; justify-content: center">
+    <button type="button" class="btn btn-primary" style="margin: auto;" onclick="readBikezModels(this)">readBikezModels</button>
+  </div>
+  <a id="downloadModels">downloadModels</a>
+<!--  <div>-->
+<!--    <img src="https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FBMW.png?alt=media&token=135b4497-e242-4eda-82b7-f97fa530f0bc">-->
+<!--  </div>-->
+</div>

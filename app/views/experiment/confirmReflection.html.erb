@@ -1,0 +1,31 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+    });
+
+    function onClickResetSuspend(obj) {
+        buttonSpinner(obj, true, false);
+        requestPost('resetSuspend', {userId: <%= @user.id %>}, data => {
+            buttonSpinner(obj, false, false);
+            if(data.result) {
+                showAlert('success', 'reset user suspended successfully', $('.content'));
+            }
+        })
+    }
+</script>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%;text-align: center; margin: auto">
+    <div style="display: flex; flex-direction: column; justify-content: center; height: 200px;">
+      <button type="button" class="btn btn-danger" onclick="onClickResetSuspend(this)"><%= @user.name %>(<%= @user.account %>) 복원해주기</button>
+    </div>
+  </div>
+</div>

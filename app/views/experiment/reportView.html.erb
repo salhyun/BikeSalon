@@ -1,0 +1,313 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+
+  .carousel-inner > .carousel-item > img {
+    max-width: <%= @mobileDevice ? 100 : 80 %>%;
+    margin: auto;
+  }
+  <% unless @mobileDevice %>
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-image: none;
+  }
+  .carousel-control-next-icon:after {
+    position: absolute;
+    right: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f105";
+    font-size: 55px;
+  }
+  .carousel-control-prev-icon:after {
+    position: absolute;
+    left: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f104";
+    font-size: 55px;
+  }
+  <% end %>
+
+  .timeline-report {
+    transition: background-color 0.1s ease-in-out;
+  }
+  .timeline-report:hover {
+    background-color: papayawhip;
+  }
+  .report-item-index {
+    text-align: left;
+    flex-basis: 5%;
+  }
+  .report-item-category {
+    text-align: left;
+    flex-basis: 12%;
+  }
+  .report-item-content {
+    text-align: left;
+    flex-basis: 25%;
+  }
+  .report-item-reporter {
+    text-align: center;
+    flex-basis: 12%;
+  }
+  .report-item-target {
+    text-align: left;
+    flex-basis: 18%;
+  }
+  .report-item-state {
+    text-align: center;
+    flex-basis: 10%;
+  }
+  .report-item-warning {
+    text-align: center;
+    flex-basis: 7%;
+  }
+  .report-item-delete {
+    text-align: right;
+    flex-basis: 10%;
+  }
+</style>
+<script>
+    commentSize = 6;
+    commentOffset = 0;
+    opendTimelineModal = false;
+    currentTimelineId = 0;
+    ajaxCommentLoading = true;
+    allLoadingComment = false;
+
+    replyReaders = new Map();
+
+    timelineReportReader = {limit: 4, offset: 0, loading: false, readAll: false};
+    commentReportReader = {limit: 4, offset: 0, loading: false, readAll: false};
+    replyReportReader = {limit: 4, offset: 0, loading: false, readAll: false};
+    bikeCommentReportReader = {limit: 4, offset: 0, loading: false, readAll: false};
+    bikeReplyReportReader = {limit: 4, offset: 0, loading: false, readAll: false};
+    comparisonCommentReportReader = {limit: 4, offset: 0, loading: false, readAll: false};
+    comparisonReplyReportReader = {limit: 4, offset: 0, loading: false, readAll: false};
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 50);
+        documentReady();
+
+        buildTabPanes();
+
+        let reports = [
+            {kind: 'timeline', reader: timelineReportReader},
+            {kind: 'comment', reader: commentReportReader},
+            {kind: 'reply', reader: replyReportReader},
+            {kind: 'bikeComment', reader: bikeCommentReportReader},
+            {kind: 'bikeReply', reader: bikeReplyReportReader},
+            {kind: 'comparisonComment', reader: comparisonCommentReportReader},
+            {kind: 'comparisonReply', reader: comparisonReplyReportReader}
+            ];
+        reports.forEach(report => {
+            readReports(report.kind, report.reader)
+            $('#' + report.kind + '-report-list').on('scroll', function () {
+                let diff = $(this)[0].scrollHeight - $(this).height();
+                if(diff - $(this).scrollTop() <= 0) {
+                    console.log('end of scroll report-list');
+                    if(!report.reader.readAll && !report.reader.loading) {
+                        readReports(report.kind, report.reader)
+                    }
+                }
+            });
+        });
+    });//$(document).ready
+
+    function readReports(reportKind, reader) {
+        let params = {userId: <%= session[:user]['id']%>, reportKind: reportKind, limit: reader.limit, offset: reader.offset};
+        reader.loading = true;
+        requestPost('readReports', params, data => {
+            if(data.result) {
+                console.log(`${reportKind} reports =`, data.reports);
+                data.reports.forEach(report => {
+                    appendReport(report, reportKind, $('#' + reportKind + '-report-list'));
+                });
+                reader.offset += data.reports.length;
+            } else {
+                console.log('no more reports!');
+                reader.readAll = true;
+            }
+            reader.loading = false;
+        });
+    }
+    function deleteReport(reportId, reportKind, obj) {
+        console.log('reportKind =', reportKind)
+        buttonSpinner(obj, true, false);
+        requestPost('deleteReport', {reportKind: reportKind, reportId: reportId}, data => {
+            buttonSpinner(obj, false, false);
+            if(data.result) {
+                console.log('%c deleted report successfully!', 'background: red; color: yellow');
+                let reportItem = $('#report-' + reportId);
+                reportItem.next('hr').remove();
+                reportItem.remove();
+            }
+        });
+    }
+    function warningToUser(reportId, userId, category, reportKind, content, obj) {
+        if(reportKind == 'timeline') {
+            content = '타임라인 "' + content + '"';
+        } else if(reportKind == 'comment') {
+            content = '댓글 "' + content + '"';
+        } else if(reportKind == 'reply') {
+            content = '답글 "' + content + '"';
+        } else if(reportKind == 'bikeComment') {
+            content = '바이크 댓글 "' + content + '"';
+        } else if(reportKind == 'bikeReply') {
+            content = '바이크 답글 "' + content + '"';
+        } else if(reportKind == 'comparisonComment') {
+            content = '바이크 비교 댓글 "' + content + '"';
+        } else if(reportKind == 'comparisonReply') {
+            content = '바이크 비교 답글 "' + content + '"';
+        }
+        console.log('warningToUser content =', content);
+
+        buttonSpinner(obj, true, false);
+        requestPost('warningToUser', {reportId: reportId, reportKind: reportKind, userId: userId, category: category, content: content}, data => {
+            console.log('warningToUser data =', data);
+            if(data.result) {
+                console.log('%c warned report successfully!', 'background: red; color: yellow');
+                buttonSpinner(obj, false, false);
+            }
+        });
+    }
+
+    function appendReport(report, reportKind, parent) {
+        let listArea = $('<div id="report-' + report.id + '" class="timeline-report" style="display: flex; flex-direction: row; align-items: center;"></div>');
+        listArea.append('<div class="report-item-index" style="text-align: center">' + report.id + '</div>');
+        listArea.append('<div class="report-item-category">' + report.category + '</div>');
+        listArea.append('<div class="report-item-content">' + report.content + '</div>');
+        listArea.append('<div class="report-item-reporter">' + report.reporter + '</div>');
+        let destination = report.destination;
+        if(reportKind == 'timeline') {
+            listArea.append('<div class="report-item-target" style="cursor: pointer;" data-toggle="modal" data-timelineid="' + destination.timelineId + '" data-target="#DetailViewModal">' + destination.timelineTitle + '</div>');
+        } else if(reportKind == 'comment' || reportKind == 'reply') {
+            listArea.append('<div class="report-item-target" style="cursor: pointer;" data-toggle="modal" data-timelineid="' + destination.timelineId + '" data-target="#DetailViewModal">"' + destination.userName + '",<br>' + destination.content + '</div>');
+        } else if(reportKind == 'bikeComment' || reportKind == 'bikeReply') {
+            listArea.append('<div class="report-item-target" style="cursor: pointer;" onclick="window.open(\'' + destination.url + '\', \'_blank\')">"' + destination.userName + '",<br>' + destination.content + '</div>');
+        } else if(reportKind == 'comparisonComment' || reportKind == 'comparisonReply') {
+            let ar = destination.bikeIds.split('-');
+            let bikeIds = 'bikeNo0=' + ar[0];
+            for(let i=1; i<ar.length; i++) {
+                bikeIds += ('&bikeNo' + i + '=' + ar[i]);
+            }
+            let url = '/compare/compareView?' + bikeIds;
+            listArea.append('<div class="report-item-target" style="cursor: pointer;" onclick="window.open(\'' + url + '\', \'_blank\')">"' + destination.userName + '",<br>' + destination.content + '</div>');
+        }
+        let state = $('<div class="report-item-state"></div>');
+        let selector = $('<select class="custom-select custom-select-sm">');
+        console.log('report id = ' + report.id + ', state = ' + report.state);
+        let stateKinds = [{value: 1, title: '접수'}, {value: 2, title: '보류'}, {value: 3, title: '완료'}];
+        stateKinds.forEach(kind => {
+            if(report.state == kind.title) {
+                selector.append('<option value="' + kind.value + '" selected>' + kind.title + '</option>');
+            } else {
+                selector.append('<option value="' + kind.value + '">' + kind.title + '</option>');
+            }
+        })
+        selector.change(function () {
+            console.log('report id =', report.id);
+            let state = {value: 0, title: 'unknown'};
+            $(this).children('select option:selected').each(function () {
+                console.log('change =', $(this).text());
+                state = {value: $(this).attr('value'), title: $(this).text()};
+            });
+            if(state.value != 0) {
+                console.log('changed state =', state);
+                requestPost('updateReportState', {reportKind: reportKind, reportId: report.id, state: state.value}, data => {
+                    if(data.result) {
+                        console.log('%c updated state successfully!', 'background: red; color: white');
+                    }
+                });
+            }
+        })
+        state.append(selector);
+        listArea.append(state);
+
+        let destContent = reportKind == 'timeline' ? destination.timelineTitle : destination.content;
+        let params = report.id + ', ' + destination.userId + ', \'' + report.category + '\', \'' + reportKind + '\', \'' + destContent + '\'';
+        let warning = $('<div class="report-item-warning"><button type="button" class="btn btn-warning btn-sm" onclick="warningToUser(' + params + ', this)">경고</button></div>');
+        warning.children('button').first().attr('disabled', report.warned);
+        listArea.append(warning);
+        listArea.append('<div class="report-item-delete"><button type="button" class="btn btn-danger btn-sm" onclick="deleteReport(' + report.id + ', \'' + reportKind + '\', this)">삭제</button></div>');
+        parent.append(listArea);
+        parent.append('<hr style="margin: 0">');
+    }
+    function buildTabPanes() {
+        let tabPanes = ['timeline', 'comment', 'reply', 'bikeComment', 'bikeReply', 'comparisonComment', 'comparisonReply'];
+        tabPanes.forEach(paneTitle => {
+            let tabPane = $('#' + paneTitle + '-reports');
+            let header = $('<div style="display: flex; flex-direction: row; background-color: #EFEFEF; padding: 0.5rem 0;">');
+            header.append('<div class="report-item-index" style="text-align: center">Id</div>');
+            header.append('<div class="report-item-category">카테고리</div>');
+            header.append('<div class="report-item-content">신고내용</div>');
+            header.append('<div class="report-item-reporter">리포터</div>');
+            if(paneTitle == 'timeline') {
+                header.append('<div class="report-item-target">게시물</div>');
+            } else {
+                header.append('<div class="report-item-target">게시물</div>');
+            }
+            header.append('<div class="report-item-state">상태</div>');
+            header.append('<div class="report-item-warning">경고</div>');
+            header.append('<div class="report-item-delete">삭제</div>');
+            tabPane.append(header);
+            tabPane.append('<div id="' + paneTitle + '-report-list" style="width: 100%; height: 800px; display: flex; flex-direction: column; margin-top: 0.125rem; overflow: auto">');
+        })
+    }
+</script>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto">
+    <div style="display: flex; flex-direction: column; justify-content: center;">
+      <h3>REPORT VIEW</h3>
+    </div>
+  </div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; text-align: center; margin: auto">
+  </div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; text-align: center; margin: auto">
+    <div style="text-align: center; font-size: 1.6rem">리포트 탭s</div>
+    <ul class="nav nav-tabs nav-justified" id="report-tab" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="timeline-report-tab" data-toggle="tab" href="#timeline-reports" role="tab" aria-controls="timeline-reports" aria-selected="true">타임라인</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="comment-report-tab" data-toggle="tab" href="#comment-reports" role="tab" aria-controls="comment-reports" aria-selected="false">댓글</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="reply-report-tab" data-toggle="tab" href="#reply-reports" role="tab" aria-controls="reply-reports" aria-selected="false">답글</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="bikeComment-report-tab" data-toggle="tab" href="#bikeComment-reports" role="tab" aria-controls="bikeComment-reports" aria-selected="false">바이크댓글</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="bikeReply-report-tab" data-toggle="tab" href="#bikeReply-reports" role="tab" aria-controls="bikeReply-reports" aria-selected="false">바이크답글</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="comparisonComment-report-tab" data-toggle="tab" href="#comparisonComment-reports" role="tab" aria-controls="comparisonComment-reports" aria-selected="false">비교댓글</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="comparisonReply-report-tab" data-toggle="tab" href="#comparisonReply-reports" role="tab" aria-controls="comparisonReply-reports" aria-selected="false">비교답글</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="reportTabContent">
+      <div class="tab-pane fade show active" id="timeline-reports" role="tabpanel" aria-labelledby="timeline-report-tab">
+      </div>
+      <div class="tab-pane fade" id="comment-reports" role="tabpanel" aria-labelledby="comment-report-tab">
+      </div>
+      <div class="tab-pane fade" id="reply-reports" role="tabpanel" aria-labelledby="reply-report-tab">
+      </div>
+      <div class="tab-pane fade" id="bikeComment-reports" role="tabpanel" aria-labelledby="bikeComment-report-tab">
+      </div>
+      <div class="tab-pane fade" id="bikeReply-reports" role="tabpanel" aria-labelledby="bikeReply-report-tab">
+      </div>
+      <div class="tab-pane fade" id="comparisonComment-reports" role="tabpanel" aria-labelledby="comparisonComment-report-tab">
+      </div>
+      <div class="tab-pane fade" id="comparisonReply-reports" role="tabpanel" aria-labelledby="comparisonReply-report-tab">
+      </div>
+    </div>
+  </div>
+</div>

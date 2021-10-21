@@ -1,0 +1,2 @@
+class MiscArchive < ApplicationRecord
+end

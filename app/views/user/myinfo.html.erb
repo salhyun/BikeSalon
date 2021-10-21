@@ -1,0 +1,543 @@
+<style>
+	body {
+		background-color:floralwhite;
+		width: 100%;
+		margin: auto
+	}
+  @keyframes animation-fadein {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+  @keyframes animation-fadeout {
+    from {opacity: 1;}
+    to {opacity: 0;}
+  }
+  .fade-in {
+    animation: animation-fadein;
+    animation-duration: 0.35s;
+  }
+  .fade-out {
+    animation: animation-fadeout;
+    animation-duration: 0.35s;
+  }
+  #level-bubble {
+    background-color: #e0e0e0;
+    border-radius: 0.25rem;
+    padding: 1rem;
+  }
+  <% unless @mobileDevice %>
+  #level-bubble:after {
+    content: '';
+    position: absolute;
+    border-style: solid;
+    border-width: 10px 10px 10px 0;
+    border-color: transparent #e0e0e0;
+    display: block;
+    width: 0;
+    z-index: 1;
+    left: -10px;
+    top: 20px;
+  }
+  <% end %>
+</style>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        let userLevel = getUserLevel('<%= session[:user]['titleOfLevel'] %>');
+        $('#level-area').append('<div class="level-bg ' + userLevel.class + '" style="display: flex; justify-content: center; align-items: center; font-family: Rubik Mono One; font-size: 1.6rem; width: 30px; height: 30px;">' + userLevel.level + '</div>');
+        buildUserLevelBubble($('#level-bubble'));
+
+        $('#modal-propose').on('show.bs.modal', function (event) {//화면에 로드되기 직전
+            let modalBody = $(this).find('.modal-body');
+            modalBody.empty();
+            let textArea = $('<textarea class="form-control" name="propose-content" rows="3" placeholder="제안, 건의, 버그등 어떤 내용도 좋습니다. 자유롭게 의견을 보내주세요" maxlength="512">');
+            modalBody.append(textArea);
+        });
+        $('#modal-reflection').on('show.bs.modal', function (event) {//화면에 로드되기 직전
+            let modalBody = $(this).find('.modal-body');
+            modalBody.empty();
+            let textArea = $('<textarea class="form-control" name="reflection-content" rows="3" placeholder="자신의 잘못, 반성, 앞으로 개선에 대하여 정성껏 적으세요." maxlength="1024">');
+            modalBody.append(textArea);
+            modalBody.append('<small style="color: orangered">정성껏 작성하여 계정복원 하세요~</small>');
+        });
+        $('#modal-userLevel').on('show.bs.modal', function (event) {//화면에 로드되기 직전
+            let modalBody = $(this).find('.modal-body');
+            modalBody.empty();
+            buildUserLevelModal(modalBody);
+        });
+    });
+
+    function buildUserLevelBubble(parent) {
+        let titles = ['뉴비', '초보', '중수', '고수', '달인', '대가', '원로', '전설'];
+        let content = $('<div></div>');
+        titles.forEach(title => {
+            let userLevel = getUserLevel(title);
+            let row = $('<div style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: flex-end; margin: 0.125rem 0.25rem"></div>');
+            row.append('<div class="level-bg ' + userLevel.class + '" style="display: flex; justify-content: center; align-items: center; font-family: Rubik Mono One; font-size: 1rem;">' + userLevel.level + '</div>');
+            row.append('<div style="margin-left: 0.5rem">' + title + '</div>');
+            content.append(row);
+        });
+        parent.append('<div>유저 등급</div>');
+        parent.append('<hr style="margin-top: 0.125rem; margin-bottom: 0.3rem">');
+        parent.append(content);
+
+        let rect = $('#level-area')[0].getBoundingClientRect();
+        parent.css({'position': 'fixed', 'left': (rect.right + 30) + 'px', 'top': (rect.top - 17) + 'px'});
+        parent.hide();
+        $('#level-area').click(function () {
+            $('#modal-userLevel').modal('show');
+        })
+        // $('#level-area').hover(function () {
+        //     parent.removeClass('fade-out').addClass('fade-in');
+        //     parent.show();
+        // }, function () {
+        //     parent.removeClass('fade-in').addClass('fade-out');
+        //     setTimeout(function () {
+        //         if(parent.hasClass('fade-out')) {
+        //             parent.removeClass('fade-out');
+        //             parent.hide();
+        //         }
+        //     }, 350);
+        // })
+    }
+    function buildUserLevelModal(parent) {
+        requestPost('/user/readAllUserLevelAttributes', {}, data => {
+            if(data.result) {
+                let table = $('<table class="table table-bordered" style="margin-bottom: 0.25rem"></table>');
+                let thead = $('<thead>');
+                let tr = $('<tr>');
+                let styles = 'style="text-align: center; padding: 0.25rem;"';
+                tr.append('<th scope="col" ' + styles + '>레벨</th>');
+                tr.append('<th scope="col" ' + styles + '>내바이크</th>');
+                tr.append('<th scope="col" ' + styles + '>타임라인<br>사진</th>');
+                tr.append('<th scope="col" ' + styles + '>영상클립<br>용량</th>');
+                thead.append(tr);
+                table.append(thead);
+
+                let tbody = $('<tbody>');
+                styles = 'style="text-align: center; padding: 0.25rem;"';
+                data.userLevelAttributes.forEach((attribute, index) => {
+                    if('<%= session[:user]['titleOfLevel'] %>' == attribute.titleOfLevel) {//
+                        styles = 'style="text-align: center; padding: 0.25rem; background-color: #f3f3f3"';
+                    } else {
+                        styles = 'style="text-align: center; padding: 0.25rem;"';
+                    }
+                    let userLevel = getUserLevel(attribute.titleOfLevel);
+                    tr = $('<tr>');
+                    let th = $('<th scope="row" ' + styles + '></th>');
+                    if(index == 0) {
+                        th.css({'display': 'flex', 'justify-content': 'center', 'border-top': 'hidden', 'border-bottom': 'hidden', 'border-left': 'hidden', 'border-right': 'hidden'});
+                    } else {
+                        th.css({'display': 'flex', 'justify-content': 'center', 'border-bottom': 'hidden', 'border-left': 'hidden', 'border-right': 'hidden'});
+                    }
+                    let $level = $('<div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-end; text-align: center;"></div>');
+                    $level.append('<div class="level-bg ' + userLevel.class + '" style="display: flex; justify-content: center; align-items: center; font-family: Rubik Mono One;">' + userLevel.level + '</div>');
+                    $level.append('<div style="margin-left: 0.5rem">' + attribute.titleOfLevel + '</div>');
+                    th.append($level);
+                    tr.append(th);
+                    tr.append('<td ' + styles + '>' + attribute.maxCountMybike + '</td>');
+                    tr.append('<td ' + styles + '>' + attribute.maxCountTimelinePhoto + '장</td>');
+                    tr.append('<td ' + styles + '>' + attribute.maxSizeTimelineVideo + 'MB</td>');
+                    tbody.append(tr);
+                });
+                table.append(tbody);
+                parent.append(table);
+                parent.append('<div style="font-size: 80%">내바이크: 내바이크 최대 생성갯수</div>');
+                parent.append('<div style="font-size: 80%">타임라인 사진: 타임라인 생성시 최대 업로드 가능한 사진 갯수</div>');
+                parent.append('<div style="font-size: 80%">영상클립 용량: 타임라인 생성시 영상클립 최대용량</div>');
+            }
+        });
+    }
+
+    function confirmChangeAvatar(obj) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            buttonSpinner(obj, true, true);
+            resizeOriginalThumb2(e.target.result, 1024, 200, (originalBlob, thumbBlob) => {
+                var user = firebase.auth().currentUser;
+                if(user) {
+                    let metadata = {cacheControl: 'public,max-age=2628000'};//one month
+                    firebase.storage().ref('<%= @firebase_users_path %>' + user.uid + '/').child('avatar_thumb').put(thumbBlob, metadata).then(thumbSnapshot => {
+                        console.log('Uploaded a thumb blob or file!');
+                        thumbSnapshot.ref.getDownloadURL().then(avatarUrl => {
+                            console.log('File available at ' + avatarUrl);
+                            firebase.storage().ref('<%= @firebase_users_path %>' + user.uid + '/').child('avatar').put(originalBlob, metadata).then(snapShot => {
+                                console.log('Uploaded a blob or file!');
+                                buttonSpinner(obj, false, true);
+                                updateAvatarUrl(avatarUrl);
+                                $('#changeAvatar').modal('hide');
+                                showAlert('success', '사진이 성공적으로 업데이트 되었습니다!', $('.content'));
+                            })
+                        })
+                    })
+                } else {
+                    console.error('로그인 되어 있지 않습니다.');
+                }
+            });
+        }
+        reader.readAsDataURL(($('#avatar-image'))[0].files[0]);
+    }
+    function updateAvatarUrl(url) {
+        requestPostSync('/user/updateAvatarUrl', {userId: <%= session[:user]['id'] %>, avatarUrl: url}, data => {
+            if(data.result == true) {
+                $('#avatar-user').attr('src', data.avatar);
+                console.log('avatar updated successfully');
+            } else {
+                console.log('result =', data.result);
+            }
+        })
+    }
+
+    function confirmChangeName() {
+        $('#newName').parent().children('small').remove();
+        let newName = $('#newName').val();
+        if(newName.length <= 0) {
+            $('#newName').after('<small style="display: block; color: red">내용이 없습니다.</small>');
+        } else if(newName.length > 8) {
+            $('#newName').after('<small style="display: block; color: red">별명은 8자 이하여야 합니다.</small>');
+        } else {
+            requestPost('/user/changeName', {userId : <%= session[:user]['id'] %>, newName: $('#newName').val().replace(/ /gi, '')}, data => {
+                if(data.result == true) {
+                    var oldName = $('#userName').text();
+                    $('#userName').text(data.name);
+
+                    var welcomeUser = $('#welcome-user').text();
+                    welcomeUser = welcomeUser.replace(oldName, data.name);
+                    $('#welcome-user').text(welcomeUser);
+                    showAlert('success', '별명이 성공적으로 변경되었습니다!', $('.content'));
+                }
+                $('#changeName').modal('hide');
+            })
+        }
+    }
+
+    function confirmChangePassword() {
+        $('#old-password').parent().children('small').remove();
+
+        var oldPassword = $('#old-password').val();
+        var newPassword = $('#new-password').val();
+        var confirmPassword = $('#new-password').next().val();
+        var codeSHA = CryptoJS.SHA256(oldPassword).toString();
+
+        if(codeSHA != "<%= session[:user]['password'] %>") {
+            $('#old-password').after('<small style="display: block; color: red">틀린 비밀번호입니다.</small>');
+        } else if(newPassword.length <= 0 && confirmPassword.length <= 0) {
+            $('#new-password').after('<small style="display: block; color: red">비밀번호를 입력하세요</small>');
+        } else if(newPassword != confirmPassword) {
+            $('#new-password').next().after('<small style="display: block; color: red">새로운 비밀번호가 일치한지 않습니다.</small>');
+        }
+        else {
+            requestPost('/user/changePassword', {userId : <%= session[:user]['id'] %>, newPassword : newPassword}, data => {
+                if(data.result == true) {
+                    $('#changePassword').modal('hide');
+                    // location.reload();
+                    showAlert('success', '비밀번호가 성공적으로 변경되었습니다!', $('.content'));
+                }
+            })
+        }
+    }
+
+    function fileUploadAction() {
+        $('#avatar-image').trigger('click');
+    };
+    $(function() {
+        $("#avatar-image").on('change', function(){
+            readURL(this);
+        });
+    });
+    function readURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $('#blah').attr('src', e.target.result);
+                $('#blah').css('display', 'block');
+            }
+            console.log('read avatar');
+            console.log(input.files[0]);
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    function withdrawUser(obj) {
+        let firebaseSignIn = function(account, callback) {
+            requestPost('/user/getFirebasePassword', {account: account}, data => {
+                if(data.result) {
+                    firebase.auth().signInWithEmailAndPassword(account, data.password).then(auth => {
+                        console.log('login successfully uid = ', auth.user.uid);
+                        callback(auth.user);
+                    }).catch(error => {
+                        showAlert('danger', '해당 유저를 찾을 수 없습니다. error = ' + error, $('.content'));
+                    })
+                }
+            });
+        }
+        if(<%= session[:logined] %>) {
+            buttonSpinner(obj, true, true);
+            firebaseSignIn('<%= session[:user]['account'] %>', (firebaseUser) => {
+                requestPost('/user/withdrawUser', {userId: <%= session[:user]['id'] %>, firebaseUsersPath: '<%= @firebase_users_path %>', firebaseUid: firebaseUser.uid}, data => {
+                    console.log('withdrawUser data =', data);
+                    if(data.result) {
+                        let firebaseUserEmail = firebaseUser.email;
+                        firebaseUser.delete().then(function() {
+                            $('#modal-withdrawUser').modal('hide');
+                            buttonSpinner(obj, false, true);
+                            location.href = '/user/goodbye';
+                        }).catch(function(error) {
+                            console.log('user delete error =', error);
+                            requestPostSync('/user/failurelog', {kind: 'deleteFirebaseUser', content: "couldn't delete " + firebaseUserEmail}, data => {
+                                console.log('failurelog data =', data);
+                            });
+                            buttonSpinner(obj, false, true);
+                            showAlert('danger', "can't delete storage user", $('.content'));
+                            $('#modal-withdrawUser').modal('hide');
+                        });
+                    } else {
+                        buttonSpinner(obj, false, true);
+                        showAlert('danger', '유저를 찾을 수 없습니다.', $('.content'));
+                        $('#modal-withdrawUser').modal('hide');
+                    }
+                })
+            })
+        }
+    }
+    function confirmPropose(obj) {
+        let proposeContent = $('textarea[name="propose-content"]').val();
+        console.log('proposeContent =', proposeContent);
+        if(proposeContent.length > 0) {
+            buttonSpinner(obj, true, true);
+            requestPost('/user/sendProposeMail', {userId: <%= session[:user]['id']%>, content: proposeContent}, data => {
+                console.log('sendProposeMail data =', data);
+                if(data.result) {
+                    buttonSpinner(obj, false, true);
+                    $('#modal-propose').modal('hide');
+                    showAlert('success', '제안 및 건의를 성공적으로 보냈습니다!', $('.content'));
+                }
+            })
+        }
+    }
+    function confirmReflection(obj) {
+        let reflectionContent = $('textarea[name="reflection-content"]').val();
+        console.log('reflection content =', reflectionContent);
+        if(reflectionContent.length > 0) {
+            buttonSpinner(obj, true, true);
+            requestPost('/user/sendReflectionMail', {userId: <%= session[:user]['id']%>, content: reflectionContent}, data => {
+                console.log('sendReflectionMail data =', data);
+                if(data.result) {
+                    buttonSpinner(obj, false, true);
+                    $('#modal-reflection').modal('hide');
+                    showAlert('success', '반성문을 성공적으로 보냈습니다!', $('.content'));
+                }
+            })
+        }
+
+    }
+    function sendTestMail(email) {
+        requestPost('/user/sendTestMail', {email: email}, data => {
+            console.log('sendTestMail data =', data);
+        })
+    }
+</script>
+
+<div class="content">
+  <div class="shadow-sm p-3 bg-white rounded" style="width: <%= @mobileDevice ? 95 : 45 %>%; height:auto; text-align: center; margin: auto">
+    <div style="width: auto; text-align: left;">
+      <div style="display: flex; align-items: baseline">
+        <h4><%= session[:user]['account'] %></h4>
+        <div style="display: flex; flex-direction: row; align-items: end; margin-left: auto">
+          <div id="level-area" style="margin-left: auto; cursor: pointer"></div>
+          <!--margin-left: auto로 오른쪽끝으로 보내버린다 flex에서-->
+<!--          <h4 style="margin-left: auto; margin-right: 1rem">티어</h4>-->
+<!--          <span><object type="image/svg+xml" data="/AnyConv.com__helmet.svg" height="60px"></object></span>-->
+        </div>
+
+      </div>
+      <hr style="margin: auto">
+      <div style="display: flex; align-items:flex-start; margin-top: 20px">
+
+        <div style="display: flex; ; flex-direction: column; align-items: center">
+          <% if session[:user]['avatar'].nil? %>
+            <img id="avatar-user" style="width: 100px; height: 100px; border: 3px solid gold;border-radius: 7px;-moz-border-radius: 7px;-khtml-border-radius: 7px;-webkit-border-radius: 7px;" src="/motorcyclist.jpg" />
+          <% else %>
+            <img id="avatar-user" style="width: 100px; height: 100px; border: 3px solid gold;border-radius: 7px;-moz-border-radius: 7px;-khtml-border-radius: 7px;-webkit-border-radius: 7px;" src="<%= session[:user]['avatar'] %>" />
+          <% end %>
+          <a data-toggle="modal" href="#changeAvatar">사진 변경</a>
+        </div>
+
+        <div style="display: flex; flex-direction: column; margin-left: 25px; width: -webkit-fill-available;">
+          <div>
+            <h5 id="userName" style="display: inline-block"><%= session[:user]['name'] %></h5>
+            <a data-toggle="modal" href="#changeName">별명 변경</a>
+          </div>
+
+          <a data-toggle="modal" href="#changePassword">비밀번호 변경</a>
+          <% if session[:user]['state'].eql? 'suspended' %>
+            <div style="display: flex; flex-direction: row; align-items: flex-end">
+              <div style="color: #dc3545">계정정지 상태입니다</div>
+              <button type="button" class="btn btn-danger btn-sm" style="margin-left: 0.5rem" data-toggle="modal" data-target="#modal-reflection">반성하기</button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <div style="text-align: right">
+      <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-withdrawUser">회원 탈퇴</button>
+    </div>
+<!--    <button type="button" class="btn btn-success" onclick="sendTestMail('salhyun@naver.com')">sendTestMail</button>-->
+  </div>
+  <div style="width: <%= @mobileDevice ? 95 : 45 %>%; height:auto; text-align: right; margin: 1rem auto; padding-right: 1rem">
+    <button type="button" class="btn btn-info" data-toggle="modal" data-target="#modal-propose">제안 및 건의하기</button>
+  </div>
+  <div id="level-bubble">
+  </div>
+</div>
+
+<div class="modal fade" id="changeAvatar" tabindex="-1" role="dialog" aria-labelledby="changeAvatarModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="changeAvatarModal-Label">프로필 사진 변경</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+        <button type="button" class="btn btn-primary btn-sm" onclick="fileUploadAction()">사진업로드</button>
+        <input type='file' id="avatar-image" name="avatar-image" accept=".jpg, .png, .gif" style="display: none" />
+        <img id="blah" src="#" alt="your image" style="display: none; width: 100px; height: 100px; border-radius: 10%; margin-top: 20px" />
+<!--				<form id="avatar-form" action="/user/uploadAvatar" method="post">-->
+<!--					<div class="form-group">-->
+<!--					<input type='file' id="avatar-image" name="avatar-image" accept=".jpg, .png, .gif" style="display: block" />-->
+<!--					<img id="blah" src="#" alt="your image" style="display: none; width: 100px; height: 100px; border-radius: 10%; margin-top: 20px" />-->
+<!--					</div>-->
+<!--				</form>-->
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+				<button type="button" class="btn btn-primary" onclick="confirmChangeAvatar(this)">올리기</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="changeName" tabindex="-1" role="dialog" aria-labelledby="changeNameModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="changeNameModal-Label">별명 변경</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div style="margin-bottom: 10px">현재 별명: <%= session[:user]['name'] %></div>
+				<form>
+					<div class="form-group">
+					<input type="text" class="form-control" id="newName" placeholder="새로운 별명(8자 이하, 띄어쓰기 안됨)" maxlength="8"/>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+				<button type="button" class="btn btn-primary" onclick="confirmChangeName()">변경</button>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal fade" id="changePassword" tabindex="-1" role="dialog" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="changePasswordModal-Label">비밀번호 변경</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group">
+            <input type="password" class="form-control" id="old-password" placeholder="현재 비밀번호"/>
+            <input style="margin-top: 10px;" type="password" class="form-control" id="new-password" placeholder="새로운 비밀번호"/>
+            <input style="margin-top: 10px;" type="password" class="form-control" placeholder="새로운 비밀번호 확인"/>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" onclick="confirmChangePassword()">변경</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-withdrawUser" tabindex="-1" role="dialog" aria-labelledby="withdrawUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="withdrawUserModal-Label">회원 탈퇴</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>모든 데이터가 삭제 됩니다.<br>정말 회원 탈퇴 하시겠습니까?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-danger" onclick="withdrawUser(this)">탈퇴</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-propose" tabindex="-1" role="dialog" aria-labelledby="proposeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="proposeModal-Label">제안 및 건의</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-info" onclick="confirmPropose(this)">제출</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-reflection" tabindex="-1" role="dialog" aria-labelledby="reflectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reflectionModal-Label">반성하기</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-warning" onclick="confirmReflection(this)">제출</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-userLevel" tabindex="-1" role="dialog" aria-labelledby="userLevelModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userLevelModal-Label">유저 레벨 안내</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>

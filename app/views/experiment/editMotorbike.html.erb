@@ -1,0 +1,231 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  .spec-name {
+    flex-basis: 20%;
+    text-align: right;
+    margin-right: 0.5rem;
+  }
+  .spec-input {
+    flex-basis: 80%;
+  }
+</style>
+
+<script>
+    motorbike = null;
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        let motorbikeId = <%= @motorbikeId.nil? ? 0 : @motorbikeId.to_i %>;
+        if(motorbikeId > 0) {
+            findMotorbike(motorbikeId);
+        }
+
+        $('#motorbikeId').keyup(function (event) {
+            if(event.keyCode == 13) {//press enter key
+                $('#btn-submit').trigger('click');
+            }
+        });
+
+        //$(document) 아래와 같이 한 이유는 동적으로 생성한 element는 jquery에서 .change 함수가 작동하지 않음
+        $(document).on('change', '#bike-image', function () {
+            if(this.files) {
+                bikeImage = this.files[0];
+            }
+        })
+        $(document).on('keyup', '.spec-input', function () {
+            changedSpecInputs($(this).attr('name'), $(this).val());
+
+        })
+    });
+
+    function changedSpecInputs(name, value) {
+        if(name == 'displacement') {
+            motorbike.displacement = parseInt(value);
+        } else {
+            motorbike[name] = value;
+            console.log(`motorbike[${name}] = value=${motorbike[name]}`);
+        }
+    }
+    function appendMotorbikeSpecification(motorbike, parent) {
+        parent.empty();
+        let specifications = [
+            {name: 'id', nameKr: '아뒤', value: motorbike.id, type: 'number', readonly: true},
+            {name: 'brand', nameKr: '브랜드', value: motorbike.brand, type: 'text', readonly: true},
+            {name: 'style', nameKr: '스타일', value: motorbike.style, type: 'text', readonly: true},
+            {name: 'year', nameKr: '연식', value: motorbike.year, type: 'number'},
+            {name: 'name', nameKr: '모델명', value: motorbike.name, type: 'text'},
+            {name: 'price', nameKr: '가격', value: motorbike.price, type: 'text'},
+            {name: 'displacement', nameKr: '배기량', value: motorbike.displacement, type: 'number'},
+            {name: 'compression_ratio', nameKr: '압축비', value: motorbike.compression_ratio, type: 'text'},
+            {name: 'maxpower', nameKr: '최대출력', value: motorbike.maxpower, type: 'text'},
+            {name: 'maxtorque', nameKr: '최대토크', value: motorbike.maxtorque, type: 'text'},
+            {name: 'engine_type', nameKr: '엔진타입', value: motorbike.engine_type, type: 'text'},
+            {name: 'engine_details', nameKr: '엔진상세', value: motorbike.engine_details, type: 'text'},
+            {name: 'bore_stroke', nameKr: '보어x스트로크', value: motorbike.bore_stroke, type: 'text'},
+            {name: 'valves', nameKr: '밸브', value: motorbike.valves, type: 'text'},
+            {name: 'fuel_delivery_system', nameKr: '연료분사', value: motorbike.fuel_delivery_system, type: 'text'},
+            {name: 'fuel_type', nameKr: '연료타입', value: motorbike.fuel_type, type: 'text'},
+            {name: 'ignition_type', nameKr: '점화', value: motorbike.ignition_type, type: 'text'},
+            {name: 'camshaft', nameKr: '캠샤프트', value: motorbike.camshaft, type: 'text'},
+            {name: 'cooling_system', nameKr: '냉각장치', value: motorbike.cooling_system, type: 'text'},
+            {name: 'lubrication_system', nameKr: '윤활방식', value: motorbike.lubrication_system, type: 'text'},
+            {name: 'gearbox_type', nameKr: '기어타입', value: motorbike.gearbox_type, type: 'text'},
+            {name: 'final_drive', nameKr: '구동방식', value: motorbike.final_drive, type: 'text'},
+            {name: 'clutch', nameKr: '클러치', value: motorbike.clutch, type: 'text'},
+            {name: 'exhaust_system', nameKr: '배기시스템', value: motorbike.exhaust_system, type: 'text'},
+            {name: 'front_brakes', nameKr: '앞 브레이크', value: motorbike.front_brakes, type: 'text'},
+            {name: 'front_disk', nameKr: '앞 디스크', value: motorbike.front_disk, type: 'text'},
+            {name: 'rear_brakes', nameKr: '뒤 브레이크', value: motorbike.rear_brakes, type: 'text'},
+            {name: 'rear_disk', nameKr: '뒤 디스크', value: motorbike.rear_disk, type: 'text'},
+            {name: 'front_tyre', nameKr: '앞 타이어', value: motorbike.front_tyre, type: 'text'},
+            {name: 'rear_tyre', nameKr: '뒤 타이어', value: motorbike.rear_tyre, type: 'text'},
+            {name: 'front_suspension', nameKr: '앞 서스펜션', value: motorbike.front_suspension, type: 'text'},
+            {name: 'rear_suspension', nameKr: '뒤 서스펜션', value: motorbike.rear_suspension, type: 'text'},
+            {name: 'front_suspension_travel', nameKr: '앞 서스펜션 트레블', value: motorbike.front_suspension_travel, type: 'text'},
+            {name: 'rear_suspension_travel', nameKr: '뒤 서스펜션 트레블', value: motorbike.rear_suspension_travel, type: 'text'},
+            {name: 'dry_weight', nameKr: '건조중량', value: motorbike.dry_weight, type: 'text'},
+            {name: 'curb_weight', nameKr: '공차중량', value: motorbike.curb_weight, type: 'text'},
+            {name: 'length', nameKr: '전장', value: motorbike.length, type: 'text'},
+            {name: 'width', nameKr: '전폭', value: motorbike.width, type: 'text'},
+            {name: 'height', nameKr: '전고', value: motorbike.height, type: 'text'},
+            {name: 'trail_size', nameKr: '트레일', value: motorbike.trail_size, type: 'text'},
+            {name: 'wheelbase', nameKr: '휠베이스', value: motorbike.wheelbase, type: 'text'},
+            {name: 'seat_height', nameKr: '시트고', value: motorbike.seat_height, type: 'text'},
+            {name: 'fueltank', nameKr: '연료탱크', value: motorbike.fueltank, type: 'text'},
+            {name: 'reserve_fuel', nameKr: '리저브연료', value: motorbike.reserve_fuel, type: 'text'},
+            {name: 'frame_type', nameKr: '프레임', value: motorbike.frame_type, type: 'text'},
+            {name: 'ground_clearance', nameKr: '지상고', value: motorbike.ground_clearance, type: 'text'},
+            {name: 'top_speed', nameKr: '최고속력', value: motorbike.top_speed, type: 'text'},
+            {name: 'gasmileage', nameKr: '연비', value: motorbike.gasmileage, type: 'text'},
+            {name: 'co2_emissions', nameKr: 'CO2 배출', value: motorbike.co2_emissions, type: 'text'},
+            {name: 'emissions', nameKr: '배출제어', value: motorbike.emissions, type: 'text'},
+            {name: 'lights', nameKr: '라이트', value: motorbike.lights, type: 'text'},
+            {name: 'instruments', nameKr: '계기판', value: motorbike.instruments, type: 'text'},
+        ];
+
+        specifications.forEach(spec => {
+            let item = $('<div style="display: flex; flex-direction: row; align-items: baseline; margin-bottom: 0.25rem"></div>');
+            item.append('<div class="spec-name text-ellipsis">' + spec.nameKr + '(' + spec.name + ')' + '</div>');
+            let value = spec.value;
+            if(typeof value === 'string' && value.length <= 0) {
+                value = '정보없음';
+            }
+            let inputElement = $('<input type="' + spec.type + '" name="' + spec.name + '" class="form-control spec-input" value="' + value + '">');
+            if(spec.readonly !== undefined) {
+                inputElement.attr('readonly', true);
+            }
+            item.append(inputElement);
+            parent.append(item);
+        });
+    }
+    function onClickImageFile() {
+        $('#bike-image').trigger('click');
+    }
+    function onClickUpdateBikeImage(obj) {
+        console.log('bikeImage =', bikeImage);
+        let fileReader = new FileReader();
+        buttonSpinner(obj, true, false);
+        fileReader.onload = async function () {
+            var user = firebase.auth().currentUser;
+            if(user) {
+                let fileName = 'No' + motorbike.id;
+                let url = '<%= ENV['gcfHost'] %>' + 'deleteFile?path=images/bikeThumbs/&';
+                await parallelSync([fileName + '.jpg', fileName + '.png', fileName], async item => {
+                    let result = await requestFetchSync(url + 'filename=' + item);
+                    console.log('requestFetchSync result =', result);
+                })
+
+                let metadata = {cacheControl: 'public,max-age=2628000'};//one month
+                firebase.storage().ref('images/bikeThumbs/').child(fileName).put(dataURItoBlob(fileReader.result), metadata).then(snapshot => {
+                    console.log('Uploaded file!');
+                    snapshot.ref.getDownloadURL().then(downloadURL => {
+                        console.log('File available at ' + downloadURL);
+                        requestPost('/main/updateBikeThumb', {id: motorbike.id, url: downloadURL}, data => {
+                            console.log('thumb updated successfully!');
+                            buttonSpinner(obj, false, false);
+                            showAlert('success', '바이크 이미지가 성공적으로 등록 되었습니다!', $('.content'));
+                        });
+                    })
+                })
+            } else {
+                console.error('로그인 되어 있지 않습니다.');
+            }
+        };
+        fileReader.readAsDataURL(bikeImage);
+    }
+    function appendMotorbikeUrl(url, parent) {
+        parent.empty();
+        parent.append('<img src="' + url + '" style="width: 300px">');
+        let buttonArea = $('<div style="display: flex; flex-direction: row; justify-content: center; margin: 1rem"></div>');
+        buttonArea.append('<button type="button" class="btn btn-primary" style="margin: 0.5rem" onclick="onClickImageFile()">image file</button>');
+        buttonArea.append('<button type="button" class="btn btn-primary" style="margin: 0.5rem"onclick="onClickUpdateBikeImage(this)">update</button>');
+        buttonArea.append('<input type="file" id="bike-image" name="bike-image" accept=".jpg, .png" style="display: none" />');
+        parent.append(buttonArea);
+        parent.css({'margin': '1rem', 'border': '1px solid rgba(0, 0, 0, .1)', 'border-radius': '0.5rem'});
+    }
+    function findMotorbike(motorbikeId) {
+        requestPost('findMotorbike', {motorbikeId: motorbikeId}, data => {
+            if(data.result) {
+                motorbike = data.motorbike;
+                motorbike.brand = data.brand;
+                motorbike.style = data.style;
+                console.log('findMotorbike data =', motorbike);
+                appendMotorbikeUrl(motorbike.url, $('#motorbike-url'));
+                appendMotorbikeSpecification(motorbike, $('#motorbike-specification'));
+            }
+        });
+    }
+    function onClickMotorbikeId(obj) {
+        let motorbikeId = $('#motorbikeId').val();
+        if(typeof motorbikeId === 'string' && motorbikeId.length > 0) {
+            findMotorbike(motorbikeId);
+        }
+    }
+    function onClickSave(obj) {
+        if(motorbike) {
+            requestPost('saveMotorbike', {specs: motorbike}, data => {
+                if(data.result) {
+                    showAlert('success', '바이크 수정 성공적', $('.content'));
+                } else {
+                    showAlert('danger', data.message, $('.content'));
+                }
+            });
+        }
+    }
+    async function sss(url) {
+        let response = await fetch(url);
+        return await response.json();
+    }
+
+    async function testFetchSync(obj) {
+        let result = await requestFetchSync('<%= ENV['gcfHost'] %>' + 'deleteFile?path=images/tt/&filename=No2.jpg');
+        console.log('testFetchSync result =', result);
+    }
+
+</script>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; text-align: center; margin: auto">
+    <h2>모터바이크 수정</h2>
+    <div style="display: flex; flex-flow: row wrap; justify-content: space-between; align-items: baseline">
+      <div class="form-group" style="flex-basis: 85%">
+        <input type="number" class="form-control" id="motorbikeId" placeholder="input motorbike id">
+      </div>
+      <button id="btn-submit" type="button" class="btn btn-primary" onclick="onClickMotorbikeId(this)">submit</button>
+      <button type="button" class="btn btn-danger" onclick="onClickSave(this)">save</button>
+    </div>
+  </div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; text-align: center; margin: auto">
+    <div id="motorbike-url">
+    </div>
+    <div id="motorbike-specification">
+    </div>
+    <div style="display: flex; flex-direction: row; justify-content: flex-end">
+      <button type="button" class="btn btn-danger" onclick="onClickSave(this)">save</button>
+    </div>
+  </div>
+</div>

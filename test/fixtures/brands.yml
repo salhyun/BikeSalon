@@ -1,0 +1,234 @@
+No1:
+  id: 1
+  name: BMW
+  url: http://www.bmwmotorrad.co.kr/kr/ko/index.html
+  desc: BMW는 1923년부터 수평대향 2기통 엔진을 개발하며, 지금까지 다양한 모델을 출시하고 있다. 또한 모터사이클 분야 최초로 ABS 및 전자제어 서스펜션을 이식하는 등 전자장비 계통에서 최고의 기술력을 보유하고 있다. 국내 수입원은 BMW 코리아(지사)이며, 전국 11개의 딜러가 판매 및 AS를 담당하고 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FBMW.png?alt=media&token=135b4497-e242-4eda-82b7-f97fa530f0bc
+  name_kr: BMW
+  rating: 6.0
+
+No2:
+  id: 2
+  name: KRMotors
+  url: http://www.krmotors.com/
+  desc: KR모터스의 전신은 1978년 6월 설립된 효성기계공업이다. 1979년 일본 스즈키사와 기술제휴를 하고 효성스즈끼라는 브랜드명으로 모터사이클을 생산하였다. 1986년 기술연구소를 설립했고, 1987년 순수 독자 기술로 모터사이클을 양산, 1995년 국내 최초로 125cc급 모터사이클 DOHC 엔진을 개발하였다. 1996년 모터사이클 생산 100만 대를 달성 한 후 이어 2001년 생산 누계 200만 대를 넘어섰다. IMF로 인해 1997년 부도 발생한 후 1998년 9월 화의인가가 결정되었다. 2003년 효성그룹으로부터 분리되었으며, 2004년 국내 최초로 650cc급 모터사이클 엔진을 개발하였다. 2005년 한솜모터스(주)를 흡수 합병하였고, 2007년 3월 S&T그룹에 편입된 후 S&T모터스로 상호가 변경 되었다. 2008년 국내 최초로 배기량 650cc이상 제품에 EFI(Electronic Fuel Injection:전자제어 연료 분사장치) 시스템을 개발 적용 하였다. 2009년 국내최초로 700cc 엔진을 독자기술로 개발 북미는 물론 유럽, 오세아니아 등에 수출을 시작 하였다. 또한 신성장 동력인 전기이륜차를 2010년 국내 최초로 독자기술로 개발 서울시를 비롯 경상남도 각 자치단체, 대학교, 프렌차이즈점, 기업체, 수목원 등에 공급 하였다. 2013년 250cc 단기통 수냉 엔진을 장착한 엑시브250N을 개발하여 유럽은 물론 아시아에도 판매를 하는 등 큰 인기를 얻고 있다. 2014년 3월 코라오그룹에 편입 된 후 현재 KR모터스로 회사명이 변경 되었다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FKRMotors.png?alt=media&token=3a095923-5864-49d6-a57d-3e2e16bc0147
+  name_kr: KR모터스
+  rating: 0.0
+
+No3:
+  id: 3
+  name: KTM
+  url: https://ktm.co.kr/
+  desc: KTM은 1934년 오스트리아에 설립됐다. 1959년 잠시 재정적인 문제를 겪기도 했지만, 이후 다카르랠리를 비롯해 수많은 국제대회에서 130개 이상의 챔피언 타이틀을 획득하며 독보적인 기술력을 입증했다. 최근 KTM은 레이스에서 얻은 노하우를 바탕으로 다양한 장르의 모터사이클을 생산하며, 라인업을 확장하고 있다. 국내공식 수입원은 (주)스포츠모터사이클코리아이다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FKTM.png?alt=media&token=5322f264-9385-4e7c-b7cb-a272cee7fc94
+  name_kr: KTM
+  rating: 0.0
+
+No4:
+  id: 4
+  name: MVAGUSTA
+  url: http://www.mvagusta-korea.com/
+  desc: 1945년에 설립된 MV 아구스타는 열정적인 레이스 마인드를 가진 브랜드였다. 맨섬 TT 레이스를 비롯해 월드 그랑프리 등 1946년부터 1976년까지 3000회의 레이스와 63번의 챔피언 타이틀을 획득했다. 1991년에는 카지바에 인수되었고 F4와 브루탈레가 출시되면서 전환점을 맞이했다. 국내 공식수입원은 (주)모토쿼드이며, 판매 및 AS서비스도 병행하고 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FMVAgusta.png?alt=media&token=ee79180b-c897-4ff1-8661-6d558bd27c4d
+  name_kr: MV아구스타
+  rating: 0.0
+
+No5:
+  id: 5
+  name: SYM
+  url: http://www.motostar.co.kr/main/index.php
+  desc: 모토스타코리아(주)는 SYM의 국내 출시와 함께 기반을 세운 수입, 유통회사로써 자체적으로 다양한 이슈를 만들고 SYM의 장점을 어필하는 적극적인 시장공략 정책으로 국내 이륜차 업계에서 SYM의 입지를 굳건히 만든 정식 수입원입니다. 장인정신을 기반 삼아 인간성을 존중하고 창조성을 중시하며, 자연스러운 매력으로 고객에게 다가가 삶의 에너지를 충원하고자 노력합니다. 이러한 경영 이념이 바탕이 되어 국내 여러 고객분들께 "좋은 이륜차"라는 평가를 얻고, 많은 사랑을 받고 있습니다. 모토스타코리아(주)는 보내주신 관심과 사랑에 보답하고, 고객에게 환원할 수 있는 방법의 일환으로 좋은 차량의 판매 뿐만 아니라, 2008년 부터 꾸준히 "미니모토 레이스"를 후원 및 개최하고 있습니다. 전문 선수들이 차량을 세팅하며 접전의 레이스를 펼치는 과정들이 고스란히 소비자에게 영감을 전달하는 계기가 된다고 판단하고 앞으로도 꾸준히 펼쳐나갈 계획입니다. 강한 자부심으로 진취적인 행보를 걷고 있는 SYM이 차별화된 마케팅을 추진하는 SYM코리아를 만나 국내에서 시너지 극대화를 펼치는 모습을 지켜봐 주시고 응원해 주시기 바랍니다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FSym.png?alt=media&token=d4b75cbe-f048-4208-b455-edef4a5bff3c
+  name_kr: SYM
+  rating: 0.0
+
+No6:
+  id: 6
+  name: KAWASAKI
+  url: http://www.kawasakikorea.com/
+  desc: 메이지 시대의 조선소로 시작해, 타이쇼 시대 제1차 세계대전에 의한 조선 활황, 그리고 뒤이은 세계 대공황, 쇼와 시대의 제2차 세계대전, 전후의 고도 성장기와 일본의 근대사, 산업사와 함께 존속해 온 오래된 기업이다. 지금은 미츠비시 중공업, IHI(구 이시카와지마 하리마 중공업)와 함께 일본의 주요 중공업 기업 중의 하나이다. 이전에는 가와사키 재벌(마츠카타 콘체른)의 주요 기업인 JFE 스틸(구 가와사키 제철) 가와사키 기선 모두 관련 회사였다. 본사는 고베 시 츄우오 구의 《고베 크리스탈 타워》이며, 도쿄도 미나토구 하마마쓰 초에도 도쿄 본사를 운영하고 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FKawasaki.png?alt=media&token=1b7a6927-cee0-4f31-bcb5-1def46e64b19
+  name_kr: 가와사키
+  rating: 0.0
+
+No7:
+  id: 7
+  name: DAELIM
+  url: http://www.d-motorcycle.com/kor/motorcycle/main.do
+  desc: 1962년 기아산업(주) 시흥공장에서 이륜자동차 생산을 개시, 1978년 대림공업(주)으로 설립되었다. 부평과 창원에 공장을 준공하고, 1982년 기아기연과 합병하고 상호를 현재의 이름으로 변경하였다. 1985년에 부평공장을 창원공장으로 이전 통합하여 공장을 일원화하였다. 1992년 대림오토바이판매(주)를 합병하였으며, 1996년에는 ISO(국제표준화기구) 9001 품질시스템 인증 취득과 품질경영대상을 수상하였다. 2000년 3월에 성림기계(주)를 합병하였다. 한국 최대의 모터사이클 제조업체로서 주요 사업은 이륜차사업과 부품사업이다. 경상남도 창원공업단지에 연간 30만 대 규모의 대단위 생산설비를 갖추고 배기량 50cc 스쿠터에서 250cc 모터사이클에 이르기까지 다양한 제품을 생산·판매하고 있다. 일본의 혼다기연공업[本田技硏工業]과 기술제휴를 맺었으나 2004년 9월 혼다와 결별하고 독자적인 기종 개발노력을 통하여 제품의 다양화를 추구하고 있다. 이미 개발된 독자모델을 중남미·유럽·중국·동남아 등지로 수출, 국내 이륜차시장의 약 70%를 점유하고 있다. 부품사업의 경우에는 자동차 부품 전문 제조업체인 성림기계(주)의 합병으로 업종 다각화 기반을 마련하고 기화기·쇽업쇼바·체인·제동장치 및 특수 산업용기계, 농기계부품 등을 생산하고 있다. 본사 및 공장은 경상남도 창원시 성산구 성산동 58번지에 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FDaelim.png?alt=media&token=6d810dd0-a907-4a7a-8f2c-4e2d18629f77
+  name_kr: 대림
+  rating: 0.0
+
+No8:
+  id: 8
+  name: DUCATI
+  url: http://www.ducati-korea.com/main/index.php
+  desc: 1956년 본격적으로 모터사이클 분야에 뛰어든 두카티는 기술과 디자인의 완벽한 결합을 추구하는 이탈리아 브랜드이다. 장인정신으로 제작한 슈퍼 스포츠 모터사이클을 기반으로, WSBK와 모토GP에서 수차례 우승을 거머쥐었다. 국내 공식 수입원은 (유)모토로싸 이다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FDucati.png?alt=media&token=9e4dbeec-88aa-452b-b667-c7dcb259aa00
+  name_kr: 두카티
+  rating: 10.0
+
+No9:
+  id: 9
+  name: royalenfield
+  url: http://www.royalenfield.co.kr/
+  desc: 로얄 엔필드는 19세기 후반부터 영국에서 시작되어 지금까지 3세기에 걸쳐 꾸준히 생산되어 온 전통있는 모터사이클 브랜드로, 유행에 따라 클래식 외형의 느낌만을 살리는 여타의 브랜드들과 달리 지금까지도 클래식 바이크의 기품을 그대로 간직한 채 생산되고 있는 진정한 클래식 모터사이클 브랜드입니다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FRoyalEnfield.png?alt=media&token=8e70f4f0-9784-4fa5-9b7a-28c2ced72327
+  name_kr: 로얄 엔필드
+  rating: 0.0
+
+No10:
+  id: 10
+  name: MOTOGUZZI
+  url: http://www.motoguzzi.com/kr_KO/
+  desc: 1921년 3월 15일, "Società Anonima Moto Guzzi" 회사는 제노바 Corso Aurelio Saffi의 Paolo Cassanello 공증 사무소에서 "모터사이클의 제조와 판매, 그리고 금속 가공과 관련된 기타 모든 활동 및 기계 엔지니어링 산업"을 설립했습니다. 회사의 파트너는 유명한 제노바 선박 소유자인 Emanuele Vittorio Parodi, 그의 아들 Giorgio 및 그의 친구 Carlo Guzzi였습니다. Guzzi는 1919년 8월 11일 시험 비행 중 사망한 Parodi와 같은 비행가이자 친구인 giovanni Ravelli와 마찬가지로 Italia Air Corps에서 Parodi의 전 동료였습니다. 모터구찌 배지의 날개 편 독수리 모티프는 이 친구를 기념하는 것입니다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FMotoGuzzi.png?alt=media&token=c89328f0-b0b0-4d4c-9683-3ce132d7157c
+  name_kr: 모토구찌
+  rating: 0.0
+
+No11:
+  id: 11
+  name: Benelli
+  url: https://korea.benelli.com/
+  desc: Pure passion since 1911. Benelli is this and lots more heritage, emotion and innovation become legendary throughout more than 100 years of groundbreaking models, advanced technology, victories and world-renowned pilots. Elegant as well as sporting, Benelli motorcycles are created to meet the requirements of every rider, even of the most demanding, and ensure the ultimate riding experience and comfort while focusing on the consumption and respect for the natural environment. This is a challenge Benelli faces up to every day as the first aim of the whole group. A Benelli motorcycle has personality to spare and is immediately recognizable for its engaging design and the unmistakable sporty looks. The most innovative design concepts are implemented in all the models of the company of Pesaro thanks to the expertise of its R&D centre, where many experts work together. In addition, Benelli counts on a widespread and efficient distribution network which covers all the national territory.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FBenelli.png?alt=media&token=70d25dd0-0bbb-4951-9638-8eda51f4e076
+  name_kr: 베넬리
+  rating: 0.0
+
+No12:
+  id: 12
+  name: Vespa
+  url: http://www.vespa.com/kr_KO.html
+  desc: 1884년에 20살의 이탈리아인 리날도 피아지오(Rinaldo Piaggio)가 제노바에 회사 '피아지오(Piaggio & Co.)를 설립했다. 설립 초기에는 호화 선박 장비를 만들었으나, 19세기 말에는 버스, 트럭, 기차, 항공기 엔진 등을 생산했다. 제1차 세계대전이 발발하자 회사는 비행기, 수상 비행기 등의 군수물자를 생산했다. 1917년에 토스카나주의 피사(Pisa)에 있는 공장을, 1921년에 폰테데라에 있는 공장을 인수했다. 폰테데라 공장은 제2차 세계대전 중에  일반 비행기와 전투용 비행기의 제작 기지가 되었고, 전 후에는 프로펠러, 엔진, 항공기 완제품 등의 생산센터가 되었다. 부친 리날도로부터 회사를 물려받은 엔리코 피아지오(Enrico Piaggio)는 전 후 이탈리아의 경제 상태와 열악한 도로 상황에 맞는 경제적이면서도 튼튼하고 간편한 개인용 운송 수단을 구상하기 시작했다. 그는 이 임무를 최초의 현대식 헬리콥터를 디자인한 천재 엔지니어 코라디노 다스카니오(Corradino D'Ascanio)에게 맡겼다. 다스카니오는 풍부한 항공기술을 응용하여 1946년에 차체와 차대를 일체화한 모노코크(monocoque) 구조의 모터 이륜차 스쿠터를 개발했다. 이 신제품은 기존의 모터사이클보다 편안하고 사용법이 간단하며 소음이 적은 장점을 지녔다. 엔리코는 모델명 MP6인 이 제품의 외형이 말벌을 닮았다고 해서 이탈리아어로 말벌이란 뜻을 가진 '베스파(Vespa)'를 브랜드명으로 채택했다. 같은 해에 '베스파 98'을 출시하여 대량생산하기 시작했다. 1949년까지 35,000대가 팔리던 베스파는 1956년까지 1백만대, 1960년까지 2백만대, 1980년대까지 1천만대가 판매되면서 회사는 성장을 거듭했다. 베스파는 1950년대 중반에 독일, 영국, 프랑스, 벨기에, 스페인에서, 1960년대에 인도, 브라질, 인도네시아에서 라이선스 생산되었다. 베스파의 모델은 1955년에 출시되어 전문가들이 가장 아름다운 모델로 꼽는 GS 150, 1960년대에 출시된 최초의 50CC 모델 베스피노, 1977년에 출시되어 베스타 역사상 가장 많이 팔린 베스트셀러 PX, 그란투리스모(Granturismo), 크고 강력한 힘을 가진 GTS, 클래식 베스파를 현대식으로 재디자인한 LX, 빈티지 스타일의 GTV, LXV  등이 있다. 피아지오 그룹은 베스파 외에 피아지오(Piaggio), 질레라(Gilera), 모토 구찌(Moto Guzzi), 아프릴리아(Aprilia), 데르비(Derbi) 등의 브랜드를 소유하고 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2Fvespa.png?alt=media&token=9e87d0fc-a350-4848-9cbb-bcf1c42f1f76
+  name_kr: 베스파
+  rating: 0.0
+
+No13:
+  id: 13
+  name: VICTORY
+  url: http://www.victorymotorcycles.co.kr/
+  desc: 폴라리스는 1997년 V92C라는 아메리칸 크루저의 개발과 동시에 빅토리라는 모터사이클 브랜드를 런칭했다. 이후 베가스, 킹핀, 비전 등의 대담한 디자인의 크루저를 출시하고 있다. 또한 세계적인 커스텀 차퍼 제조사인 알렌네스와 기술제휴를 통해, 소비자의 다양한 욕구를 충족시키고 있다. 국내 공식 수입원은 화창상사이다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FVictory.png?alt=media&token=ba04761b-244a-4a6b-b973-d913d643de4e
+  name_kr: 빅토리
+  rating: 0.0
+
+No14:
+  id: 14
+  name: SUZUKI
+  url: https://www.suzuki.co.kr/main.jsp
+  desc: 스즈키모터는 모터사이클 등 2륜차와 소형차를 주력으로 생산하는 일본 기업이다. 1909년 창업자 스즈키 미치오(鈴木道雄)가 하마마추의 작은 해안 마을에 세운 스즈키식방직기제작소가 모태다. 1920년 회사 형태를 법인으로 바꾸고 사명을 스즈키식방직기로 변경했다. 스즈키식방직기의 초기 사업은 사명 그대로 방직기를 만드는 것이었다. 1937년 사업 다각화를 시도하면서 처음으로 자동차 생산에 나섰다. 1939년 스즈키오리지널(Suzuki Original) 등 몇 대의 차량을 완성했으나 일본 정부의 명령으로 생산을 멈췄다. 스즈키오리지널은 800cc 차량으로 13마력의 출력을 냈다. 이후 스즈키식방직기는 방직기 생산에 집중하다가 1952년 파워프리(Power Free)라는 보조엔진을 장착한 자전거를 출시하면서 본격적으로 2륜차 생산에 뛰어들었다. 1954년 회사 이름을 스즈키모터로 바꿨다. 1955년 승용차인 스즈라이트를 생산했다. 1973년 캐나다에, 1984년 뉴질랜드에 현지 법인을 각각 세웠다. 1996년 베트남 시장에 진출했다. 창업자인 스즈키 미치오와 2대 회장인 스즈키 조, 3대 회장인 스즈키 지츠지로에 이어 스즈키 오사무(鈴木修) 회장이 1978년부터 회사를 이끌고 있다. 그는 2000년 경영 일선에서 물러났다가 2008년 세계 금융위기가 터지자 78세의 나이에 다시 복귀했다. 스즈키모터는 모터사이클과 소형차를 주력으로 만든다. 모터사이클 분야에서는 일본 혼다와 함께 세계 시장에서 최강자로 평가 받는다. 이외에 소형 선박 엔진, 휠체어 엔진 등 다양한 소형 엔진의 생산도 병행한다. 캐나다, 헝가리, 인도, 파키스탄 등에 현지 법인을 두고 있다. 본사는 시즈오카에 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FSuzuki.png?alt=media&token=9ff4b9d2-ad18-4e60-96d6-cb655cc26f4a
+  name_kr: 스즈키
+  rating: 0.0
+
+No15:
+  id: 15
+  name: aprilia
+  url: http://www.aprilia-korea.com/
+  desc: 1945년 이탈리에서 창립했으며, 피아지오 그룹에 속해있다. 소형 스쿠터부터 대형 모터사이클까지 다양한 장르의 모터사이클을 생산하고 있다. 국내 디스트리뷰터, 딜러, 서비스 센터는 KNC가 담당하고 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FAprilia.png?alt=media&token=6b3fb1a7-d365-4670-adb1-ac6ca22c21d9
+  name_kr: 아프릴리아
+  rating: 0.0
+
+No16:
+  id: 16
+  name: YAMAHA
+  url: http://www.ysk.co.kr/
+  desc: 1887년에 일본인 야마하 도라쿠스가 시즈오카현의 하마마쓰에 '야마하 풍금 제작소'를 설립하고 리드 오르간을 생산하기 시작했다. 1897년 10월 12일에 '일본 악기제조 주식회사'를 설립했다. 1900년에 업라이트 피아노를, 1902년에 그랜드 피아노를 생산하기 시작했다. 1904년에 미국 세인트 루이스(Saint Louis)에서 열린 세계 악기박람회에서 대상을 수상했다. 1930년에 세계 최초의 음원연구소를 설립했다. 1942년에 어쿠스틱 기타를 출시했다. 1954년에 125cc, 싱글 실린더, 2스트로크 엔진의 오토바이 'YA-1'을 출시했으며, 이의 성공에 힘입어 다음 해인 1955년에 야마하 모터 컴퍼니(Yamaha Motor Co., Ltd.)를 설립했다. 1959년에 최초의 전자오르간 '일렉톤 D-1(Electone D-1)'을 출시했다. 1965년에 트럼펫 생산을 시작으로 관악기 부문 생산에 돌입했다. 1966년에 전자기타를 출시했으며, 1968년부터 하이파이 기기를 생산하기 시작했다. 1973년에 신시사이저를, 1976년에 디지털 피아노를, 1982년에 디스클라비어 피아노(Disklavier piano)를 출시했다. 1983년에 신시사이저 DX-7을 출시했다. FM 칩을 내장한 이 제품은 뛰어난 품질과 저렴한 가격으로 전 세계적으로 20만대 이상이 팔린 당대 신시사이저 최고의 히트상품이다. 1987년에 회사 창립 100주년을 맞이하여 회사명을 야마하 코퍼레이션(Yamaha Corporation)으로 변경했다. 1991년에 피아노와 관악기 생산 500만대를 돌파했다. 1993년에 사일런트 피아노 VL 시리즈를 출시했다. 회사는 1988년에 미국의 신서사이저 회사 시퀀셜 서킷츠(Sequential Circuits Inc.)를 인수했으며, 1989년부터 1993년까지 일본 내 경쟁사 코르그(Korg)의 주식 51%를 인수했다. 2004년에 독일의 오디오 소프트웨어 제조사 스타인베르그(Steinberg)를 인수했다. 야마하 그룹이 소유하고 있는 회사로는 야마하 모터 컴퍼니(Yamaha Motor Co.), 야마하 파인 테크놀로지(Yamaha Fine Technologies Co., Ltd.), 야마하 리빙테크 코퍼레이션(Yamaha Livingtec Corp.), 야마하 메타닉스 코퍼레이션(Yamaha Metanix Corp.), 야마하 프로 오디오(Yamaha Pro Audio) 등이 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FYamaha.png?alt=media&token=597b56b0-8bab-4589-b2da-0cfe9fffeb3d
+  name_kr: 야마하
+  rating: 0.0
+
+No17:
+  id: 17
+  name: Indian
+  url: http://www.indianmotorcycle.kr/
+  desc: 인디언은 미국 최초의 모터사이클 제조사로 1901년에 설립됐다. 하지만 1953년 심각한 재정위기로 파산하고, 이후 몇 차례의 분할과 합병을 거듭했다. 결국 2008년 노스캐롤라이나에 생산 공장을 재건했으며, 현재는 폴라리스 그룹에 속해있다. 국내 공식 수입원은 화창상사이다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FIndian.png?alt=media&token=760e72f3-6528-48e6-b3e8-0733207881f6
+  name_kr: 인디언
+  rating: 0.0
+
+No18:
+  id: 18
+  name: can-am BRP
+  url: http://brp.co.kr/index.php
+  desc: 붐바디어사는 1942년에 세워졌으며 본사는 캐나다 몬트리올에 위치하고 있으며 호주, 브라질, 벨기에, 일본, 미국, 스칸디나비아, 러시아등 세계 각지에 80여개의 지점과 6500명 이상의 직원을 보유하고 있는 세계적인 레져제품 생산업체입니다. 항상 독창적이고 혁신적이며 최첨단 기술이 접목된 제품을 개발하여 전세계 소비자들의 욕구를 충족시키기 위해 노력하고 있으며, CAN-AM, SEA-DOO, SKI-DOO, ROTAX Engine, EVINRUDE선외기 등을 생산하여 모든 분야에서 선두를 달리고 있습니다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FCan_am_BRP.png?alt=media&token=9a660649-b8c7-41be-98fd-c79908ab6c96
+  name_kr: 캔암 BRP
+  rating: 0.0
+
+No19:
+  id: 19
+  name: KYMCO
+  url: http://www.kymco.co.kr/
+  desc: 대만 모터사이클 제조사인 킴코는 1963년 광양 자동차로 설립돼 혼다의 부품을 제조하며, 1970년부터 전문적으로 스쿠터를 생산했다. 이후 1992년에는 브랜드를 킴코로 변경하고 대만 최대의 스쿠터 제조사로 거듭났다. 국내 공식 수입원은 (주)바이크코리아이다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FKymco.png?alt=media&token=ded88a02-2f8e-44f1-a66f-3206670f631e
+  name_kr: 킴코
+  rating: 0.0
+
+No20:
+  id: 20
+  name: TRIUMPH
+  url: http://www.triumphmotorcycles.co.uk/
+  desc: 영국의 모터사이클 메이커 및 제조 회사.[1] 영화 대탈주에서 주인공(스티브 맥퀸분)이 포로 수용소로부터 탈출할 때 타고 철책을 날아 넘었던 모터사이클로 유명하다. 1885년에 설립되어 1983년까지 존재했던 원 트라이엄프 엔지니어링社(Triumph Engineering Co Ltd)로부터 회사와 기종의 이름 사용권을 인수하여 1984년부터 모터사이클을 생산하고 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FTriumph.png?alt=media&token=09a6de0a-e7ff-4e38-87d8-df7d6d258490
+  name_kr: 트라이엄프
+  rating: 0.0
+
+No21:
+  id: 21
+  name: POLARIS
+  url: http://polariskorea.co.kr/default/index.php
+  desc: 미국의 스노모빌과 ATV[10], 소형 자동차 제작회사. 미국 회사라 북미에서만 점유율이 높지만 북미라는곳이 눈과 사막이 한 대륙에 있는곳이라 세계적으로도 상당히 많이 팔린다. 직접 제작하지는 않지만 오토바이 회사인 인디언 바이크와 빅토리 바이크를 소유하고 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FPolaris.png?alt=media&token=72200428-66f0-4d1e-96b9-96d452cc4df0
+  name_kr: 폴라리스
+  rating: 0.0
+
+No22:
+  id: 22
+  name: PEUGEOT
+  url: http://peugeotscooters.kr/#!/up
+  desc: 깊은 역사를 자랑하는 프랑스 자동차의 자존심이라고 할 수 있는 회사로 1897년 아르망 푀조(Armand Peugeot)[1][2]에 의해 설립된 프랑스의 자동차/모터사이클 제조 회사. 푸조-시트로엥 그룹(PSA, Peugeot Citroën)의 지주회사이기도 하다. 프랑스에서는 국영 경찰의 차종으로 푸조의 사자 마크를 아예 드러내 놓고 다닐 정도로 프랑스의 국민 브랜드로 통하며, 프랑스에 가 보면 대한민국에서 현대자동차그룹의 차량이 많듯이 푸조 차량이 정말 많다. 특유의 "포효하는 사자"[3]를 형상화한 디자인인 펠린 룩(Feline Look)으로 유명하다. 하지만 고양이과 동물의 느낌으로 나오는 펠린 룩에 대한 거부감이 꽤 많아 점차 부드럽게 디자인을 바꾸고 있다고 한다. 안정적이고 부드럽지만, 칼같은 핸들링으로 인한 특유의 주행감이 고양이의 움직임을 닮았다는 평이 많다.[4] 외유내강 그래도 계열사인 시트로엥보다 디자인이 점잖은 편이다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FPeugeot.png?alt=media&token=d8fdf2fa-c8e4-4e55-8ffd-c60c05ce07b2
+  name_kr: 푸조
+  rating: 0.0
+
+No23:
+  id: 23
+  name: PIAGGIO
+  url: http://www.vespa.com/kr
+  desc: 1884년 항공 및 철도회사로 설립된 피아지오는 2차 세계대전이 끝난 후, 대중을 위한 저렴한 이동수단을 개발하는 사업에 집중했다. 그 결과 1946년에 출시된 베스파는 선풍적인 인기를 끌며, 피아지오의 성공의 바탕이 됐다. 이후 피아지오는 자국의 모터사이클 제조사들을 인수하며 베스파, 아프릴리아, 더비, 모토구찌, 질레라 등 7개의 브랜드를 보유하고 있다. 국내 공식 판매원은 (주)모토코파이다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FPiaggio.png?alt=media&token=e73c18a4-3fb2-4d5f-87c3-c3ed8adec178
+  name_kr: 피아지오
+  rating: 0.0
+
+No24:
+  id: 24
+  name: HARLEY-DAVIDSON
+  url: http://harley-korea.com/
+  desc: 1903년 미국의 모터사이클 제작자인 윌리엄 할리(William Harley)와 아서 데이비슨(Arthur Davidson)이 두 사람의 이름을 따서 처음으로 제작하였다. 1907년 두 사람은 이 모터사이클 이름을 회사명으로 내걸고 법인으로 전환한 이래, 전 세계의 대형 고급 모터사이클의 대명사이자 미국의 강력한 파워를 상징하는 상표로 자리잡았다. 배기량 883㏄에서 1,450㏄에 이르는 대형 모터사이클로, 400~800㏄인 일반 레저용 모터사이클보다 배기량이 훨씬 높고, 엔진 소리도 우렁차서 일반적으로 '모터사이클의 황제'로 일컬어진다. 미국 영화에서 흔히 히피 차림의 젊은이들이 떼를 지어 몰고다니며 거리를 질주하는 모터사이클이 바로 이 할리데이비슨인데, 1980년대 초 무리한 사업 확장으로 파산 위기에까지 몰리기도 했으나, 다시 중대형 모터사이클 시장에 주력하면서 빠른 속도로 전 세계 마니아층을 끌어모았다. 1985년 이후 15년간 연평균 17％의 순익증가율을 보여 2000년에는 세계 모터사이클 시장의 1·2위를 점하고 있는 일본의 혼다와 야마하를 젖히고 1위에 올랐고, 수요 증가 역시 계속되고 있는 추세이다. 이러한 추세는 특히 할리데이비슨사의 대 고객 전략에서 찾을 수 있는데, 이 회사는 할리데이비슨을 타는 사람들의 모임인 '호그(HOG:Harley Owners Group)'를 조직해 고객들의 결속을 강화하고, 다양한 행사를 통해 고객들의 욕구를 충족시켜 왔다. 2001년 현재 호그 회원은 세계 50개국 55만 명 정도로 추정되며, 한국에만도 400여 명이 회원으로 가입해 있다. 1998년 미국 위스콘신주(州) 밀워키에서 열린 할리데이비슨 95주년 기념 랠리에 5만여 명이 참가하였고, 한국에서도 1999년부터 매년 경기를 개최하고 있는데, 2001년의 경우 400여 대가 참가하였다. 이들 회원들은 경주 외에 환경보호 및 안전운행 캠페인도 펼치고 있다. 대형 모터사이클이라 값이 매우 비싼데, 최저가 모델인 '스포스터 883'이 한화로 1,000만 원을 웃돌고, 1,450㏄의 경우 3,000만~3,100만 원에 달한다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FHarley_Davidson.png?alt=media&token=6cd6f9c7-ad5a-4ccd-a7a4-8fc0969b969d
+  name_kr: 할리데이비슨
+  rating: 0.0
+
+No25:
+  id: 25
+  name: HUSQVARNA
+  url: http://hqv.co.kr/
+  desc: 스웨덴의 임업관련 제조회사. 발렌베리 가문 산하의 기업으로 정원관리용품이나 전동공구들도 판매하고 있다. 1689년부터 지금까지 330여년의 전통을 자랑하는 회사로 전기톱, 예초기, 스프링클러 등이 주요 라인업. 자회사로 허스크바나 모터사이클(Husqvarna Motorcycles)이 있으며 이쪽은 오프로더와 슈퍼 모타드가 주력인, 산악지형 관련 제품들에 강한 회사이다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FHusqvarna.png?alt=media&token=4710ea06-d6bd-425c-8360-47f4b85a1efc
+  name_kr: 허스크바나
+  rating: 0.0
+
+No26:
+  id: 26
+  name: HONDA
+  url: https://www.hondakorea.co.kr/
+  desc: 일본에 본사를 둔 세계적인 다국적기업이다. 현재 도요타, 닛산자동차와 함께 일본 3대 자동차회사 가운데 하나이자 세계 10위권 안에 포함되는 자동차회사이다. 그리고 세계 최대 모터사이클, 내연엔진 제조업체이다. 주로 자동차, 모터사이클, 동력엔진을 생산하며 그밖에 항공기, 스쿠터, 발전기, 잔디 깎는 기계, 수펌프, 선외기 등을 만든다. 전 세계 30여 개국에 70여 개 생산거점과 40개 이상의 개발거점을 두고 있다. 도쿄와 뉴욕 증권거래소 상장기업이다. 본사는 도쿄 미나토구에 있고 전 세계 직원 수는 약 19만 350명이다.1948년 혼다 소이치로가 설립한 혼다기켄공업주식회사로 출발했다. 그는 보조엔진이 장착된 이륜차로 사업을 시작했으며, 이듬해 전문경영인으로 후지사와 다케오를 영입했다. 1950년 도쿄와 쿄우하 시에 영업소를 개설했다. 1952년 출시한 자전거용 보조엔진 커브F형이 세계적으로 큰 성공을 거두었다. 1957년 도쿄 증권거래소에 주식을 상장했으며, 2년 뒤 미국 로스앤젤레스에 아메리칸혼다모터(American Honda Motor Inc)를 세웠다. 혼다는 1959년부터 세계 최대의 모터사이클 제조업체가 되었다. 1960년 연구개발 부문을 분리하여 (주)기켄연구소를 설립했다. 1963년 혼다 최초의 스포츠카 S500과 경트럭 T360을 출시했다. 같은 해 벨기에에 이륜차 제조공장을 설립하여 일본 자동차회사로는 최초로 유럽 현지공장에서 제품을 생산하기 시작했다. 1972년 소형차 시빅을 선보였으며 저공해 엔진인 CVCC를 개발하는 데 성공했다. 1980년 매출 1조 엔을 달성했다. 1981년 세계 최초로 자동차용 내비게이션 시스템을 완성했으며, 이듬해 미국 현지공장에서 4륜차를 생산하기 시작했다. 1986년 항공기 엔진을 연구, 개발하고 시험기를 제조하기 시작했다. 같은 해 일본 자동차회사 가운데 최초로 고급차 브랜드 아큐라(Acura)를 출시했다. 1980년대 중반부터 인공지능 연구부문에도 투자하여 2000년 아시모 로봇을 내놓았다. 아시모 로봇은 인간처럼 걷고 물체를 인식하는 최초의 인공지능 로봇이다. 2003년 자체 개발한 HF-118 엔진이 장착된 소형항공기 혼다제트(HondaJet)의 비행 실험에 성공했고, 2004년 제트엔진을 개발하기 위해 GE와 제휴해 합작법인을 설립했다. 2006년 8월에는 항공기사업 부문 자회사 혼다에어크래프트컴퍼니(Honda Aircraft Company)를 미국에 설립했다. 2006년 혼다제트를 발표한 데 이어 2012년 혼다제트를 생산하기 시작했다. 2012년 하이브리드 차량 백만 대 판대 기록을 세웠다. 2013년 혼다와 아큐라 차종 10만 8,700여 대를 미국으로 수출했으며, 그해 매출의 약 5.7%에 해당하는 68억 달러를 연구개발 부문에 투자했다. 2014년 하이브리드 소형차 피트(Fit)의 품질 문제가 제기되고 다카타 에어백을 사용한 혼다 차량에서 결함 사고가 발생하면서 위기에 부딪혔다. 그해 매출 1,190억 달러, 순이익 57억 5천만 달러를 기록했다. 2014년 미국 경제전문지 <포춘>이 매출액 기준으로 선정한 세계 500대 기업 순위에서 45위를 차지했으며, 세계 5위 자동차회사에 이름을 올렸다. 현재 사업부는 크게 아큐라, 혼다자동차, 혼다모터사이클로 나뉘어 있다. 자동차, 항공, 항공기엔진, 스포츠카 부문 등의 여러 자회사가 있고 영국과 캐나다, 대만, 파키스탄 등 해외 곳곳에 지사를 두고 있다. 혼다자동차의 주요 모델로 중형세단 어코드(Accord), 소형차 시빅(Civic), 스포츠카 S2000, NSX, 그리고 RV 차량 CR-V가 있다. 그리고 모터사이클의 주요 모델로 골드윙(Gold Wing), CBR600RR이 있다.
+  logo: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FHonda.png?alt=media&token=a697c784-85c0-46cb-8501-3225a0680b23
+  name_kr: 혼다
+  rating: 0.0
+

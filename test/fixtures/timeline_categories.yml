@@ -1,0 +1,31 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+tour:
+  id: 1
+  name: 투어
+  desc: 투어중 사진과 글
+  color: '#0060B6'
+
+day:
+  id: 2
+  name: 일상
+  desc: 일상에서 사진과 글
+  color: '#8D9CA3'
+
+service:
+  id: 3
+  name: 정비
+  desc: 정비하면서 사진과 글
+  color: '#423D37'
+
+tasty:
+  id: 4
+  name: 맛집
+  desc: 투어중 맛집 사진과 글
+  color: '#F8CA00'
+
+coffee:
+  id: 5
+  name: 커피
+  desc: 커피마시면서 사진과 글
+  color: '#AC926F'

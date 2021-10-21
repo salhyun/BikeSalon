@@ -1,0 +1,250 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  .scrollable-menu {
+    height: auto;
+    max-height: 200px;
+    overflow-x: hidden;
+  }
+  .clickable-dimgray {
+    color: dimgray;
+    transition: color 200ms ease-in-out;
+  }
+  .clickable-dimgray:hover {
+    color: black;
+  }
+  .comparison {
+    cursor: pointer;
+  <% unless @mobileDevice %>
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.25s cubic-bezier(.25,.8,.25,1);
+  <% end %>
+  }
+  <% unless @mobileDevice %>
+  .comparison:hover {
+    box-shadow: 0.125rem 0.125rem 0.75rem rgba(0, 0, 0, 0.2)
+  }
+  <% end %>
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 50);
+        documentReady();
+
+        selectedBikeIndices = [0, 0, 0];
+
+        brandList = new Array();
+        <% @brands.each do |k, v| %>
+        brandList['<%= k %>'] = <%= v['id'] %>;
+        <% end %>
+
+        styleList = new Array();
+        <% @styles.each do |k, v| %>
+        styleList['<%= k %>'] = <%= v['id'] %>;
+        <% end %>
+    });
+    function readModelList(brandId, styleId, parent) {
+        jQuery.ajax({
+            url: '/compare/readModels',
+            type: 'post',
+            data: {
+                brandId: brandId,
+                styleId: styleId
+            },
+            success: function(data) {
+                console.log("success");
+                console.log(data);
+
+                var menu = parent.children('.btn-group').eq(2).children().last();
+                menu.empty();
+                for(model of data.models) {
+                    menu.append("<a class='dropdown-item' href='javascript:void(0)' data-bikeno='" + model[0] + "'>" + model[2] + ' ' + model[1] + "</a>");
+                }
+            },
+            error: function(request, status, error) {
+                console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+            }
+        });
+    }
+    function checkCompareBikesButton() {
+        var count=0;
+        for(index of selectedBikeIndices) {
+            if(index > 0) count++;
+        }
+        if(count > 1) $('#compare-bikes').attr('disabled', false);
+        else $('#compare-bikes').attr('disabled', true);
+    }
+    function onClickCloseCandidate(obj) {
+        var card = $(obj).parent().parent();
+        card.empty();
+        resetDropdowns(card);
+        var candidateNo = card.attr('id').split('-').pop();
+        selectedBikeIndices[candidateNo] = 0;
+        checkCompareBikesButton();
+    }
+
+    function addDropdown(parent, btnName, items, enable) {
+        var btnGroup = $("<div class='btn-group' style='width: 80%; margin: auto;'></div>");
+        var btn = $("<button class='btn btn-secondary btn-sm dropdown-toggle' style='width: 100%;' type='button' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>" + btnName + "</button>");
+        if(enable == false) btn.attr('disabled', true);
+        btnGroup.append(btn);
+        var menu = $("<div class='dropdown-menu scrollable-menu' aria-labelledby='dropdownMenuButton'></div>");
+        for(item of items) {
+            menu.append("<a class='dropdown-item' href='javascript:void(0)'>" + item + "</a>");
+        }
+        menu.on('click', 'a', function () {
+            btn.text($(this).text());
+            if(btnName == "브랜드") {
+                var styleButton = parent.children('.btn-group').eq(1).children('.btn');
+                styleButton.attr('disabled', false);
+            } else if(btnName == '스타일') {
+                var modelButton = parent.children('.btn-group').eq(2).children('.btn');
+                modelButton.attr('disabled', false);
+
+                var brandName = parent.children('.btn-group').eq(0).children('.btn').text();
+                var styleName = parent.children('.btn-group').eq(1).children('.btn').text();
+                readModelList(brandList[brandName], styleList[styleName], parent);
+            } else if(btnName == '모델') {
+                var selectedModel = $(this).text();
+                var bikeNo = $(this).data('bikeno');
+                console.log('bikeNo = ' + bikeNo);
+                parent.empty();
+
+                jQuery.ajax({
+                    url: '/compare/getBikeThumbUrl',
+                    type: 'post',
+                    data: {
+                        bikeId: bikeNo
+                    },
+                    success: function(data) {
+                        console.log("success");
+                        console.log(data);
+
+                        parent.append("<div style='width: 100%; text-align: right;' href='javascript:void(0)'><a style='text-decoration: none; cursor: pointer' onclick='onClickCloseCandidate(this)'><i class=\"fas fa-times clickable-dimgray\" style='margin-right: 5px;'></i></a></div>");
+                        var bikeThumb = $("<img style='width: 100%;' src=" + data.url + ">");
+                        parent.append(bikeThumb);
+                        parent.append("<div style='margin-bottom: 10px; color: dimgray;'>" + selectedModel + "</div>");
+                        console.log('bikeNo = ' + bikeNo);
+                        selectedBikeIndices[parent.attr('id').split('-').pop()] = bikeNo;
+                        console.log(selectedBikeIndices);
+                        checkCompareBikesButton();
+                    },
+                    error: function(request, status, error) {
+                        console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+                    }
+                });
+            }
+        });
+        btnGroup.append(menu);
+        parent.append(btnGroup);
+    }
+
+    function resetDropdowns(card) {
+        var brands = new Array();
+        <% @brands.each do |k, v| %>
+        brands.push('<%= k %>');
+        <% end %>
+        addDropdown(card, "브랜드", brands, true);
+
+        var styles = new Array();
+        <% @styles.each do |k, y| %>
+        styles.push('<%= k %>');
+        <% end %>
+        addDropdown(card, "스타일", styles, false);
+
+        addDropdown(card, "모델", ['두카티', '혼다', 'BMW'], false);
+    }
+    function onClickAddBike(obj) {
+        var card = $(obj).parent();
+        card.empty();
+        resetDropdowns(card);
+    }
+    function onClickCompareBikes() {
+        console.log('selectedBikeIndices =', selectedBikeIndices);
+        let compareView = '/compare/compareView?';
+        selectedBikeIndices.forEach((bikeNo, index) => {
+            if(bikeNo > 0) {
+                if(compareView[compareView.length-1] == '?') {
+                    compareView += 'bikeNo' + index + '=' + bikeNo;
+                } else {
+                    compareView += '&bikeNo' + index + '=' + bikeNo;
+                }
+            }
+        });
+        console.log('compareView =', compareView);
+        window.location.href = compareView;
+    }
+</script>
+
+<div class="content" style="padding: 0 1rem">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:100%; height:auto; text-align: center; margin: auto">
+    <div style="width: auto; margin: auto">
+      <div style="display: flex; justify-content: center; flex-wrap: wrap;">
+        <% maxCount = @mobileDevice ? 1 : 2 %>
+        <% for i in 0..maxCount %>
+        <div id="candidate-<%= i %>" class="card" style="display: flex; align-items: center; justify-content: space-between; margin: 10px; width: 13rem; min-height: 196px;">
+          <a class="clickable-a" style="text-decoration: none; text-align: center; padding: 10px; cursor: pointer;" onclick="onClickAddBike(this)">
+            <i class="fa fa-plus" style="font-size: 150px; color: #CED4DA;"></i>
+            <div style="color: #CED4DA;">바이크를 추가해주세요!</div>
+          </a>
+        </div>
+        <% end %>
+      </div>
+      <button type="button" id="compare-bikes" class="btn btn-danger" style="text-align: center;" disabled onclick="onClickCompareBikes()">비교하기</button>
+    </div>
+  </div>
+
+  <div class="shadow-sm mb-5 bg-white rounded" style="width:100%; height:auto; text-align: center; margin: auto">
+    <div style="font-size: 1.3rem; font-weight: bold; padding-top: 1rem">자주 검색된 비교</div>
+    <hr style="margin-top: 1px; margin-bottom: 1rem">
+    <div style="width: 100%; display: flex; flex-direction: row; justify-content: center; padding: 1rem; flex-wrap: wrap">
+      <% if @mobileDevice %>
+      <% @bestComparisons.each do |motorbikes| %>
+        <% comparisonUrl = '/compare/compareView?' %>
+        <% motorbikes.each_with_index do |motorbike, index| %>
+          <% comparisonUrl += 'bikeNo' + index.to_s + '=' + motorbike[:id].to_s + '&' %>
+        <% end %>
+        <div class="comparison" style="width: 90%; display: flex; flex-direction: column; border-radius: 0.25rem; border: 1px solid #e4e4e4; margin-bottom: 1rem;" onclick="window.open('<%= comparisonUrl[0...-1] %>', '_blank')">
+          <% motorbikes.each_with_index do |motorbike, index| %>
+            <div style="display: flex; flex-direction: column; justify-content: flex-end; width: 100%; padding: 0.75rem;">
+              <img src="<%= motorbike[:url] %>" style="width: 90%; object-fit: contain; margin: auto;">
+              <div>
+                <div><%= motorbike[:year] %></div>
+                <div class="text-ellipsis"><%= motorbike[:name] %></div>
+              </div>
+            </div>
+            <% if index != motorbikes.size-1 %>
+            <div style="display: flex; justify-content: center">
+              <img src="/vs.png" style="width: 30px; height: 30px; object-fit: contain;">
+            </div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+      <% else %>
+      <% @bestComparisons.each do |motorbikes| %>
+      <% comparisonUrl = '/compare/compareView?' %>
+      <% motorbikes.each_with_index do |motorbike, index| %>
+        <% comparisonUrl += 'bikeNo' + index.to_s + '=' + motorbike[:id].to_s + '&' %>
+      <% end %>
+      <div class="comparison" style="display: flex; flex-direction: row; position: relative; border-radius: 0.25rem; border: 1px solid #e4e4e4; margin: 0.75rem" onclick="window.open('<%= comparisonUrl[0...-1] %>', '_blank')">
+        <% motorbikes.each do |motorbike| %>
+        <div style="display: flex; flex-direction: column; justify-content: flex-end; width: 50%; padding: 0.75rem;">
+          <img src="<%= motorbike[:url] %>" style="width: 160px; object-fit: contain">
+          <div>
+            <div><%= motorbike[:year] %></div>
+            <div class="text-ellipsis"><%= motorbike[:name] %></div>
+          </div>
+        </div>
+        <% end %>
+        <img src="/vs.png" style="position: absolute; left: calc(50% - 15px); top: calc(15% - 15px); width: 30px; object-fit: contain;">
+      </div>
+      <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,83 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  #livecast-area {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .livecast-card {
+    min-width: 320px;
+    min-height: 200px;
+    margin: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0,0,0,.125);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  }
+  <% unless @mobileDevice %>
+  .livecast-card:hover {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.25), 0 5px 6px rgba(0,0,0,0.22);
+  }
+  <% end %>
+</style>
+
+<script>
+    livecastCard = {width: '320px', height: '200px'};
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        let livecastAreaWidth =  $('#livecast-area').innerWidth();
+        console.log('livecastAreaWidth = ', livecastAreaWidth);
+        livecastCard.width = parseInt((livecastAreaWidth - (10*4))/4);
+        livecastCard.height = parseInt(livecastCard.width/1.618) + 'px';
+        livecastCard.width = livecastCard.width + 'px';
+        console.log('livecastCard =', livecastCard);
+        readLivecast();
+
+        // var player = videojs('vid1');
+        // player.play();
+    });
+
+    function readLivecast() {
+        requestPost('readLivecast', {}, data => {
+            if(data.result) {
+                console.log('data.result =', data);
+                data.livecasts.forEach(livecast => {
+                    appendLivecastCard($('#livecast-area'), livecast);
+                })
+            }
+        })
+    }
+    function appendLivecastCard(parent, livecast) {
+        let $card = $('<div class="livecast-card" style="width: ' + livecastCard.width + '; height: ' + livecastCard.height + '"onclick="window.open(\'/main/liveview?livecastId=' + livecast.id + '\', \'_blank\')"></div>');
+        let thumbSrc = livecast.poster.length > 0 ? livecast.poster : '/poster.jpg';
+        let $thumb = $('<div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 65%;"><img src="' + thumbSrc + '" style="width: 100%; height: 100%; border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; object-fit: cover"></div>');
+        $card.append($thumb);
+
+        let $lowerBody = $('<div style="display: flex; flex-direction: row; align-items: flex-end; margin: 0.5rem; width: 100%; height: 35%;"></div>');
+        let thumbSize = parseInt(getNumberFromString(livecastCard.height)*0.3) + 'px';
+        $lowerBody.append('<img class="img-thumbnail" src="' + livecast.avatar + '" style="min-width: 40px; min-height: 40px; width: ' + thumbSize + '; height: ' + thumbSize + ';">');
+        let $contentArea = $('<div style="margin-left: 0.5rem"></div>');
+        $contentArea.append('<div class="text-ellipsis" style="font-size: 1rem; font-weight: bold; line-height: 1">' + livecast.title + '</div>');
+        $contentArea.append('<div style="font-size: 0.8rem; color: dimgray; text-align: left;">' + livecast.name + '</div>');
+        $contentArea.append('<div style="font-size: 0.8rem; color: dimgray; text-align: left; line-height: 1">' + livecast.category + '</div>');
+        $lowerBody.append($contentArea);
+        $card.append($lowerBody);
+        parent.append($card);
+    }
+</script>
+
+<div class="content">
+  <div style="width: 90%; margin: auto; font-size: 2.5rem">살롱 라이브 캐스트</div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; text-align: center; margin: auto">
+    <div id="livecast-area">
+    </div>
+  </div>
+</div>

@@ -1,0 +1,582 @@
+<style>
+  @media only screen and (max-width: 768px) {
+    /*최소크기 768보다 작은경우*/
+
+  }
+
+  @media only screen and (min-width: 768px) {
+    /*최소크기 768보다 큰경우*/
+
+  }
+
+	body {
+		background-color:floralwhite;
+		width: 100%;
+		margin: auto
+	}
+
+  .card {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  }
+  <% unless @mobileDevice %>
+  .card:hover {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  }
+  <% end %>
+
+</style>
+
+<style>
+  * { box-sizing: border-box; }
+
+  .grid {
+    background: white;
+    max-width: 100%;
+    counter-reset: grid-item;
+  }
+
+  .grid:after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+
+  .grid-item {
+    float: left;
+    margin-bottom: 5px;
+  }
+
+  .fade-scale {
+    transform: scale(0);
+    opacity: 0;
+    -webkit-transition: all .25s linear;
+    -o-transition: all .25s linear;
+    transition: all .25s linear;
+  }
+
+  .fade-scale.in {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+    .carousel-inner > .carousel-item > img {
+      max-width: <%= @mobileDevice ? 100 : 80 %>%;
+      margin: auto;
+    }
+
+  <% unless @mobileDevice %>
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-image: none;
+  }
+  .carousel-control-next-icon:after {
+    position: absolute;
+    right: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f105";
+    font-size: 3.4375rem;
+  }
+  .carousel-control-prev-icon:after {
+    position: absolute;
+    left: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f104";
+    font-size: 3.4375rem;
+  }
+  .youtube-thumb:before {
+    position: absolute;
+    font-family: "Font Awesome 5 Brands";
+    left: 0;
+    top: 0;
+    font-weight: 900;
+    color: #ff0000a0;
+    content: '\f167';
+    font-size: 25px;
+  }
+  .video-thumb:before {
+    position: absolute;
+    font-family: "Font Awesome 5 Free";
+    left: 0;
+    top: 0;
+    font-weight: 900;
+    color: #b73aa7a0;
+    content: '\f03d';
+    font-size: 25px;
+  }
+  <% end %>
+</style>
+
+<script type="text/javascript">
+    pageSize = 12;
+    pageOffset = 0;
+    ajaxTimelineLoading = false;
+    allLoadingTimeline = false;
+    gTimelines = new Array();
+    gMisc = new Array();
+
+    commentSize = 6;
+    commentOffset = 0;
+    opendTimelineModal = false;
+    currentTimelineId = 0;
+    ajaxCommentLoading = true;
+    allLoadingComment = false;
+
+    replyReaders = new Map();
+
+    function getAntilog(r, e) {//로그에서 진수 구하는 함수
+        return Math.pow(r, 1/e);
+    }
+
+    // var params = location.href.split('?');
+    // console.log(params);
+    // if(params.length > 0) {
+    //     params = params[1].split('&');
+    //
+    //     //scroll move
+    //     var scroll = params[1].split('=')[1];
+    //     $('body').animate({
+    //         scrollTop: scroll
+    //     }, 500);
+    //
+    //     console.log('moved scroll(' + scroll + ')');
+    // } else {
+    //     console.log('params length = ' + params.length);
+    // }
+
+    //사파리에서 페이지 앞뒤로 와리가리할때 사용해야함.
+    <% if @browserInfo.eql? 'Safari' %>
+    $(window).bind("pageshow", function (event) {
+        if (event.originalEvent.persisted) {
+            $('#timeline-container').empty();//타이밍상 여기서 해야 댐
+        }
+        else {
+        }
+    });
+    <% end %>
+
+    $(document).ready(function() {
+        console.log('%c document ready', 'background: yellow; color: red');
+        var navbarHeight = $('.navbar')[0].clientHeight;
+        $('.content').css('margin-top', navbarHeight);
+        documentReady();
+
+        let radioTabHeight = $('#gallery-map-radioTab')[0].clientHeight;
+        $('.search-form').css('top', navbarHeight+radioTabHeight + 'px');
+
+        let hashtag = '<%= @hashtag %>';
+        if(hashtag.length > 0) {
+            hashtag = '#' + hashtag;
+            onClickSearchButton($('#search-button')[0], hashtag);
+        } else {
+            readTimelines();
+        }
+
+        // var fontSize = getComputedStyle(document.documentElement).fontSize;
+        // console.log('fontSize: ' + fontSize);
+
+        $('input[name="map-view"]').change(function () {
+            location.href = 'mapview';
+        })
+    });
+
+    $(window).scroll(function () {
+        // console.log('%c scrollTop = ' + $(window).scrollTop(), 'background: #222; color: yellow');
+        // console.log('docHeight = ' + $(document).height());//도큐먼트 높이 : 도큐먼트 전체 높이, 증거)창크기를 줄여도 변하지 않음
+        // console.log('winHeight = ' + $(window).height());//도큐먼트중 현재 화면에 보여지는 부분(윈도우)의 높이, 창크기를 줄이면 이것도 줄어듬
+        var diff = $(document).height() - $(window).height();
+        // console.log('차이 = ' + diff);
+        // console.log('ajaxTimelineLoading = ' + ajaxTimelineLoading + ', allLoadingTimeline = ' + allLoadingTimeline);
+        if(ajaxTimelineLoading == false && allLoadingTimeline == false) {
+            if($(window).scrollTop() > diff*95/100) {
+                console.log('%c reach bottom', 'background-color: yellow; color: brown');
+                readTimelines();
+            }
+        } else {
+        }
+    });
+
+    function readTimelines() {
+        ajaxTimelineLoading = true;
+        requestPost('/gallery/readTimelines', {limit: pageSize, offset: pageOffset*pageSize, searchWord: searchWord}, data => {
+            console.log(data);
+            if(data.result) {
+                if(data.timelineCount == 0) {
+                    allLoadingTimeline = true;
+                } else if(data.timelineCount > 0) {
+                    for(var i in data.timelines) {
+                        var misc = data.misc[data.timelines[i].id];
+                        gTimelines.push(data.timelines[i]);
+                        gMisc.push(data.misc[i]);
+                        buildTimelineHtml($('#timeline-container'), data.timelines[i], misc);
+                    }
+                    ++pageOffset;
+                    console.log('pageOffset = ' + pageOffset + ', ajaxTimelineLoading = ' + ajaxTimelineLoading);
+                    setTimeout(() => {
+                        if(data.result && data.timelineCount > 0) {
+                            if($('body').height() <= $(window).height()) {//스크롤이 없을경우는 로드 한번 더
+                                readTimelines();
+                            } else {
+                                ajaxTimelineLoading = false;
+                            }
+                        }
+                    }, 500);
+                }
+            }
+        });
+    }
+
+    function renewUrl() {
+        var url = location.href;
+        url = url.split('?')[0];
+        url += '?page=' + pageOffset + '&scroll=' + $(window).scrollTop();
+        history.pushState(null, null, url);
+        console.log('renewURL = ' + url);
+    }
+
+    // $(window).bind("popstate", function (event) {
+    //     var data = event.originalEvent.state;
+    //     console.log('%c event popstate', 'color: red');
+    //     console.log(data);
+    // });
+
+    function getCategoryFontColor(category) {
+        let color = 'white';
+        if(category == '맛집') {
+            color = '#383d41';
+        }
+        return color;
+    }
+    function buildTimelineHtml(parent, timeline, misc) {
+        let fontSize = {normal: '1rem', level: '0.9rem', title: '1.25rem'};
+        let bodyPadding = '1.25rem';
+        <% if @mobileDevice %>
+        fontSize = {normal: '0.8rem', level: '0.7rem', title: '1rem'};
+        bodyPadding = '0.8rem';
+        <% end %>
+
+        let $gridItem;
+        <% if @mobileDevice %>
+        $gridItem = $("<div style='display: none; width: 50%'>");
+        <% else %>
+        $gridItem = $("<div class=\"grid-item\" style='display: none;'>");
+        <% end %>
+        let cardMargin = <%= @mobileDevice ? 5 : 10 %>;
+        $gridItem.append("<div id=\"card-timeline-" + timeline.id + "\" class=\"card\" style=\"display: block; margin: " + cardMargin + "px; border: 1px solid transparent; cursor: pointer;\" data-toggle=\"modal\" data-timelineid=\"" + timeline.id + "\" data-target=\"#DetailViewModal\" >");
+        var timelineCard = $gridItem.children().last();
+
+        let thumb = misc.attachments.length > 0 ? misc.attachments[0].thumb : '/NoImageAvailable.png';
+        timelineCard.append("<img class=\"card-img-top\" src=\"" + thumb + "\" onload=\"loadedCardImg(this)\" data-kind=\"" + timeline.kind + "\" alt=\"Card image cap\">");
+        timelineCard.append("<div class=\"hcv\" style=\"margin-right: 20px; text-align: right\">");
+
+        var hcv = timelineCard.children().last();
+        hcv.append(" <i class=\"far fa-heart\" style=\"color: #D6336C\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"좋아요\"></i>");
+        hcv.append(" <span style=\"color: darkgray; font-size: 0.7rem; margin-left: -3px; margin-right: 4px;\">" + numberWithCommas(misc.ratingNum) + "</span>");
+        hcv.append(" <i class=\"far fa-comment\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"댓글수\"></i>");
+        hcv.append(" <span style=\"color: darkgray; font-size: 0.7rem; margin-left: -3px; margin-right: 4px;\">" + numberWithCommas(misc.commentNum) + "</span>");
+        hcv.append(" <i class=\"far fa-eye\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"조회수\"></i>");
+        hcv.append(" <span style=\"color: darkgray; font-size: 0.7rem; margin-left: -3px\">" + numberWithCommas(timeline.viewCount) + "</span>");
+
+        timelineCard.append("<div class=\"card-body text-right\" style='font-size: " + fontSize.normal + "; padding: " + bodyPadding + ";'>");
+
+        var cardBody = timelineCard.children().last();
+
+        let cardTitle = $('<div style="display: flex; flex-direction: row; justify-content: flex-end; align-items: center"></div>');
+        if(misc.timelineLocation) {
+            cardTitle.append('<div style="margin-top: 0.25rem; margin-right: 0.25rem"><i class="far fa-map" style="color: #17a2b8;"></i></div>');
+        }
+        cardTitle.append('<div style="margin-right: 5px; font-size: 0.8rem; background-color: ' + misc.categoryColor + '; color: ' + getCategoryFontColor(timeline.category) + '; border-radius: 2px; padding: 0 2px;">' + timeline.category + '</div>');
+        cardTitle.append('<div class="card-title text-ellipsis" style="max-width: <%= @mobileDevice ? 58 : 75 %>%; margin-bottom: 0; font-size: ' + fontSize.title + '">' + timeline.title + '</div>');
+        cardTitle.appendTo(cardBody);
+
+        cardBody.append("<div style=\"display: flex; flex-direction: row-reverse; align-items: flex-end; margin-top: 10px; margin-bottom: 10px;\">");
+
+        var flexContainer = timelineCard.children().last();
+        flexContainer.append("<div></div>");
+
+        var content1 = timelineCard.children().last();
+        if(misc.avatar_url == null) {
+            content1.append("<img class=\"img-thumbnail\" src=\"/motorcyclist.jpg\" style=\"width: 45px; height: 45px;\">");
+        } else {
+            content1.append("<img class=\"img-thumbnail\" src=\"" + misc.avatar_url + "\" style=\"width: 45px; height: 45px;\">");
+        }
+
+        flexContainer.append("<div style=\"margin-right: 5px;\">");
+
+        var content2 = timelineCard.children().last();
+        let nameElement = $('<div>' + misc.name + '</div>');
+        nameElement.append(buildUserLevel(misc.titleOfLevel, fontSize.level));
+        content2.append(nameElement);
+        content2.append("<div style=\"font-size: 0.8rem; color: darkgray\">게시일: " + getDateString(new Date(timeline.created_at)) + "</div>");
+
+        // var shell = $("<div></div>");
+        // var desc = $("<p class=\"card-text\" style=\"display: inline-block; overflow: hidden; -ms-text-overflow: ellipsis; text-overflow: ellipsis; white-space: nowrap\"></p>");
+        var desc = $("<div class=\"card-desc\" style=\"display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap\"></div>");
+        // desc.html(timeline.desc.replace(/\n/gi, '<br>'));
+        desc.html(timeline.desc.replace(/\n/gi, ''));
+        // desc.appendTo(shell);
+        cardBody.append(desc);
+
+        let $hashtags = $('<div id="hashtags-' + timeline.id + '" style="display: flex; justify-content: flex-end; flex-wrap: wrap; margin-left: auto;"></div>');
+        if(timeline.cachedHashtags.length > 0) {
+            $hashtags.append('<div class="text-ellipsis" style="max-width: 60%; background-color: #a141ad; color: whitesmoke; border-radius: 0.125rem; font-size: 0.9rem; padding: 0 2px">' + timeline.cachedHashtags + '</div>');
+        }
+        cardBody.append($hashtags);
+
+        // cardBody.append("<p class=\"card-text\" style=\"overflow: hidden; -ms-text-overflow: ellipsis;text-overflow: ellipsis; white-space: nowrap\">" + timeline.desc + "</p>");
+        // parent.masonry().append($gridItem).masonry('appended', $gridItem).masonry();
+    }
+
+    function loadedCardImg(obj) {
+        let appendKindIcon = function (width, height) {
+            let kind = $(obj).data('kind');
+            if(kind == 2) {
+                $(obj).parent().append('<i class="fab fa-youtube" style="position: absolute; left: ' + (width-35) + 'px; top: ' + (height-30) + 'px; font-size: 25px; color: #ff0000a0"></i>');
+            } else if(kind == 3) {
+                $(obj).parent().append('<i class="fas fa-video" style="position: absolute; left: ' + (width-35) + 'px; top: ' + (height-30) + 'px; font-size: 25px; color: #b73aa7a0"></i>');
+            }
+        }
+        <% if @mobileDevice %>
+        $(obj).css('width', '100%');
+        $(obj).css('height', 'auto');
+        setTimeout(() => {
+            let rect = $(obj)[0].getBoundingClientRect();
+            appendKindIcon(rect.width, rect.height);
+        }, 250);
+
+        // $(obj).parent().children('.card-body').children().last().css('width', '70%');
+        $(obj).parent().children('.card-body').children('.card-desc').last().css('width', '70%');
+        var gridItem = $(obj).parent().parent();
+        $('#timeline-container').append(gridItem);
+        gridItem.css('display', 'block');
+        <% else %>
+        var pic = $(obj)[0];
+        // console.log('name = ' + pic.name + ', natural width = ' + pic.naturalWidth + ', height = ' + pic.naturalHeight);
+
+        <% if @mobileDevice %>
+        standardImgArea = 25000;
+        <% else %>
+        standardImgArea = 81840;
+        <% end %>
+
+        var fixedArea = standardImgArea;
+        var area = pic.naturalWidth * pic.naturalHeight;
+
+        var b = getAntilog(area/fixedArea, 2);
+        // console.log('진수 구하기 = ' + b);
+        // console.log('검산 = ' + Math.pow(b, 2));
+        var rWidth = pic.naturalWidth/b;
+        var rHeight = pic.naturalHeight/b;
+        // console.log('rWidth: ' + rWidth + ', rHeight: ' + rHeight);
+
+        $(obj).css('width', rWidth + 'px');
+        $(obj).css('height', rHeight + 'px');
+        appendKindIcon(rWidth, rHeight);
+
+        // $(obj).parent().children('.card-body').children('.card-text').css('width', rWidth*0.8 + 'px');
+        // $(obj).parent().children('.card-body').children().last().css('width', rWidth*0.8 + 'px');
+        // console.log('card-text =', $(obj).parent().children('.card-body').children('.card-text'));
+        let cardDesc = $(obj).parent().children('.card-body').children('.card-desc').last();
+        rWidth *= 0.8;
+        cardDesc.css('width', rWidth + 'px');
+        cardDesc.next('div').css('width', rWidth + 'px');
+
+        var gridItem = $(obj).parent().parent();
+        $('#timeline-container').append(gridItem).masonry('appended', gridItem).masonry();
+        // $('#timeline-container').append(gridItem).masonry('prepended', gridItem).masonry();
+        // $('#timeline-container').append(gridItem);
+        gridItem.css('display', 'block');
+
+        // $(obj).parent().parent().css('display', 'block');
+        <% end %>
+    }
+</script>
+
+<button type="button" class="btn btn-link scrollTop" style="width: 42px; border: 1px solid #ced4da;" onclick="scrollToTop()"><i class="fas fa-angle-double-up" style="font-size: 1.25rem;"></i></button>
+<!--<a class="scrollToTop" style="position: fixed; bottom: 25px; right: 10px; z-index: 2000;" href="javascript:scrollToTop();">Scroll To Top</a>-->
+
+<style>
+  .enable-bar {
+    animation-duration: 0.3s;
+    animation-timing-function: ease-in-out;
+    animation-name: enableBar;
+    animation-fill-mode: forwards;
+  }
+  @keyframes enableBar {
+    from {width: 10px;}
+    to {width: 10rem;}
+  }
+  .search-form .search-btn {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    transition: all 200ms ease-in-out;
+  }
+  <% unless @mobileDevice %>
+  .search-form .search-btn:hover {
+    color: #fff;
+    background-color: #8fbe00;
+  }
+  #close-detailView:hover {
+    color: slategrey;
+  }
+  <% end %>
+  .search-form .search-input {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    transition: all 200ms ease-in-out;
+  }
+  <% unless @mobileDevice %>
+  .search-form .search-input:hover {
+    border-color: gray;
+  }
+  <% end %>
+
+</style>
+
+<div class="search-form" style="position: fixed; top: 80px; right: 10px; z-index: 100;">
+  <button id="search-button" type="button" class="btn btn-link search-btn" style="border: 1px solid #ced4da;" onclick="onClickSearchButton(this)"><i class="fas fa-search"></i></button>
+  <span id="span-width" style="visibility: hidden">나의바이크</span>
+</div>
+
+<script>
+    intervalCall1000 = intervalCall(1000);
+    searchWord = "";
+    function confirmSearch(obj) {
+        var parent = $(obj).parent();
+        var keyword = parent.children('input').val();
+        if(keyword.length > 0) {
+            console.log('keyword = ' + keyword);
+            searchWord = keyword;
+        } else {
+            console.log("There is no keyword");
+            searchWord = "";
+            parent.children('input').remove();
+            parent.children('button').css('border', '1px solid #ced4da');
+        }
+
+        <% unless @mobileDevice %>
+        $('#timeline-container').masonry('remove', $('#timeline-container').find('.grid-item'));
+        <% end %>
+        $('#timeline-container').empty();
+        $('#timeline-container').css('height', 'auto');
+        $(window).scrollTop(0);
+        allLoadingTimeline = false;
+        pageOffset = 0;
+        readTimelines();
+    }
+    function onClickSearchButton(obj, keyword='') {
+        console.log("onClickSearchButton");
+        var parent = $(obj).parent();
+        var searchInput = parent.children('input');
+        if(searchInput.length > 0) {
+            confirmSearch(obj);
+        } else {
+            let basicWidth;
+            var inputSearch = $("<input class=\"form-control search-input enable-bar\" placeholder=\"검색\" type=\"text\" style=\"width: 10px;\">");
+            inputSearch.on('keyup paste', function(event) {
+                var val = $(this).val();
+                console.log('length = ' + val.length + ', basicWidth = ' + basicWidth + ', val = ' + val);
+
+                $('#span-width').text(val);
+                var diff = $('#span-width').outerWidth() - 100;//버튼앞에서 멈추게 함
+                if(diff > 0) {
+                    console.log('diff = ' + diff);
+                    $(this).css('width', basicWidth+diff);
+                } else {
+                    $(this).css('width', basicWidth);
+                }
+
+                if(event.keyCode == 13) {//press enter key
+                    intervalCall1000(() => {//한글입력하면 두번 발생함 그래서 interval 사용...
+                        console.log('%c enter key', 'color: yellow');
+                        $('#search-button').trigger('click');
+                    });
+                }
+            });
+            inputSearch[0].addEventListener('animationend', () => {
+                basicWidth = $(this).outerWidth();
+                $(this).removeClass('enable-bar');
+                $(this).css('width', basicWidth);
+                console.log('animationend width = ' + basicWidth);
+                if(keyword.length > 0) {
+                    inputSearch.val(keyword);
+                    $('#search-button').trigger('click');
+                }
+            });
+            //jQuery 왜 사파리에서 말을 잘 안듣지?
+            // inputSearch.on('animationend', function (e) {
+            //     basicWidth = $(this).outerWidth();
+            //     $(this).removeClass('enable-bar');
+            //     $(this).css('width', basicWidth);
+            //     console.log('animationend width = ' + basicWidth);
+            //     if(keyword.length > 0) {
+            //         inputSearch.val(keyword);
+            //         $('#search-button').trigger('click');
+            //     }
+            // });
+            parent.prepend(inputSearch);
+            $(obj).css('border', '');
+            inputSearch.focus();
+        }
+    }
+    function onClickCloseDetailView(obj) {
+        $('#DetailViewModal').modal('toggle');
+        console.log('close detailview');
+    }
+</script>
+
+<!--<div id="search-bar" style="display: flex; flex-direction: row-reverse; position: fixed; top: 80px; right: 10px; z-index: 2000; width: auto; border: 1px solid darkgray; border-radius: 5px; background-color: white; padding: 10px;">-->
+<!--  <i class="fas fa-search" style="cursor: pointer;" onclick="onClickSearchButton(this)"></i>-->
+<!--</div>-->
+
+<!--<div id="search-bar" class="search-bar" style="width: 85%; margin: auto;">-->
+<!--  <div class="shadow-sm p-3 bg-white rounded" style="padding: 5px;">-->
+<!--    <i class="fas fa-search"></i>-->
+<!--  </div>-->
+<!--</div>-->
+
+<!--<div id="close-detailView" onclick="onClickCloseDetailView(this)">-->
+<!--  <i class="fas fa-times-circle" style="font-size: 400%;"></i>-->
+<!--</div>-->
+
+<div class="content">
+  <% if @mobileDevice %>
+  <div id="gallery-map-radioTab" style="display: flex; flex-direction: column; width:100%; margin: auto; padding: 0.5rem 0.5rem; text-align: left">
+  <% else %>
+  <div id="gallery-map-radioTab" style="width:85%; margin: auto; padding: 0.5rem 0.5rem; text-align: left">
+  <% end %>
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+      <label class="btn btn-outline-primary active">
+        <input type="radio" name="gallery-view" checked> 갤러리 뷰
+      </label>
+      <label class="btn btn-outline-primary">
+        <input type="radio" name="map-view"> 맵 뷰
+      </label>
+    </div>
+    <div></div>
+  </div>
+  <div class="shadow-sm <%= @mobileDevice ? 'p-1' : 'p-3' %> mb-5 bg-white rounded" style="<%= @mobileDevice ? 'width:100%' : 'width:85%' %>; height:auto; text-align: center; margin: auto">
+    <% if @mobileDevice %>
+    <div id="timeline-container" style="display: flex; flex-wrap: wrap; height: auto;">
+    <% else %>
+    <div id="timeline-container" class="grid" style="height: auto;">
+    <% end %>
+    </div>
+  </div>
+</div>
+<% unless @mobileDevice%>
+<script type="text/javascript" src="<%=asset_path 'masonry-pkgd.min.js'%>"></script>
+<script type="text/javascript">
+    $('.grid').masonry({
+        itemSelector: '.grid-item',
+        columnWidth: 1,// 15,
+        horizontalOrder: true
+    });
+</script>
+<% end %>

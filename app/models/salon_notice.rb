@@ -1,0 +1,2 @@
+class SalonNotice < ApplicationRecord
+end

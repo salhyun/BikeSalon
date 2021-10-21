@@ -1,0 +1,509 @@
+<style>
+	body {
+		background-color: floralwhite
+	}
+	.form-check {
+		margin: 10px;
+		display: inline-block;
+	}
+
+	.dropdown-content {
+		display: none;
+		overflow: auto;
+		border: 1px solid #ddd;
+		width: 40%;
+	}
+	.dropdown-content a {
+		text-decoration: none;
+		display: block;
+	}
+  .card {
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  }
+  <% unless @mobileDevice %>
+  .card:hover {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  }
+  <% end %>
+  .ratingRibbon {
+    display: inline;
+    position: absolute;
+    left: -1px;
+    top: 0.75rem;
+    text-align: center;
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+  }
+</style>
+<script>
+	var gMaxSelectBrand=3;
+	var gDropdownfilter=null;
+	var gFilters = ["year", "brand", "style"];
+	var gFiltersKr = ["연식", "브랜드", "스타일"];
+	var gSelectedFilterCheckCounts = [{name: 'year', count: 0}, {name: 'brand', count: 0}, {name: 'style', count: 0}];
+	var gSelectedDisplacementId=null;
+	var displacements = new Array();
+	<% @displacements.each do |displacement| %>
+  <% if displacement.include?('이하') %>
+  displacements.push({name: '<%= displacement %>', greater_than: 0, less_than: <%= displacement.match(/\d+/).to_s.to_i %>});
+  <% elsif displacement.include?('이상') %>
+  displacements.push({name: '<%= displacement %>', greater_than: <%= displacement.match(/\d+/).to_s.to_i %>, less_than: 5000});
+  <% else %>
+  <% among = displacement.match(/\d+[~]\d+/).to_s.split('~') %>
+  displacements.push({name: '<%= displacement %>', greater_than: <%= among[0].to_i %>, less_than: <%= among[1].to_i %>});
+  <% end %>
+  <% end %>
+  console.log('displacements =', displacements);
+
+  var gFilteredBikeParams = {selectedYears: null, selectedBrands: null, selectedStyles: null, displacementRange: null, limit: 12, offset: 0};
+  var gLoadingFilteredBike=false;
+  var gTotalFilteredBikeCount=0;
+
+  lazyLoad=null;
+  lazyImages = null;
+  function initializeLazyload() {
+      lazyImages = [].slice.call(document.querySelectorAll("img.lazy"));
+      let active = false;
+
+      lazyLoad = function() {
+          if (active === false) {
+              active = true;
+              setTimeout(function() {
+                  lazyImages.forEach(lazyImage => {
+                      let lazyImageRect = lazyImage.getBoundingClientRect();
+                      if((lazyImageRect.top <= window.innerHeight && lazyImageRect.bottom >= 0) && getComputedStyle(lazyImage).display !== "none" && $('#' + lazyImage.dataset.style).css('display') !== 'none') {
+                          if(lazyImage.dataset.src.length > 0) {
+                              lazyImage.src = lazyImage.dataset.src;
+                              $(lazyImage).load(function () {
+                                  $(this).css('width', '70%');
+                              });
+                          } else {
+                              lazyImage.src = '/NoImageAvailable.png';
+                              $(lazyImage).css({'width': '80px', 'height': '80px'});
+                          }
+                          // lazyImage.srcset = lazyImage.dataset.srcset;
+                          lazyImage.classList.remove("lazy");
+                          lazyImages = lazyImages.filter(function(image) {
+                              return image !== lazyImage;
+                          });
+                      }
+                  });
+                  active = false;
+              }, 200);
+          }
+      };
+      document.addEventListener("scroll", lazyLoad);
+      window.addEventListener("resize", lazyLoad);
+      window.addEventListener("orientationchange", lazyLoad);
+      lazyLoad();
+  }
+
+	$(document).ready(function() {
+      documentReady();
+
+	    let filtersArea = $('#filters-area');
+      filtersArea.css('margin-top', $('.navbar')[0].clientHeight);
+      console.log('filteredArea height =', filtersArea.outerHeight(true));
+
+      let navbarHeight = $('.navbar').outerHeight(true);
+      let filtersAreaHeight = filtersArea.outerHeight(true);
+
+      console.log('document clientHeight =', document.documentElement.clientHeight);
+      let filteredBikesArea = document.documentElement.clientHeight - (navbarHeight+filtersAreaHeight);
+      // $('#filteredbikes-area').css('height', filteredBikesArea);
+      // $('#filteredbikes-area').innerHeight(filteredBikesArea);
+
+      checkEnableSearchButton();
+      gFilters.forEach(function(item, index, array) {
+          var dropdownId = "#" + item + "_dropdown";
+          var buttonId = "#" + item;
+
+          console.log('dropdownId =', dropdownId);
+          console.log(('buttonId =', buttonId));
+
+          $(dropdownId).children().each(function() {
+              $(this).children('input').change(function() {
+                  var value = $(this).prop('checked');
+                  console.log('chkeced value =', value);
+                  if(value == true) {
+                      let currentLabel = $(this).next('label').text();
+                      console.log('currentLabel =', currentLabel);
+                      var brand = $(buttonId).text();
+                      if(brand.indexOf(gFiltersKr[index]) != -1) {
+                          $(buttonId).text(currentLabel);
+                          updateChevron(buttonId);
+                      } else {
+                          $(buttonId).text(brand + ", " + currentLabel);
+                          updateChevron(buttonId);
+                      }
+                      gSelectedFilterCheckCounts[index].count++;
+                  } else {
+                      let currentLabel = $(this).next('label').text();
+                      console.log('currentLabel =', currentLabel);
+                      var brand = $(buttonId).text();
+                      var atLabel = brand.indexOf(currentLabel);
+                      if(atLabel != -1) {
+                          if(gSelectedFilterCheckCounts[index].count == 1) {//only one selected
+                              $(buttonId).text(gFiltersKr[ gFilters.indexOf(item)]);
+                              updateChevron(buttonId);
+                          } else {//one more brand selected
+                              if(atLabel == 0)
+                                  brand = brand.replace(currentLabel + ", ", "");
+                              else
+                                  brand = brand.replace(", " + currentLabel, "");
+                              $(buttonId).text(brand);
+                              updateChevron(buttonId);
+                          }
+                          gSelectedFilterCheckCounts[index].count--;
+                      }
+                  }
+                  checkEnableSearchButton();
+              });
+          });
+      });
+
+      let selectedStyleId = '<%= @selectedStyleId %>';
+      if(selectedStyleId.length > 0) {
+          console.log('selectedStyleId =', selectedStyleId);
+          $('#check-year-' + '<%= Time.new.year.to_s %>').trigger('click');
+          $('#check-style-' + selectedStyleId).trigger('click');
+          onClickItem($('#brand')[0]);
+      }
+
+      $('#displacement_dropdown').children().each(function () {
+          $(this).children('input').change(function () {
+              var value = $(this).prop('checked');
+              console.log('chkeced displacement value =', value);
+              if(value == true) {
+                  if(gSelectedDisplacementId !== null) {
+                      $('#' + gSelectedDisplacementId).prop('checked', false);
+                  }
+                  gSelectedDisplacementId = $(this).attr('id');
+                  let currentLabel = $(this).next('label').text();
+                  $('#displacement').text(currentLabel);
+              } else {
+                  gSelectedDisplacementId = null;
+              }
+          })
+      })
+      //click outside
+      $('#filters-area').on('click', function(e) {
+          if($(e.target).attr('class') === 'dropdown') {
+              console.log('click filters-area');
+              slideupAll();
+          }
+      });
+
+      $(window).on('scroll', function () {
+          let diff = $('body')[0].scrollHeight - $(this).height() - 10;//scrollMargin 10
+          <% unless @mobileDevice and @browserInfo.eql? 'Safari' %>
+          diff += $('.navbar').outerHeight(true);
+          <% end %>
+          // console.log(`%c diff=${diff}, scrollTop=${$('html,body').scrollTop()}`, 'color: yellow');
+          if($('html,body').scrollTop() > diff) {
+              if(gLoadingFilteredBike == false && (gFilteredBikeParams.offset < gTotalFilteredBikeCount)) {
+                  searchbikes(gFilteredBikeParams);
+              }
+          }
+      });
+      initializeLazyload();
+	});
+
+	function slideupAll() {
+      $('.dropdown-content').each(function() {
+          if($(this).is(':visible')) {
+              $(this).slideUp();
+          }
+      })
+  }
+
+	function checkEnableSearchButton() {
+      if(gSelectedFilterCheckCounts[0].count > 0 && gSelectedFilterCheckCounts[1].count > 0) {
+          $('#search-bike').attr('disabled', false);
+      } else {
+          $('#search-bike').attr('disabled', true);
+      }
+  }
+  function updateChevron(obj) {
+      let text = $(obj).text();
+      let chevron = $(obj).children('i').first();
+      if(chevron.hasClass('fa-chevron-down')) {
+          $(obj).empty().text(text).append('<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i>');
+      } else {
+          $(obj).empty().text(text).append('<i class="fas fa-chevron-down" style="padding-left: 0.25rem"></i>');
+      }
+  }
+  function onClickItem(obj) {
+	    let id = $(obj).attr('id');
+      var dropdown = "#" + id + "_dropdown";
+      console.log("dropdown = " + dropdown);
+
+      if($(dropdown).is(':visible')) {
+          $(dropdown).slideUp();
+      } else {
+          $(dropdown).css('position', 'relative');
+          var pos = $("#" + id).position();
+          var ptop = $("#" + id).css('padding-top');
+          console.log("ptop = " + ptop);
+
+          $(dropdown).css('left', pos.left + "px");
+          $(dropdown).css('top', $("#" + id).css('padding-top'));
+
+          if(gDropdownfilter)
+              gDropdownfilter.css("display", "none");
+          gDropdownfilter = $(dropdown);
+
+          <% unless @mobileDevice %>
+          $(dropdown).slideDown();
+          <% else %>
+          $(dropdown).slideDown({start: function () {
+              $(dropdown).css({'left': 0, 'width': '100%', 'height': 'auto'});
+          }});
+          <% end %>
+      }
+      updateChevron(obj);
+      //use return false; at end of click handler to avoid browser default event on a link. If there is no match to element in href, page will jump to top by default
+      return false;//이거 안하면 스크롤이 덜덜덜 거림.
+  }
+
+  function onClickMotorbike(bikeId) {
+	    console.log('bikeId =', bikeId);
+	    history.pushState({year: 2020, brand: 'bmw'}, 'searchbike', window.location.href);
+	    location.href = '/main/bikeview?bikeId=' + bikeId;
+  }
+
+	function searchbikes(params, obj) {
+      gLoadingFilteredBike = true;
+      buttonSpinner(obj, true, false);
+      requestPost('/main/searchbikes', params, data => {
+          console.log('searchbikes data =', data);
+          if(data.result) {
+              var bikes = data.bikes;
+              if(bikes.length > 0) {
+                  if(params.offset == 0) {
+                      $('#filteredbikes').children().html("");
+                      if(data.totalCount > 0) {
+                          gTotalFilteredBikeCount = data.totalCount;
+                          console.log('gTotalFilteredBikeCount =', gTotalFilteredBikeCount);
+                      }
+                  }
+
+                  let filteredBikes = $('#filteredbikes');
+                  bikes.forEach(function(value, index) {
+                      // $('#filteredbikes').children().append("<p>" + value + "</p>");
+                      // console.log("index = " + index + ", value = " + value);
+
+                      //value [0]  [1]    [2]    [3]            [4]        [5]         [6]          [7]     [8]   [9]           [10]
+                      //      :id, :name, :year, :displacement, :maxpower, :maxtorque, :dry_weight, :price, :url, :ratingCount, :totalRating
+
+                      //새로운 페이지로
+                      let parent = $("<a href=\"javascript:void(0)\" onclick=\"window.open('/main/bikeview?bikeId=" + value[0] + "', '_blank')\" link=\"windowText\" hover=\"windowText\" active=\"windowText\" style=\"text-decoration: none\"></a>");
+                      //현재 페이지로
+                      // let parent = $("<a href=\"javascript:void(0)\" onclick=\"onClickMotorbike(" + value[0] + ")\" link=\"windowText\" hover=\"windowText\" active=\"windowText\" style=\"text-decoration: none\"></a>");
+                      let card = $("<div id=\"bikeNo-" + value[0] + "\" class=\"card\" style=\"width: 16rem; display: inline-block; margin: 5px; vertical-align: top; border-color: rgba(0, 0, 0, .125)\"></div>");
+                      if(value[9] > 0) {
+                          let ratingRibbon = $('<div class="ratingRibbon">');
+                          colorRating(ratingRibbon, value[9]);
+                          ratingRibbon.append('<div style="margin: 0 0.5rem">' + value[10].toFixed(1) + '</div>');
+                          card.append(ratingRibbon);
+                      }
+                      let thumb = value[8] ? value[8] : '/NoImageAvailable.png';
+                      // card.append("<img src=\"" + thumb + "\" style=\"width: 70%; height: auto; display: block; margin: 0.3rem auto auto auto;\" alt=\"" + value[0] + "\">");
+                      let lazyImage = $("<img class='lazy' src=\"/imgLoading.svg\" data-src='" + thumb + "' style=\"width: 30%; height: auto; display: block; margin: 0.3rem auto auto auto;\" alt=\"" + value[0] + "\">");
+                      card.append(lazyImage);
+                      lazyImages.push(lazyImage[0]);
+                      // card.append("<img class='lazy' src=\"/imgLoading.svg\" data-src='" + thumb + "' style=\"width: 70%; height: auto; display: block; margin: 0.3rem auto auto auto;\" alt=\"" + value[0] + "\">");
+                      let cardBody = $("<div class=\"card-body\"></div>");
+                      cardBody.append("<h4 class=\"card-title\" style=\"color: windowText; text-align: left;\">" + value[2] + " " + value[1] + "</h4>");
+                      cardBody.append("<p class=\"card-text\" style=\"color: windowText; text-align: left; margin-bottom: -4px\">" + value[3] + "cc</p>");
+
+                      let blankPos = value[4].indexOf('(');
+                      let maxpower = value[4].substring(0, blankPos === -1 ? value[4].length : blankPos-1);
+                      blankPos = value[5].indexOf('(');
+                      let maxtorque = value[5].substring(0, blankPos === -1 ? value[5].length : blankPos-1);
+                      cardBody.append("<p class=\"card-text\" style=\"color: rgba(0, 0, 0, .3); text-align: left; margin-bottom: 3px\">" + maxpower + "<br>" + maxtorque + "<br>" + value[6] + "</p>");
+                      cardBody.append("<p class=\"card-text\" style=\"color: windowText; text-align: left;\">" + value[7] + "</p>");
+                      card.append(cardBody);
+                      parent.append(card);
+                      filteredBikes.append(parent);
+                  });
+                  gFilteredBikeParams.offset += bikes.length;
+                  console.log('gFilteredBikeParams =', gFilteredBikeParams);
+                  lazyLoad();
+              }
+          }
+          gLoadingFilteredBike = false;
+          setTimeout(() => {
+              buttonSpinner(obj, false, false);
+              if(data.result && data.bikes.length > 0) {
+                  if($('body').height() <= $(window).height()) {//스크롤이 없을경우는 로드 한번 더
+                      searchbikes(gFilteredBikeParams, obj);
+                  }
+              }
+          }, 700);
+      })
+  }
+  function onClickSearchBike(obj) {
+      var years = null;
+      if(!$('#year').text().includes('연식')) {
+          years = $('#year').text().split(", ");
+          years.forEach(function(value, index) {
+              console.log("[" + index + "] " + value);
+          });
+      }
+      var brands = $('#brand').text().split(", ");
+      brands.forEach(function(value, index) {
+          console.log("[" + index + "] " + value);
+      });
+      var styles = $('#style').text().split(", ");
+      styles.forEach(function(value, index) {
+          console.log("[" + index + "] " + value);
+      });
+
+      let displacementRange = null;// {greater_than: 0, less_than: 0};
+      if(gSelectedDisplacementId !== null) {
+          let displacementIndex = parseInt(gSelectedDisplacementId.replace(/[^0-9]/g, ''))-1;
+          let selectedDisplacement = displacements[displacementIndex];
+          displacementRange = {greater_than: selectedDisplacement.greater_than, less_than: selectedDisplacement.less_than};
+          console.log('displaceRange =', displacementRange);
+      }
+      if(brands.length > 0 && styles.length > 0) {
+          // requestPost('/main/searchbikes', {selectedYears: years, selectedBrands: brands, selectedStyles: styles, limit: gLimitFilteredBikeCount, offset: gOffsetFilteredBike}, data => {
+          //     console.log('searchbikes data =', data);
+          // })
+          if(!gLoadingFilteredBike) {
+              slideupAll();
+              gFilteredBikeParams.selectedYears = years;
+              gFilteredBikeParams.selectedBrands = brands;
+              gFilteredBikeParams.selectedStyles = styles;
+              gFilteredBikeParams.displacementRange = displacementRange;
+              gFilteredBikeParams.limit = 12;
+              gFilteredBikeParams.offset = 0;
+              $('#filteredbikes').children().html("");
+              // let url = new URL(location.href);
+              // url.searchParams.append('year', years);
+              // url.searchParams.append('brands', brands);
+              // console.log('location.search =', location.search);
+              // location.search = '?year=2020&brands=BMW';
+              searchbikes(gFilteredBikeParams, obj);
+          }
+      }
+  }
+</script>
+
+<div id="filters-area" class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; height:auto; text-align: left; margin: auto">
+  <% unless @mobileDevice %>
+	<div class="dropdown">
+    <button id="year" class="btn btn-outline-secondary" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis" onclick="onClickItem(this)">연식<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i></button>
+		<button id="brand" class="btn btn-outline-secondary" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis" onclick="onClickItem(this)">브랜드<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i></button>
+		<button id="style" class="btn btn-outline-secondary" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis" onclick="onClickItem(this)">스타일<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i></button>
+		<button id="displacement" class="btn btn-outline-secondary" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis" onclick="onClickItem(this)">배기량<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i></button>
+    <button id="search-bike" class="btn btn-success" style="width: 100px; overflow: hidden; text-overflow: ellipsis" onclick="onClickSearchBike(this)">검색</button>
+    <div id="year_dropdown" class="dropdown-content" style="border-radius: 0.25rem">
+      <% years = Time.new.year..2011 %>
+      <% years.first.downto(years.last).each do |year| %>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" autocomplete="off" id="<%= 'check-year-'.concat year.to_s %>">
+          <label class="form-check-label" for="<%= 'check-year-'.concat year.to_s %>"><%= year %></label>
+        </div>
+      <% end %>
+    </div>
+		<div id="brand_dropdown" class="dropdown-content" style="border-radius: 0.25rem">
+			<% @brands.each_with_index do |brand, index| %>
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" value="" autocomplete="off" id="<%= "check-brand-".concat (index+1).to_s %>">
+				<label class="form-check-label" for="<%= "check-brand-".concat (index+1).to_s %>"><%= brand.name_kr %></label>
+			</div>
+			<% end %>
+		</div>
+		<div id="style_dropdown" class="dropdown-content" style="border-radius: 0.25rem">
+			<% @styles.each_with_index do |style, index| %>
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" value="" autocomplete="off" id="<%= "check-style-".concat (index+1).to_s %>">
+				<label class="form-check-label" for="<%= "check-style-".concat (index+1).to_s %>"><%= style.name %></label>
+			</div>
+			<% end %>
+		</div>
+		<div id="displacement_dropdown" class="dropdown-content" style="border-radius: 0.25rem">
+			<% @displacements.each_with_index do |displacement, index| %>
+			<div class="form-check">
+				<input class="form-check-input" type="checkbox" value="" autocomplete="off" id="<%= "check-displacement-".concat (index+1).to_s %>">
+				<label class="form-check-label" for="<%= "check-displacement-".concat (index+1).to_s %>"><%= displacement %></label>
+			</div>			
+			<% end %>
+		</div>
+	</div>
+  <% else %>
+    <button id="year" class="btn btn-outline-secondary" style="width: 100%; overflow: hidden; text-overflow: ellipsis" onclick="onClickItem(this)">연식<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i></button>
+    <div id="year_dropdown" class="dropdown-content" style="border-radius: 0.25rem;">
+    <% years = Time.new.year..2011 %>
+    <% years.first.downto(years.last).each do |year| %>
+      <div class="form-check" style="display: block">
+        <input class="form-check-input" type="checkbox" value="" autocomplete="off" id="<%= 'check-year-'.concat year.to_s %>">
+        <label class="form-check-label" for="<%= 'check-year-'.concat year.to_s %>"><%= year %></label>
+      </div>
+    <% end %>
+    </div>
+    <button id="brand" class="btn btn-outline-secondary" style="width: 100%; margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis" onclick="onClickItem(this)">브랜드<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i></button>
+    <div id="brand_dropdown" class="dropdown-content" style="border-radius: 0.25rem;">
+    <% @brands.each do |brand| %>
+      <div class="form-check" style="display: block">
+        <input class="form-check-input" type="checkbox" value="" autocomplete="off" id="<%= "check-brand-".concat brand.name %>">
+        <label class="form-check-label" for="<%= "check-brand-".concat brand.name %>"><%= brand.name_kr %></label>
+      </div>
+    <% end %>
+    </div>
+    <button id="style" class="btn btn-outline-secondary" style="width: 100%; margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis" onclick="onClickItem(this)">스타일<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i></button>
+    <div id="style_dropdown" class="dropdown-content" style="border-radius: 0.25rem">
+    <% @styles.each_with_index do |style, index| %>
+      <div class="form-check" style="display: block">
+        <input class="form-check-input" type="checkbox" value="" autocomplete="off" id="<%= "check-style-".concat (index+1).to_s %>">
+        <label class="form-check-label" for="<%= "check-style-".concat style.name %>"><%= style.name %></label>
+      </div>
+    <% end %>
+    </div>
+    <button id="displacement" class="btn btn-outline-secondary" style="width: 100%; margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis" onclick="onClickItem(this)">배기량<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i></button>
+    <div id="displacement_dropdown" class="dropdown-content" style="border-radius: 0.25rem">
+    <% @displacements.each_with_index do |displacement, index| %>
+      <div class="form-check" style="display: block">
+        <input class="form-check-input" type="checkbox" value="" autocomplete="off" id="<%= "check-displacement-".concat index.to_s %>">
+        <label class="form-check-label" for="<%= "check-displacement-".concat index.to_s %>"><%= displacement %></label>
+      </div>
+    <% end %>
+    </div>
+    <button id="search-bike" class="btn btn-success" style="width: 100%; margin-top: 0.25rem; overflow: hidden; text-overflow: ellipsis" onclick="onClickSearchBike(this)">검색</button>
+  <% end %>
+</div>
+
+<div id="filteredbikes-area" class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto">
+	<div class="container-fluid">
+		<div id="filteredbikes" style="margin-top: 10px; ">
+			
+			<div id="xxx" style="margin: 10px; text-align: left;">
+        <% unless @filterBikes.nil? %>
+				<% @filterBikes.each do |bike| %>
+				<a href="bikeview?bikeId=<%= bike.id %>" link="windowText" hover="windowText" active="windowText" style="text-decoration: none">
+				<div id="<%= "bikeNo ".concat bike.id.to_s %>" class="card" style="width: 16rem; display: inline-block; margin: 5px; vertical-align: top; border-color: rgba(0, 0, 0, .125)">
+					<% bikeNo = bike.id.to_s.concat ".png" %>
+					<img src="<%= bike.url %>" style="width: 70%; height: auto; display: block; margin: auto;" alt="<%= bikeNo %>">
+					<div class="card-body">
+						<h4 class="card-title" style="color: windowText; text-align: left;"><%= bike.year + " " + bike.name %></h4>
+						<p class="card-text" style="color: windowText; text-align: left; margin-bottom: -4px"><%= bike.displacement %>cc</p>
+						<p class="card-text" style="color: rgba(0, 0, 0, .3); text-align: left; margin-bottom: 3px">
+              <%= bike.maxpower[0..(bike.maxpower.index('(').nil? ? bike.maxpower.length : bike.maxpower.index('('))-1] %>
+              <br>
+              <%= bike.maxtorque[0..(bike.maxtorque.index('(').nil? ? bike.maxtorque.length : bike.maxtorque.index('('))-1] %>
+              <br>
+              <%= bike.dry_weight %></p>
+						<p class="card-text" style="color: windowText; text-align: left;"><%= bike.price %></p>
+					</div>
+				</div>
+				</a>
+				<% end %>
+        <% end %>
+			</div>
+			
+		</div>
+	</div>
+</div>
+<button type="button" class="btn btn-link scrollTop" style="width: 42px; border: 1px solid #ced4da;" onclick="scrollToTop()"><i class="fas fa-angle-double-up" style="font-size: 1.25rem;"></i></button>

@@ -1,0 +1,3 @@
+class LastActivity < ApplicationRecord
+  belongs_to :user
+end

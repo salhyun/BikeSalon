@@ -1,0 +1,61 @@
+DUCATI:
+  id: 3074
+  name: 두카티 멀티스트라다 1260 D-Air
+  year: 2020
+  style_id: 5
+  price: 정보 없음
+  brand_id: 8
+  totalRating: 0.0
+  maxpower: 158.0hp @ 9500rpm
+  maxtorque: 129.5Nm @ 7500rpm
+  compression_ratio: 13.0:1
+  gasmileage: 19.23km/리터 (5.20리터/100km)
+  valves: 4
+  fuel_delivery_system: 인젝션
+  fuel_type: 가솔린
+  ignition_type: 듀얼 스파크
+  cooling_system: 수냉식
+  gearbox_type: 6단
+  transmission_type: 
+  clutch: 유압 제어 기능이있는 가벼운 동작, 습식, 다중 플레이트 슬리퍼 클러치. 주행시 셀프 서보 동작, 오버런시 슬리퍼 동작
+  front_brakes: 더블 디스크. ABS. 플로팅 디스크. 4 피스톤 캘리퍼. 방사상으로 장착.
+  front_disk: 정보없음
+  rear_disk: 정보없음
+  front_tyre: 120/70-17
+  rear_tyre: 190/55-17
+  front_suspension: 48mm 완전 조절 식 usd 포크.
+  rear_suspension: 완전 조절 식 Sachs 장치. 원격 스프링 프리로드 조정. 알루미늄 단면 스윙 암
+  dry_weight: 213.0kg
+  length: 2200mm
+  width: 정보없음
+  height: 정보없음
+  wheelbase: 1585mm
+  seat_height: 825mm
+  fueltank: 20.00리터
+  url: 
+  rear_brakes: 싱글 디스크. ABS. 2 피스톤 캘리퍼.
+  top_speed: 정보없음
+  curb_weight: 236.0kg
+  front_suspension_travel: 정보없음
+  rear_suspension_travel: 정보없음
+  reserve_fuel: 정보없음
+  engine_type: V2, 4 스트로크
+  engine_details: 테스 타레 스타 DVT
+  camshaft: Desmodromic 밸브 제어
+  exhaust_system: 촉매 변환기 및 2 개의 람다 프로브, 알루미늄 테일 파이프가있는 스테인레스 스틸 머플러
+  lights: 정보없음
+  frame_type: 관형 강철 격자
+  final_drive: 체인
+  lubrication_system: 정보없음
+  bore_stroke: 106.0x71.5mm
+  co2_emissions: 120.6CO2g/km.
+  emissions: 유로 4
+  trail_size: 111mm
+  ground_clearance: 정보없음
+  instruments: LCD 디스플레이
+  displacement: 1262.0
+  msrp: 0
+  designRating: 0.0
+  performanceRating: 0.0
+  comfortRating: 0.0
+  ratingCount: 0

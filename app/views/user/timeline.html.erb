@@ -1,0 +1,2240 @@
+<style>
+	body {
+		background-color:floralwhite;
+		width: 100%;
+		margin: auto
+	}
+</style>
+
+<style>
+  .cd-container {
+    width: <%= @mobileDevice ? 95 : 80 %>%;
+    /*max-width: 1080px;*/
+    margin: 0 auto;
+    background: #2B343A;
+    padding: 0 10%;
+    border-radius: 2px;
+  }
+  .cd-container::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+
+  /* --------------------------------
+
+  Main components
+
+  모델
+  1. 사진 5장
+  2. 카테고리(투어, 정비, 일상, 맛집, 커피, 구매, 판매...) - 관련한 아이콘
+  3. 관련 글
+  4. good
+  5. bad
+  6. 공개 or 비공개
+  6. 리플들 references
+
+  -------------------------------- */
+
+
+  #cd-timeline {
+    position: relative;
+    padding: 2em 0;
+    margin-top: 2em;
+    margin-bottom: 2em;
+  }
+  #cd-timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 25px;
+    height: 100%;
+    width: 4px;
+    background: #7E57C2;
+  }
+  @media only screen and (min-width: 1170px) {
+    #cd-timeline {
+      margin-top: 3em;
+      margin-bottom: 3em;
+    }
+    #cd-timeline::before {
+      left: 50%;
+      margin-left: -2px;
+    }
+  }
+
+  .cd-timeline-block {
+    position: relative;
+    margin: 2em 0;
+  }
+  .cd-timeline-block:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  .cd-timeline-block:first-child {
+    margin-top: 0;
+  }
+  .cd-timeline-block:last-child {
+    margin-bottom: 0;
+  }
+  @media only screen and (min-width: 1170px) {
+    .cd-timeline-block {
+      margin: 4em 0;
+    }
+    .cd-timeline-block:first-child {
+      margin-top: 0;
+    }
+    .cd-timeline-block:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .cd-timeline-img {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px #7E57C2, inset 0 2px 0 rgba(0, 0, 0, 0.08), 0 3px 0 4px rgba(0, 0, 0, 0.05);
+  }
+  .cd-timeline-img {
+    background: #673AB7;
+  }
+  @media only screen and (min-width: 1170px) {
+    .cd-timeline-img {
+      width: 30px;
+      height: 30px;
+      left: 50%;
+      margin-left: -15px;
+      margin-top: 15px;
+      /* Force Hardware Acceleration in WebKit */
+      transform: translateZ(0);
+      backface-visibility: hidden;
+    }
+  }
+  <% unless @mobileDevice %>
+  .cd-timeline-content:hover {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  }
+  <% end %>
+
+  .cd-timeline-content {
+    position: relative;
+    margin-left: 60px;
+    margin-right: 30px;
+    background: #333C42;
+    border-radius: 2px;
+    border: 1px solid transparent;
+    padding: 1em;
+
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    transition: all 0.3s cubic-bezier(.25, .8, .25, 1);
+  }
+
+  .timeline-content-info {
+    background: #2B343A;
+    padding: 5px 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.08);
+    border-radius: 2px;
+  }
+  /*i {*/
+    /*margin-right: 5px;*/
+  /*}*/
+  .timeline-content-info-title, .timeline-content-info-date {
+    width: calc(50% - 2px);
+    display: inline-block;
+  }
+  @media (max-width: 500px) {
+    .timeline-content-info-title, .timeline-content-info-date {
+      display: block;
+      width:100%;
+    }
+  }
+  .content-skills {
+    font-size: 12px;
+    padding: 0;
+    margin-bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  /*li {*/
+    /*background: #40484D;*/
+    /*border-radius: 2px;*/
+    /*display: inline-block;*/
+    /*padding: 2px 10px;*/
+    /*color: rgba(255,255,255,0.7);*/
+    /*margin: 3px 2px;*/
+    /*text-align: center;*/
+    /*flex-grow: 1;*/
+  /*}*/
+
+  .cd-timeline-content:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  .cd-timeline-content h2 {
+    color: rgba(255,255,255,.9);
+    margin-top:0;
+  }
+  .cd-timeline-content p, .cd-timeline-content .cd-date {
+    color: rgba(255,255,255,.7);
+    font-size: 13px;
+    font-size: 0.8125rem;
+  }
+  .cd-timeline-content .cd-date {
+    display: inline-block;
+  }
+  .cd-timeline-content p {
+    margin: 1em 0;
+    line-height: 1.6;
+  }
+
+  .cd-timeline-content::before {
+    content: '';
+    position: absolute;
+    top: 16px;
+    right: 100%;
+    height: 0;
+    width: 0;
+    border: 7px solid transparent;
+    border-right: 7px solid #333C42;
+  }
+  .cd-timeline-attachments {
+    display: flex;
+    width: 100%;
+  }
+
+  @media only screen and (min-width: 768px) {
+    .cd-timeline-content h2 {
+      font-size: 20px;
+      font-size: 1.25rem;
+    }
+    .cd-timeline-content p {
+      font-size: 16px;
+      font-size: 1rem;
+    }
+    .cd-timeline-content .cd-read-more, .cd-timeline-content .cd-date {
+      font-size: 14px;
+      font-size: 0.875rem;
+    }
+  }
+  @media only screen and (min-width: 1170px) {
+    .cd-timeline-content {
+      color: white;
+      margin-left: 0;
+      /*padding: 1.6em;*/
+      padding: 0.8em;
+      width: 36%;
+      margin: 0 5%
+    }
+    .cd-timeline-content::before {
+      top: 24px;
+      left: 100%;
+      border-color: transparent;
+      border-left-color: #333C42;
+    }
+    .cd-timeline-content .cd-date {
+      position: absolute;
+      width: 100%;
+      left: 132%;
+      top: 6px;
+      font-size: 16px;
+      font-size: 1rem;
+    }
+    .cd-timeline-block:nth-child(even) .cd-timeline-content {
+      float: right;
+    }
+    .cd-timeline-block:nth-child(even) .cd-timeline-content::before {
+      top: 24px;
+      left: auto;
+      right: 100%;
+      border-color: transparent;
+      border-right-color: #333C42;
+    }
+    .cd-timeline-block:nth-child(even) .cd-timeline-content .cd-read-more {
+      float: right;
+    }
+    .cd-timeline-block:nth-child(even) .cd-timeline-content .cd-date {
+      left: auto;
+      right: 132%;
+      text-align: right;
+    }
+    .cd-timeline-attachments {
+      justify-content: center;
+    }
+
+    <% unless @mobileDevice %>
+    .card:hover {
+      box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    }
+    <% end %>
+  }
+  <% unless @mobileDevice %>
+  .timeline-dm:hover {
+    color: antiquewhite;
+    text-decoration: none;
+  }
+  <% end %>
+
+  .wrap-carousel {
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    filter: progid:DXImageTransform.Microsoft.Gradient(startColorstr='#20000000', endColorstr='#20000000');
+    z-index: 50000;
+  }
+  .carousel-inner > .carousel-item > img {
+    max-width: <%= @mobileDevice ? 100 : 80 %>%;
+    margin: auto;
+  }
+  <% unless @mobileDevice %>
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-image: none;
+  }
+  .carousel-control-next-icon:after {
+    position: absolute;
+    right: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f105";
+    font-size: 55px;
+  }
+  .carousel-control-prev-icon:after {
+    position: absolute;
+    left: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f104";
+    font-size: 55px;
+  }
+  <% end %>
+
+  .my-close-button {
+    color: #dc3545;
+    font-size: 1.6rem;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0.75;
+    text-shadow: 0 1px;
+    transition: opacity 150ms ease-in-out;
+  }
+  .my-close-button:hover {
+    opacity: 1;
+  }
+  .youtube-thumb:after {
+    position: relative;
+    font-family: "Font Awesome 5 Brands";
+    right: 50px;
+    bottom: 0;
+    font-weight: 900;
+    color: #ff0000a0;
+    content: '\f167';
+    font-size: 40px;
+  }
+  .video-thumb:after {
+    position: relative;
+    font-family: "Font Awesome 5 Free";
+    right: 50px;
+    bottom: 0;
+    font-weight: 900;
+    color: #b73aa7a0;
+    content: '\f03d';
+    font-size: 40px;
+  }
+</style>
+
+<script type="text/javascript">
+
+  pageSize = 6;
+  pageOffset = 0;
+  searchWord = "";
+  ajaxTimelineLoading = false;
+  allLoadingTimeline = false;
+
+  commentSize = 6;
+  commentOffset = 0;
+  opendTimelineModal = false;
+  currentTimelineId = 0;
+  currentTimelineKind = {kind: 1}
+  ajaxCommentLoading = true;
+  allLoadingComment = false;
+
+  replyReaders = new Map();
+
+  hashtagMaxnum = 8;
+  hashtagSuggests = new Array();
+
+  $(document).ready(function() {
+      console.log('guest = ' + <%= @guest %>);
+      $('.timeline-container').css('margin-top', $('.navbar')[0].clientHeight+10);
+      documentReady();
+
+      <% unless @mobileDevice %>
+      if($('#cd-timeline').length > 0) {
+          let rect = $('#cd-timeline')[0].getBoundingClientRect();
+          $('.floating-badge').css('left', (rect.left-$('.floating-badge')[0].clientWidth/3) + 'px');
+      }
+      <% end %>
+
+      $('[data-toggle="tooltip"]').tooltip({
+          animation: true,
+          delay: {show: 500, hide: 100}
+      });
+
+      $('#input_imgs').on('change', function() {
+          selectImageFiles(this);
+      });
+
+      $('#input-title').on('change keyup paste', function () {
+          if($(this).next('small').is(':visible')) {
+              $(this).next('small').hide();
+          }
+      });
+      $('#input-desc').on('change keyup paste', function () {
+          if($(this).next('small').is(':visible')) {
+              $(this).next('small').hide();
+          }
+          if($(this).height() < this.scrollHeight) {
+              console.log(`scrollHeight=${this.scrollHeight}, height=${$(this).height()}`);
+              $(this).css('height', 'auto').css('height', this.scrollHeight);
+              scrollToElement($(this), $('#modal-createTimeline'), 0, 3);
+          }
+      });
+      $('#input-youtubelink').on('change keyup paste', function () {
+          let youtubeLink = $(this).val();
+          let $button = $('#modal-linkYoutube').find('.modal-footer').children('button').last();
+          if(youtubeLink.includes('youtube.com') || youtubeLink.includes('youtu.be')) {
+              if($button.attr('disabled') === 'disabled') {
+                  $button.attr('disabled', false);
+              }
+          } else {
+              $button.attr('disabled', true);
+          }
+      });
+
+      <% unless @guest %>
+      $('#modal-createTimeline').on('show.bs.modal', function (event) {
+          $('body').css('overflow', 'hidden');
+          console.log('show.bs.modal #modal-createTimeline zIndex =', $('#modal-createTimeline').css('z-index'));
+
+          $('#thumbs').prev('small').hide();
+          $('#thumbs').css('display', 'none');
+
+          var button = $(event.relatedTarget);
+          var kind = button.data('kind');
+
+          let kinds = ['사진', '유튜브', '영상클립'];
+          $('#input-kind').empty();
+          kinds.forEach((kind, index) => {
+              if(currentTimelineKind.kind === (index+1)) {
+                  $('#input-kind').append('<option selected>' + kind + '</option>');
+              } else {
+                  $('#input-kind').append('<option>' + kind + '</option>');
+              }
+          })
+
+          if(typeof selectedFiles === 'undefined') {
+              selectedFiles = [];
+          } else {
+              selectedFiles.length = 0;
+          }
+          $('#input-title').prev('small').hide();
+          $('#input-title').next('small').hide();
+          $('#input-desc').next('small').hide();
+
+          $('#tag-area').empty();
+          let $inputTags = $('<input class="form-control" name="input-tags" type="text" row="3" placeholder="태크를 입력하세요">');
+          $('#tag-area').append($inputTags);
+          $('#tag-area').append('<p style="font-size: 80%; line-height: 1rem; margin-top: 0.25rem">태그구분은 엔터(enter)키 혹은 콤마(,)로 구분할 수 있으며, 최대갯수는 8개입니다</p>');
+          if(hashtagSuggests.length <= 0) {
+              requestPostSync('/gallery/readBestHashtags', {limit: 20}, data => {
+                  if(data.result) {
+                      console.log('data =', data);
+                      data.bestHashtags.forEach(tag => {
+                          hashtagSuggests.push(tag.word);
+                      })
+                  }
+              })
+          }
+          myAmsify = $inputTags.amsifySuggestags({
+              suggestions: hashtagSuggests
+          });
+
+          $('.imgs_wrap').empty();
+          $('#upload-progress').hide();
+
+          if(kind == 'create') {
+              $('#modalTimeline-Label').text('타임 라인 등록');
+              $(this).find('.modal-footer').children().last().text('등록');
+              $(this).find('.modal-footer').children().last().attr('onclick', 'confirmCreateTimeline(this)');
+
+              $('#input-category').children().eq(0).prop('selected', true);
+
+              $(this).find('#input-title').val('');
+              $(this).find('#input-desc').val('');
+
+              if(timelineLocation.enable) {
+                  timelineLocation.enable = false;
+                  resetMap();
+                  let text = $('#select-location').text();
+                  $('#select-location').empty().text(text);
+                  $('#location-address').text('');
+                  $('#location-close-button').css('display', 'none');
+              }
+          }
+          else if(kind == 'modify') {
+              var timelineId = button.data('id');
+              currentTimelineKind.kind = button.data('timelinekind');
+              console.log('currentTimelineKind.kind =', currentTimelineKind);
+              $('#input-kind').children('option').each(function (index) {
+                  console.log('option =', $(this).text());
+                  if(currentTimelineKind.kind === (index+1)) {
+                      $(this).attr('selected', true);
+                  } else {
+                      $(this).attr('selected', false);
+                  }
+              });
+              onChangeTimelineKind($('#input-kind')[0]);
+
+              $('#modalTimeline-Label').text('타임 라인 수정');
+              $(this).find('.modal-footer').children().last().text('수정');
+              $(this).find('.modal-footer').children().last().attr('onclick', 'confirmModifyTimeline(' + timelineId + ', this)');
+
+              $(this).find('#input-category').children().each(function() {
+                  if($(this).text() == $('#timeline-' + timelineId + '-category').text()) {
+                      $(this).prop('selected', true);
+                  } else {
+                      $(this).prop('selected', false);
+                  }
+              });
+
+              $(this).find('#input-title').val($('#timeline-' + timelineId + '-title').text());
+              $(this).find('#input-desc').val($('#timeline-' + timelineId + '-desc').html().replace(/<br>/gi, '\n'));
+
+              $('#thumbs').css('display', 'block');
+              $('#thumbs').css('margin-top', '10px');
+              $('#timeline-' + timelineId + '-attachments').children('div').each(function() {
+                  console.log($(this).children('img').attr('src'));
+
+                  var imgUrl = $(this).children('img').attr('src');
+                  var html = "<img style=\"max-width: 100px; margin: 2px\" src=\"" + imgUrl +"\" class='selProductFile'>";
+                  $('.imgs_wrap').append(html);
+              });
+
+              let $hashtags = $('#hashtags-' + timelineId);
+              if($hashtags.length > 0) {
+                  $hashtags.text().replace(/#/gi, '').split(' ').forEach(hashtag => {
+                      myAmsify.addTag(hashtag);
+                  })
+              }
+
+              let location = $('#timeline-' + timelineId + '-location');
+              if(location.length > 0) {
+                  enableTimelineLocation(location);
+              } else {
+                  disableTimelineLocation();
+              }
+              console.log('selected category = ' + $('#input-category option:selected').text());
+          }
+      });
+      $('#modal-createTimeline').on('shown.bs.modal', function (event) {
+          var button = $(event.relatedTarget);
+          var kind = button.data('kind');
+          let getDefaultHeight = function($this) {
+              let lineHeight = getNumberFromString($this.css('line-height'));
+              let rows = getNumberFromString($this.attr('rows'));
+              let paddingTop = getNumberFromString($this.css('padding-top'));
+              let paddingBottom = getNumberFromString($this.css('padding-bottom'));
+              let borderWidth = getNumberFromString($this.css('border-width'));
+              return lineHeight*rows+(paddingTop+paddingBottom+borderWidth*2);
+          }
+          if(kind == 'create') {
+              $(this).find('#input-desc').each(function () {
+                  $(this).css('height', getDefaultHeight($(this)));
+              })
+          } else if(kind == 'modify') {
+              $(this).find('#input-desc').each(function () {
+                  let defaultHeight = getDefaultHeight($(this));
+                  if(defaultHeight < this.scrollHeight) {
+                      $(this).css('height', 'auto').css('height', this.scrollHeight);
+                  }
+              })
+          }
+      })
+      $('#modal-createTimeline').on('hide.bs.modal', function (event) {//화면에서 사라지기 직전
+          $('body').css('overflow', 'auto');
+      });
+      $('#modal-deleteTimeline').on('show.bs.modal', function (event) {
+          console.log('show.bs.modal #modal-deleteTimeline');
+
+          var button = $(event.relatedTarget);
+          var timelineId = button.data('id');
+          console.log('timelineId = ' + timelineId);
+
+          $(this).find('.modal-footer').children().last().attr('onclick', 'confirmDeleteTimeline(' + timelineId + ', this)');
+      });
+      $('#modal-mapview').on('show.bs.modal', function (event) {
+          let footer = $('#modal-mapview').find('.modal-footer');
+          if(timelineLocation.enable) {
+              footer.children('button').last().attr('disabled', false);
+          } else {
+              footer.children('button').last().attr('disabled', true);
+          }
+      });
+      $('#modal-mapview').on('shown.bs.modal', function (event) {
+          console.log('modal-mapview zIndex =', $('#modal-mapview').css('z-index'));
+          // $('.pac-container').css('z-index', $('#modal-mapview').css('z-index') + 10);//google map search box dropdown
+          let modalBody = $(this).find('.modal-body');
+          if(modalBody.children('#map').length > 0) {
+              if(timelineLocation.enable) {
+                  setMapCenterWithMarker(timelineLocation.lat, timelineLocation.lng);
+              } else {
+                  displayFloatingMapLoading(modalBody[0].getBoundingClientRect(), $('#modal-mapview').css('z-index')+10);
+                  removeMarker();
+                  if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(function(position) {
+                          $('#floating-map-loading').css('display', 'none');
+                          map.setCenter({lat: position.coords.latitude, lng: position.coords.longitude});
+                          console.log('reset map pos =', {lat: position.coords.latitude, lng: position.coords.longitude});
+                      }, function() {
+                          handleLocationError(true, infoWindow, map.getCenter());
+                      });
+                  } else {
+                      // Browser doesn't support Geolocation
+                      $('#floating-map-loading').css('display', 'none');
+                      map.setCenter({lat: 35.859389, lng: 128.573000});
+                  }
+              }
+          } else {
+              console.log('modalBody height =', modalBody[0].clientHeight);
+              let mapHeight = modalBody[0].clientHeight - 20;
+              modalBody.append('<div id="map" style="width: 100%; height: ' + mapHeight + 'px; padding: 1rem"></div>');
+              displayFloatingMapLoading(modalBody[0].getBoundingClientRect(), $('#modal-mapview').css('z-index')+10);
+              if(timelineLocation.enable) {
+                  $('#floating-map-loading').css('display', 'none');
+                  initMap({lat: timelineLocation.lat, lng: timelineLocation.lng}, true);
+              } else {
+                  if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(function(position) {
+                          $('#floating-map-loading').css('display', 'none');
+                          initMap({lat: position.coords.latitude, lng: position.coords.longitude});
+                          console.log('reset map pos =', {lat: position.coords.latitude, lng: position.coords.longitude});
+                      }, function() {
+                          handleLocationError(true, infoWindow, map.getCenter());
+                      });
+                  } else {
+                      // Browser doesn't support Geolocation
+                      $('#floating-map-loading').css('display', 'none');
+                      initMap({lat: 35.859389, lng: 128.573000});
+                  }
+              }
+          }
+      });
+      $('#modal-linkYoutube').on('show.bs.modal', function (event) {
+          $('#modal-createTimeline').css('overflow', 'hidden');
+          let footer = $(this).find('.modal-footer');
+          $('#input-youtubelink').val('');
+          footer.children('button').last().attr('disabled', true);
+      })
+      $('#modal-linkYoutube').on('shown.bs.modal', function (event) {
+          $('#input-youtubelink').focus();
+      })
+      $('#modal-linkYoutube').on('hide.bs.modal', function (event) {
+          $('#modal-createTimeline').css('overflow', 'auto');
+      })
+      $('#modal-mapview').on('hide.bs.modal', function (event) {
+          let text = $('#select-location').text();
+          if(timelineLocation.enable) {
+              $('#select-location').empty().text(text).append('<i class="fas fa-check" style="color: lawngreen; margin-left: 0.25rem"></i>');
+          } else {
+              $('#select-location').empty().text(text);
+          }
+          $('#modal-createTimeline').css('overflow', 'auto');
+      });
+      <% end %>//unless @guest
+
+      $('#DetailViewModal').on('scroll', function () {
+          // console.log('%c scrollTop = ' + $(this).scrollTop(), 'background: #222; color: yellow');
+
+          var dialog = $(this).children('.modal-dialog');
+          var diff = dialog.height() - $(window).height();
+          if(diff - $(this).scrollTop() <= 0) {
+              console.log('%c reach bottom', 'background: #222; color: yellow');
+              if(ajaxCommentLoading == false && allLoadingComment == false) {
+                  readComments(currentTimelineId);
+              }
+          }
+      });
+
+      console.log('currentBike = ' + '<%= @currentBike.name %>');
+      var bikeId = getParameterByName('bikeId');
+      console.log('bikeId = ' + bikeId);
+
+      if(typeof eventPersisted !== 'undefined') {
+          $('#cd-timeline').empty();
+      }
+      readMyTimelines();
+  });
+
+  $(window).scroll(function () {
+      // console.log('%c scrollTop = ' + $(window).scrollTop(), 'background: #222; color: yellow');
+      // console.log('docHeight = ' + $(document).height());//도큐먼트 높이 : 도큐먼트 전체 높이, 증거)창크기를 줄여도 변하지 않음
+      // console.log('winHeight = ' + $(window).height());//도큐먼트중 현재 화면에 보여지는 부분(윈도우)의 높이, 창크기를 줄이면 이것도 줄어듬
+      var diff = $(document).height() - $(window).height();
+      // console.log('차이 = ' + ddd);
+      if(ajaxTimelineLoading === false && allLoadingTimeline === false) {
+          if($(window).scrollTop() > diff*95/100) {
+              console.log('%c reach bottom', 'background-color: dimgray; color: blue');
+              readMyTimelines();
+          }
+      } else {
+      }
+  });
+
+  function readMyTimelines() {
+      if(<%= !@currentBike.public %> && <%= @guest %>) {
+          showAlert('info', '비공개 타임라인입니다.', $('.timeline-container'));
+      } else {
+          ajaxTimelineLoading = true;
+          jQuery.ajax({
+              url: '/user/readTimelines',
+              type: 'post',
+              data: {
+                  bikeId: getParameterByName('bikeId'),
+                  limit: pageSize,
+                  offset: pageOffset,
+                  searchWord: searchWord
+              },
+              success: function(data) {
+                  if(data.result == true) {
+                      if(data.timelineCount == 0) {
+                          allLoadingTimeline = true;
+                      } else if(data.timelineCount > 0) {
+                          for(var i in data.timelines) {
+                              var misc = data.misc[data.timelines[i].id];
+                              buildTimelineHtml($('#cd-timeline'), data.timelines[i], misc);
+                          }
+                          pageOffset += data.timelineCount;
+                      }
+                  } else {
+                      showAlert('danger', data.message, $('.timeline-container'));
+                  }
+                  ajaxTimelineLoading = false;
+              },
+              error: function(request, status, error) {
+                  console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+              }
+          });
+      }
+  }
+  function getCategoryFontColor(category) {
+      let color = 'white';
+      if(category == '맛집') {
+          color = '#383d41';
+      }
+      return color;
+  }
+  function buildTimelineHtml(parent, timeline, misc, prepend=false) {
+
+      var block = $("<div class=\"cd-timeline-block\">");
+      block.append("<div class=\"cd-timeline-img cd-picture\">");
+
+      var content =  $("<div class=\"cd-timeline-content\" id=\"content-timeline-" + timeline.id + "\">");
+      var flexArea = $("<div style=\"display: flex; flex-direction: row-reverse; margin-bottom: 5px\">");
+      <% if @guest == false %>
+      flexArea.append("<a class=\"timeline-dm\" style=\"margin: 2px;\" data-toggle=\"modal\" data-id=\"" + timeline.id + "\" href=\"#modal-deleteTimeline\">삭제</a>");
+      flexArea.append("<a class=\"timeline-dm\" style=\"margin: 2px;\" data-toggle=\"modal\" data-kind=\"modify\" data-id=\"" + timeline.id + "\" data-timelinekind=\"" + timeline.kind + "\" href=\"#modal-createTimeline\">수정</a>");
+      <% end %>
+      content.append(flexArea);
+
+      // var subContent = $("<div class=\"cd-timeline-subcontent\" style=\"cursor: pointer; width: 100%; height: 100%;\" onclick=\"location.href='photoview?id=" + timeline.id + "'\">");
+      var subContent = $("<div class=\"cd-timeline-subcontent\" style=\"cursor: pointer; width: 100%; height: 100%;\" data-toggle=\"modal\" data-timelineid=\"" + timeline.id + "\" data-target=\"#DetailViewModal\">");
+      //data-toggle=\"modal\" data-timelineid=\"" + timeline.id + "\" data-target=\"#DetailViewModal\"
+
+      flexArea = $("<div id=\"timeline-" + timeline.id + "-attachments\" class='cd-timeline-attachments'>");
+      for(let i=0; i<(misc.attachments.length > 3 ? 3 : misc.attachments.length); i++) {
+          let attachment = misc.attachments[i];
+          var flexItem = $("<div style=\"display: flex; align-items: flex-end; margin: 2px;\">");
+          let $img = $("<img src=\"" + attachment.thumb + "\" style=\"max-width: 100%; height: auto; margin: auto; object-fit: cover\">");
+          flexItem.append($img);
+          if(timeline.kind == 2) {
+              flexItem.addClass('youtube-thumb');
+          } else if(timeline.kind == 3) {
+              flexItem.addClass('video-thumb');
+          }
+          flexArea.append(flexItem);
+      }
+      subContent.append(flexArea);
+
+      var hcv = $(" <div class=\"hcv\" style=\"text-align: right;\">");
+      hcv.append(" <i class=\"far fa-heart\" style=\"color: #D6336C\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"좋아요\"></i>");
+      hcv.append(" <span style=\"color: darkgray; font-size: 0.7rem; margin-left: -3px; margin-right: 4px;\">" + numberWithCommas(misc.ratingNum) + "</span>");
+      hcv.append(" <i class=\"far fa-comment\" style='color: darkgray' data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"댓글수\"></i>");
+      hcv.append(" <span style=\"color: darkgray; font-size: 0.7rem; margin-left: -3px; margin-right: 4px;\">" + numberWithCommas(misc.commentNum) + "</span>");
+      hcv.append(" <i class=\"far fa-eye\" style='color: darkgray' data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"조회수\"></i>");
+      hcv.append(" <span style=\"color: darkgray; font-size: 0.7rem; margin-left: -3px\">" + numberWithCommas(timeline.viewCount) + "</span>");
+      subContent.append(hcv);
+
+      let title = $('<div id="timeline-' + timeline.id + '-titleArea" style="display: flex; flex-direction: row; justify-content: flex-end; align-items: center;"></div>');
+      title.append('<div id="timeline-' + timeline.id + '-category" style="margin-right: 5px; margin-bottom: 0.5rem; color: ' + getCategoryFontColor(timeline.category) + '; font-size: 0.8rem; background-color: ' + misc.categoryColor + '; border-radius: 2px; padding: <%= @mobileDevice ? 0 : 2 %>px;">' + timeline.category + '</div>');
+      title.append('<h2 id="timeline-' + timeline.id + '-title" style="font-size: <%= @mobileDevice ? 1.2 : 2 %>rem;">' + timeline.title + '</h2>');
+      if(misc.timelineLocation) {
+          title.prepend('<div id="timeline-' + timeline.id + '-location" style="margin-bottom: 0.1rem; font-size: <%= @mobileDevice ? 1 : 1.25 %>rem; margin-right: 0.25rem;" data-locationid="' + misc.timelineLocation.id + '" data-lat="' + misc.timelineLocation.lat + '" data-lng="' + misc.timelineLocation.lng + '" data-name="' + misc.timelineLocation.name + '" data-address="' + misc.timelineLocation.address + '"><i class="far fa-map" style="color: #17a2b8;"></i></div>');
+      }
+      subContent.append(title);
+
+      // subContent.append("<h2 id=\"timeline-" + timeline.id + "-title\" style='text-align: right;'>" + timeline.title + "</h2>");
+      $("<p id=\"timeline-" + timeline.id + "-desc\" style='text-align: right; overflow: hidden; -ms-text-overflow: ellipsis;text-overflow: ellipsis; white-space: nowrap'></p>").html(timeline.desc.replace(/\n/gi, '<br>')).appendTo(subContent);
+      content.append(subContent);
+
+      let $hashtags = $('<div id="hashtags-' + timeline.id + '" style="display: flex; justify-content: flex-end; flex-wrap: wrap; margin-left: auto;"></div>');
+      if(timeline.cachedHashtags.length > 0) {
+          $hashtags.append('<div class="text-ellipsis" style="max-width: 60%; background-color: #a141ad; color: whitesmoke; border-radius: 0.125rem; font-size: 0.9rem; padding: 0 2px">' + timeline.cachedHashtags + '</div>');
+      }
+      subContent.append($hashtags);
+
+      content.append("<span class=\"cd-date\">" + getDateString(new Date(timeline.created_at)) + "</span>");
+      block.append(content);
+      if(prepend) {
+          parent.prepend(block);
+      } else {
+          parent.append(block);
+      }
+  }
+
+  function onClickTimeline(timelineId) {
+      console.log('click Timeline');
+      console.log(timelineId);
+
+      jQuery.ajax({
+          url: '/user/findTimeline',
+          type: 'post',
+          data: {
+              id: timelineId
+          },
+          success: function(data) {
+              console.log("success");
+              console.log(data);
+              if(data.result == true) {
+                  var timeline = data.timeline;
+
+                  if(timeline.timelinepics.length > 0) {
+                      var indicator = $('#carouselTimelineIndicators').find('.carousel-indicators');
+                      indicator.empty();
+                      indicator.append("<li data-target=\"#carouselTimelineIndicators\" data-slide-to=\"0\" class=\"active\"></li>");
+
+                      var inner = $('#carouselTimelineIndicators').find('.carousel-inner');
+                      inner.empty();
+                      inner.append("<div class=\"carousel-item active\">");
+                      inner.children('.carousel-item').last().append("<img class=\"d-block\" style=\"width: auto; height: auto; max-height: 60%; margin: auto;\" src=\"" + timeline.timelinepics[0].url  + "\" alt=\"First slide\">");
+
+                      for(var i=1; i<timeline.timelinepics.length; i++) {
+                          console.log(timeline.timelinepics[i].url);
+
+                          indicator.append("<li data-target=\"#carouselTimelineIndicators\" data-slide-to=\"" + i + "\"></li>");
+
+                          inner.append("<div class=\"carousel-item\">");
+                          inner.children('.carousel-item').last().append("<img class=\"d-block\" style=\"width: auto; height: auto; max-height: 60%; margin: auto;\" src=\"" + timeline.timelinepics[i].url  + "\" alt=\"First slide\">");
+                      }
+                  }
+
+                  $('.wrap-carousel').removeClass('display-none');
+
+              } else {
+                  alert("해당 데이터가 존재하지 않습니다.");
+              }
+          },
+          error: function(request, status, error) {
+              console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+          }
+      });
+
+      // $('.wrap-carousel').removeClass('display-none');
+      //
+      // $('#carouselTimelineIndicators').
+  }
+
+  <% unless @guest %>
+  function onChangeTimelineKind(obj) {
+      let kinds = new Map([['사진', 1], ['유튜브', 2], ['영상클립', 3]]);
+      currentTimelineKind.kind = kinds.get($(obj).val());
+      selectedFiles.length = 0;
+      $('#thumbs').hide();
+      let uploadArea = $('#upload-area');
+      uploadArea.empty();
+      if(currentTimelineKind.kind === 1) {
+          uploadArea.append('<button type="button" class="btn btn-outline-primary <%= @mobileDevice ? 'btn-sm' : '' %>" style="width: 90%; height: 100%;" onclick="fileUploadAction()">사진업로드</button>');
+          let inputImg = $('<input style="display: none; margin-right: 5px;" type="file" id="input_imgs" multiple/>');
+          inputImg.on('change', function () {
+              selectImageFiles(this);
+          })
+          uploadArea.append(inputImg);
+          let help = $('#thumbs').next('small');
+          help.text('사진은 최대 <%= session[:user]['maxCountTimelinePhoto'] %>개까지 업로드 가능합니다.');
+          help.next('small').text('업로드할 사진이 없습니다.');
+      } else if(currentTimelineKind.kind === 2) {
+          uploadArea.append('<button type="button" class="btn btn-outline-primary <%= @mobileDevice ? 'btn-sm' : '' %>" style="width: 90%; height: 100%;" data-toggle="modal" data-target="#modal-linkYoutube">유튜브링크</button>');
+          let help = $('#thumbs').next('small');
+          help.text('유튜브 영상 주소를 링크 할 수 있습니다.');
+          help.next('small').text('주소가 올바르지 않습니다.');
+      } else if(currentTimelineKind.kind === 3) {
+          uploadArea.append('<button type="button" class="btn btn-outline-primary <%= @mobileDevice ? 'btn-sm' : '' %>" style="width: 90%; height: 100%;" onclick="fileUploadAction()">영상업로드</button>');
+          let inputVideo = $('<input style="display: none; margin-right: 5px;" type="file" id="input_video"/>');
+          inputVideo.on('change', function () {
+              selectVideoFiles(this);
+          })
+          uploadArea.append(inputVideo);
+          let help = $('#thumbs').next('small');
+          help.text('영상파일 용량 <%= session[:user]['maxSizeTimelineVideo'] %>MB 이하만 가능합니다.');
+          help.next('small').text('업로드할 영상클립이 없습니다.');
+      }
+  }
+  function fileUploadAction() {
+      if(currentTimelineKind.kind === 1) {
+          $('#input_imgs').trigger('click');
+      } else if(currentTimelineKind.kind === 3) {
+          $('#input_video').trigger('click');
+      }
+  }
+  function selectVideoFiles(e) {
+      selectedFiles.length = 0;
+      $('.imgs_wrap').empty();
+
+      var maxSizeTimelineVideo = <%= session[:user]['maxSizeTimelineVideo'] %>;
+
+      var videoFile = e.files[0];
+
+      if(!videoFile.type.match("video.*")) {
+          $('#thumbs').next('small').next('small').css('display', 'block').text('비디오 파일이 아닙니다.');
+          return;
+      } else {
+          currentTimelineKind.fileType = videoFile.type;
+      }
+
+      if(videoFile.size >= maxSizeTimelineVideo*1000000) {
+          $('#thumbs').next('small').next('small').css('display', 'block').text('' + maxSizeTimelineVideo + 'MB 보다 작아야 합니다.');
+          return;
+      }
+
+      let reader = new FileReader();
+      reader.onload = (function (file){
+          return function (evt){
+              var video = document.createElement('video');
+              video.setAttribute('src', evt.target.result);
+              video.setAttribute('autoplay', true);
+              video.muted = true;
+              video.addEventListener('loadedmetadata', function() {
+                  let third = this.seekable.end(0)/3;
+                  this.currentTime = third; //Set current time of video after metadat loaded
+              }, false);
+              // Create thumbnail after video data loaded
+              video.addEventListener('loadeddata', function() {
+                  let createThumb = function () {
+                      var canvas = document.createElement("canvas");
+                      canvas.width = 350;
+                      canvas.height = canvas.width*video.videoHeight/video.videoWidth;
+                      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                      $('#thumbs').show();
+                      let dataUrl = canvas.toDataURL();
+                      var mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+                      let $videoThumb = $("<a href=\"javascript:void(0)\" onclick=\"deleteImageAction(0)\" id=\"img_id_0\"><img style=\"max-width: 100px; height: auto; margin: 2px\" data-type=\"" + mimeString + "\" data-file=\"" + file.name + "\" src=\"" + dataUrl + "\"' class='selProductFile' title='Click to remove'></a>");
+                      let $imgsWrap = $('#thumbs').children('.imgs_wrap').first();
+                      $imgsWrap.append($videoThumb);
+                      $imgsWrap.focus();
+                      if($('#input-title').prev('small').is(':visible')) {
+                          $('#input-title').prev('small').hide();
+                      }
+                      $(canvas).remove();
+                      video.setAttribute('currentTime', 0); // Reset video current time
+                      video.pause();
+                      $(video).remove();
+                      selectedFiles.push(videoFile);
+                      currentTimelineKind.src = evt.target.result;
+                  }
+                  setTimeout(createThumb, 500);
+              }, false);
+          }
+      })(videoFile);
+      reader.readAsDataURL(videoFile);
+  }
+  function selectImageFiles(e) {
+      selectedFiles.length = 0;
+      $('.imgs_wrap').empty();
+
+      var files = e.files;
+      var filesAr = Array.prototype.slice.call(files);
+      for(const file of filesAr) {
+          if(!file.type.match("image.*")) {
+              $('#thumbs').next('small').next('small').css('display', 'block').text('이미지파일이 아닙니다.');
+              return;
+          }
+      }
+
+      var index = 0;
+      var maxCountTimelinePhoto = <%= session[:user]['maxCountTimelinePhoto'] %>;
+      var limit = filesAr.length > maxCountTimelinePhoto ? maxCountTimelinePhoto : filesAr.length;
+      for(let i=0; i<limit; i++) {
+          var f = filesAr[i];
+          if($('#thumbs').css('display') === 'none') {
+              $('#thumbs').css('display', 'block');
+          }
+
+          if($('#thumbs').prev('small').css('display') === 'none') {
+              $('#thumbs').prev('small').css('display', 'block');
+              $('#thumbs').css('margin-top', '');
+          }
+
+          selectedFiles.push(f);
+          console.log('selectedFiles.push(f);');
+          var reader = new FileReader();
+          reader.fileName = f.name;
+          reader.type = f.type;
+          reader.onload = function(e) {
+              console.log('e.target =', e.target);
+              let $image = $("<a href=\"javascript:void(0)\" onclick=\"deleteImageAction(" + index + ")\" id=\"img_id_" + index + "\"><img style=\"max-width: 100px; margin: 2px\" src=\"" + e.target.result + "\" data-type='" + e.target.type + "' data-file='" + e.target.fileName + "' class='selProductFile' title='Click to remove'></a>");
+              let $imgsWrap = $('#thumbs').children('.imgs_wrap').first();
+              $imgsWrap.append($image);
+              index++;
+              $imgsWrap.focus();
+              if($('#input-title').prev('small').is(':visible')) {
+                  $('#input-title').prev('small').hide();
+              }
+          }
+          reader.readAsDataURL(f);
+      }
+  }
+  function youtubeParser(url){
+      var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+      var match = url.match(regExp);
+      return (match&&match[7].length==11)? match[7] : false;
+  }
+  function selectYoutubeLink(url) {
+      selectedFiles.length = 0;
+      $('.imgs_wrap').empty();
+
+      // url = 'https://www.youtube.com/watch?v=woC_MUZik1w';
+      let youtubeVideoId = youtubeParser(url);
+      if(youtubeVideoId === false) {
+          $('#thumbs').next('small').next('small').css('display', 'block').text('올바른 주소가 아닙니다.');
+          return;
+      }
+
+      if($('#thumbs').css('display') === 'none') {
+          $('#thumbs').css('display', 'block');
+      }
+
+      //https://img.youtube.com/vi/[video-id]/[thumbnail-number].jpg
+      selectedFiles.push({name: youtubeVideoId, thumb: 'https://img.youtube.com/vi/' + youtubeVideoId + '/0.jpg', original: youtubeVideoId});
+      let $youtubeThumb = $("<a href=\"javascript:void(0)\" onclick=\"deleteImageAction(0)\" id=\"img_id_0\"><img style=\"max-width: 100px; height: auto; margin: 2px\" data-type=\"video/youtube\" data-file=\"" + youtubeVideoId + "\" src=\"" + selectedFiles[0].thumb + "\"' class='selProductFile' title='Click to remove'></a>");
+      let $imgsWrap = $('#thumbs').children('.imgs_wrap').first();
+      $imgsWrap.append($youtubeThumb);
+      $imgsWrap.focus();
+      if($('#input-title').prev('small').is(':visible')) {
+          $('#input-title').prev('small').hide();
+      }
+  }
+
+  function deleteImageAction(index) {
+      selectedFiles.splice(index, 1);
+      $("#img_id_" + index).remove();
+  }
+
+  function getFirestorageMybikePath(firebaseUser) {
+      return '<%= @firebase_users_path %>' + firebaseUser.user.uid + '/' + <%= @currentBike.id %> + '/';
+  }
+  async function uploadFireStorage(path, filename, blob, metadata, progressUpdater) {
+      return new Promise((resolve, reject) => {
+          let uploadTask = firebase.storage().ref(path).child(filename).put(blob, metadata);
+          uploadTask.on('state_changed', function(snapshot){
+              // Observe state change events such as progress, pause, and resume
+              // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+              var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              // console.log(`bytesTransferred=${snapshot.bytesTransferred}, totalBytes=${snapshot.totalBytes}`);
+              if(typeof progressUpdater === 'function') {
+                  progressUpdater(snapshot.bytesTransferred);
+              }
+              switch (snapshot.state) {
+                  case firebase.storage.TaskState.PAUSED: // or 'paused'
+                      console.log('Upload is paused');
+                      break;
+                  case firebase.storage.TaskState.RUNNING: // or 'running'
+                      console.log('Upload is running');
+                      break;
+              }
+          }, function(error) {
+              // Handle unsuccessful uploads
+          }, function() {
+              // Handle successful uploads on complete
+              // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+              uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+                  console.log('File available at', downloadURL);
+                  resolve(downloadURL);
+              });
+          });
+      });
+  }
+  function updatePhotoFireStorage(sources, mybikeId, timelineId, firebaseUser, callback) {
+      let attachments = new Array();
+      sources.map((source, index) => {
+          resizeOriginalThumb2(source.uri, 1200, 450, (originalBlob, thumbBlob) => {
+              let path = '<%= @firebase_users_path %>' + firebaseUser.user.uid + '/' + mybikeId;
+              let filename = 'timeline-' + timelineId + '-' + index;
+              let metadata = {cacheControl: 'public,max-age=2628000'};//one month
+              firebase.storage().ref(path).child(filename + '_thumb').put(thumbBlob, metadata).then(thumbSnapshot => {
+                  console.log('Uploaded a thumb blob or file!');
+                  thumbSnapshot.ref.getDownloadURL().then(thumbDownloadURL => {
+                      console.log('thumbDownloadURL available at ' + thumbDownloadURL);
+
+                      firebase.storage().ref(path).child(filename).put(originalBlob, metadata).then(originalSnapshot => {
+                          console.log('Uploaded a original blob or file!');
+                          originalSnapshot.ref.getDownloadURL().then(originalDownloadURL => {
+                              console.log('originalDownloadURL available at ' + originalDownloadURL);
+
+                              attachments.push({kind: source.kind, name: filename, original: originalDownloadURL, thumb: thumbDownloadURL});
+                              if(attachments.length == sources.length) {
+                                  callback(attachments);
+                              }
+                          })
+                      })
+                  })
+              })
+          })
+      })
+  }
+  async function updateImageFireStorage(sources, mybikeId, timelineId, firebaseUser, updateAttachment) {
+      let attachments = new Array();
+      let completedBytes = 0;
+      let totalFileSize = 0;
+      sources = await Promise.all(
+          sources.map(async (source, index) => {
+              let blobs = await resizeOriginalThumb2Sync(source.uri, 1200, 450);
+              totalFileSize += blobs.thumbBlob.size;
+              totalFileSize += blobs.originalBlob.size;
+              return {index: index, kind: source.kind, thumbBlob: blobs.thumbBlob, originalBlob: blobs.originalBlob};
+          })
+      )
+      console.log('resize sources =', sources);
+      $('#upload-progress').css('width', '0%').show();
+      let progressUpdater = function (bytesTransferred) {
+          let progress = (completedBytes+bytesTransferred)/totalFileSize*100;
+          $('#upload-progress').css('width', progress + '%');
+          // console.log('%c progress = ' + progress + '%', 'color: yellow');
+      }
+      let path = '<%= @firebase_users_path %>' + firebaseUser.user.uid + '/' + mybikeId;
+      let metadata = {cacheControl: 'public,max-age=2628000'};//one month
+      let uploadSource = async function(source, index) {
+          let filename = 'timeline-' + timelineId + '-' + index;
+          let thumbDownloadURL = await uploadFireStorage(path, filename + '_thumb', source.thumbBlob, metadata, progressUpdater);
+          completedBytes += source.thumbBlob.size;
+          let originalDownloadURL = await uploadFireStorage(path, filename, source.originalBlob, metadata, progressUpdater);
+          completedBytes += source.originalBlob.size;
+          let attachment = {kind: source.kind, name: filename, original: originalDownloadURL, thumb: thumbDownloadURL};
+          attachments.push(attachment);
+      }
+      // await uploadSource(sources[0], 0);
+      // await uploadSource(sources[1], 1);
+      for (const source of sources) {
+          await uploadSource(source, sources.indexOf(source));
+      }
+      //이건 왜 안될까...
+      // await Promise.all(
+      //     sources.map(async (source, index) => {
+      //         await uploadSource(source, index);
+      //         // let attachment = await uploadSource(source, index);
+      //         // attachments.push(attachment);
+      //         // return attachment;
+      //     })
+      // )
+      updateAttachment(attachments);
+  }
+  async function updateVideoFireStorage(source, mybikeId, timelineId, firebaseUser, updateAttachment) {
+      let attachments = new Array();
+      let path = '<%= @firebase_users_path %>' + firebaseUser.user.uid + '/' + mybikeId;
+      let filename = 'timeline-' + timelineId + '-0';
+      let metadata = {cacheControl: 'public,max-age=2628000'};//one month
+
+      let completedBytes = 0;
+      let thumbFileSize = getFileSizeFromDataUrl(source.uri);
+      let videoFileSize = getFileSizeFromDataUrl(currentTimelineKind.src);
+      let totalFileSize = thumbFileSize + videoFileSize;
+      $('#upload-progress').css('width', '0%').show();
+      let progressUpdater = function (bytesTransferred) {
+          let progress = (completedBytes+bytesTransferred)/totalFileSize*100;
+          $('#upload-progress').css('width', progress + '%');
+          // console.log('%c progress = ' + progress + '%', 'color: yellow');
+      }
+      let thumbDownloadURL = await uploadFireStorage(path, filename + '_thumb', dataURItoBlob(source.uri), metadata, progressUpdater);
+      console.log('finished thumb');
+      completedBytes += thumbFileSize;
+      let originalDownloadURL = await uploadFireStorage(path, filename, dataURItoBlob(currentTimelineKind.src), metadata, progressUpdater);
+      console.log('finished video');
+      completedBytes += videoFileSize;
+      attachments.push({kind: currentTimelineKind.fileType, name: filename, original: originalDownloadURL, thumb: thumbDownloadURL});
+      updateAttachment(attachments);
+  }
+  function confirmCreateTimeline(obj) {
+      console.log('confirmCreateTimeline input values');
+      if(selectedFiles.length > 0) {
+          console.log('selectedFiles =', selectedFiles);
+          let title = $('#input-title').val();
+          if(title.length <= 0) {
+              $('#input-title').next('small').show();
+          } else {
+              $('#input-title').next('small').hide();
+          }
+          let desc = $('#input-desc').val();
+          if(desc.length <= 0) {
+              $('#input-desc').next('small').show();
+          } else {
+              $('#input-desc').next('small').hide();
+          }
+          if(title.length > 0 && desc.length > 0) {
+              let firebaseUser = checkFirebaseUser();
+              if(firebaseUser.exist) {
+                  console.log('firebaseUser =', firebaseUser);
+                  buttonSpinner(obj, true, true);
+                  let mybikeId = '<%= @currentBike.id %>';
+                  //여기서 createTimeline 먼저 생성시키고
+                  let tagNames = myAmsify.getTagNames();
+                  let params = {
+                      userId: <%= session[:user]['id'] %>,
+                      title: title,
+                      desc: desc,
+                      public: $('#input-public').prop('checked'),
+                      kind: currentTimelineKind.kind,
+                      category: $('#input-category').val(),
+                      mybikeId: mybikeId,
+                      timelineLocation: timelineLocation.enable ? timelineLocation : {enable: false},
+                      tagNames: tagNames.length >= hashtagMaxnum ? tagNames.slice(0, hashtagMaxnum) : tagNames
+                  };
+                  requestPost('/user/createTimeline', params, data => {
+                      if(data.result) {
+                          let timeline = data.timeline;
+                          let misc = data.misc;
+                          let handleTimelineAttachments = function (data2) {
+                              if(data2.result) {
+                                  misc.attachments = data2.attachments;
+                                  buildTimelineHtml($('#cd-timeline'), timeline, misc, true);
+                                  buttonSpinner(obj, false, true);
+                                  $('#modal-createTimeline').modal('hide');
+                                  showAlert('success', '타임라인이 성공적으로 생성되었습니다.', $('.timeline-container'));
+                                  if($('#cd-timeline').length <= 0) {
+                                      location.reload();
+                                  }
+                              } else {
+                                  showAlert('danger', data2.message, $('.timeline-container'));
+                              }
+                          }
+                          if(timeline.kind === 1) {
+                              let sources = new Array();
+                              $('#thumbs').children('.imgs_wrap').first().children('a').each(function (index, item) {
+                                  console.log(`index=${index}, item=${$(item)}`);
+                                  let element = $(item).children().first();
+                                  sources.push({kind: element.data('type'), name: element.data('file'), uri: element.attr('src')});
+                              });
+                              updateImageFireStorage(sources, mybikeId, timeline.id, firebaseUser, attachments => {
+                                  requestPost('/user/updateTimelineAttachments', {timelineId: timeline.id, attachments: attachments}, data2 => {
+                                      handleTimelineAttachments(data2);
+                                  })
+                              })
+                          } else if(timeline.kind === 2) {
+                              let attachments = new Array();
+                              attachments.push({kind: 'video/youtube', name: selectedFiles[0].name, thumb: selectedFiles[0].thumb, original: selectedFiles[0].original});
+                              requestPost('/user/updateTimelineAttachments', {timelineId: timeline.id, attachments: attachments}, data2 => {
+                                  handleTimelineAttachments(data2);
+                              })
+                          } else if(timeline.kind === 3) {
+                              let sources = new Array();
+                              $('#thumbs').children('.imgs_wrap').first().children('a').each(function (index, item) {
+                                  console.log(`index=${index}, item=${$(item)}`);
+                                  let element = $(item).children().first();
+                                  sources.push({kind: element.data('type'), name: element.data('file'), uri: element.attr('src')});
+                              });
+                              updateVideoFireStorage(sources[0], mybikeId, timeline.id, firebaseUser, attachments => {
+                                  requestPost('/user/updateTimelineAttachments', {timelineId: timeline.id, attachments: attachments}, data2 => {
+                                      handleTimelineAttachments(data2);
+                                  })
+                              })
+                          }
+                      } else {
+                          showAlert('danger', data.message, $('.timeline-container'));
+                      }
+                  });
+                  console.log('%c end of parallelSync', 'color: green');
+              } else {
+                  showAlert('danger', '유저를 찾을 수 없습니다.', $('.timeline-container'));
+              }
+          }
+      } else {
+          let $help = $('#thumbs').next('small').next('small');
+          $help.css('display', 'block');
+          if(currentTimelineKind.kind === 1) {
+              $help.text('업로드 할 사진이 없습니다.');
+          } else if(currentTimelineKind.kind == 2) {
+              $help.text('업로드 할 유튜브 링크가 없습니다.');
+          } else if(currentTimelineKind.kind == 3) {
+              $help.text('업로드 할 영상클립이 없습니다.');
+          }
+      }
+  }
+  function confirmModifyTimeline(timelineId, obj) {
+      let title = $('#input-title').val();
+      if(title.length <= 0) {
+          $('#input-title').next('small').show();
+      } else {
+          $('#input-title').next('small').hide();
+      }
+      let desc = $('#input-desc').val();
+      if(desc.length <= 0) {
+          $('#input-desc').next('small').show();
+      } else {
+          $('#input-desc').next('small').hide();
+      }
+      let firebaseUser = checkFirebaseUser();
+      if(title.length > 0 && desc.length > 0 && firebaseUser.exist) {
+          let tagNames = myAmsify.getTagNames();
+          let params = {
+              userId: <%= session[:user]['id'] %>,
+              bikeId: <%= @currentBike.id %>,
+              timelineId: timelineId,
+              public: $('#input-public').prop('checked'),
+              kind: currentTimelineKind.kind,
+              category: $('#input-category option:selected').text(),
+              title: $('#input-title').val(),
+              desc: $('#input-desc').val(),
+              timelineLocation: timelineLocation.enable ? timelineLocation : {enable: false},
+              tagNames: tagNames.length >= hashtagMaxnum ? tagNames.slice(0, hashtagMaxnum) : tagNames
+          };
+          if(typeof selectedFiles === 'undefined') {
+              params.updateAttachments = false;
+          } else {
+              if(selectedFiles.length > 0) {
+                  params.updateAttachments = true;
+                  params.firestoragePath = getFirestorageMybikePath(firebaseUser);
+              }
+          }
+          buttonSpinner(obj, true, true);
+          requestPost('/user/modifyTimeline', params, data => {
+              console.log('modifyTimeline data =', data);
+              if(data.result) {
+                  if(params.updateAttachments) {
+                      let handleTimelineAttachments = function (data2) {
+                          if(data2.result) {
+                              $('#timeline-' + data.timeline.id + '-title').text(data.timeline.title);
+                              $('#timeline-' + data.timeline.id + '-desc').html(data.timeline.desc.replace(/\n/gi, '<br>'));
+                              $('#timeline-' + data.timeline.id + '-category').css('background-color', data.categoryColor);
+                              $('#timeline-' + data.timeline.id + '-category').text(data.timeline.category);
+                              if(data.timeline.cachedHashtags.length > 0) {
+                                  updateHashtags(data.timeline.id, data.timeline.cachedHashtags);
+                              }
+                              updateTimelineLocationInTitleArea(data.timeline, data.timelineLocation);
+
+                              let attachmentArea = $('#timeline-' + data.timeline.id + '-attachments');
+                              attachmentArea.empty();
+                              data2.attachments.forEach(attachment => {
+                                  let div = $('<div style="margin: 2px"></div>');
+                                  div.append('<img style="max-width: 100%; height: auto; margin: auto; object-fit: cover;" src="' + attachment.thumb + '">');
+                                  attachmentArea.append(div);
+                              })
+                              buttonSpinner(obj, false, true);
+                              $('#modal-createTimeline').modal('hide');
+                              showAlert('success', '타임라인이 성공적으로 수정되었습니다.', $('.timeline-container'));
+                          } else {
+                              buttonSpinner(obj, false, true);
+                              $('#modal-createTimeline').modal('hide');
+                              showAlert('danger', data2.message, $('.timeline-container'));
+                          }
+                      }
+                      if(data.timeline.kind === 1) {
+                          let sources = new Array();
+                          $('#thumbs').children('.imgs_wrap').first().children('a').each(function (index, item) {
+                              let element = $(item).children().first();
+                              sources.push({kind: element.data('type'), name: element.data('file'), uri: element.attr('src')});
+                          })
+                          updateImageFireStorage(sources, <%= @currentBike.id %>, data.timeline.id, firebaseUser, attachments => {
+                              requestPost('/user/updateTimelineAttachments', {timelineId: data.timeline.id, attachments: attachments}, data2 => {
+                                  handleTimelineAttachments(data2);
+                              })
+                          });
+                      } else if(data.timeline.kind === 2) {
+                          let attachments = new Array();
+                          attachments.push({kind: 'video/youtube', name: selectedFiles[0].name, thumb: selectedFiles[0].thumb, original: selectedFiles[0].original});
+                          requestPost('/user/updateTimelineAttachments', {timelineId: data.timeline.id, attachments: attachments}, data2 => {
+                              handleTimelineAttachments(data2);
+                          })
+                      } else if(data.timeline.kind === 3) {
+                          let sources = new Array();
+                          $('#thumbs').children('.imgs_wrap').first().children('a').each(function (index, item) {
+                              console.log(`index=${index}, item=${$(item)}`);
+                              let element = $(item).children().first();
+                              sources.push({kind: element.data('type'), name: element.data('file'), uri: element.attr('src')});
+                          });
+                          updateVideoFireStorage(sources[0], <%= @currentBike.id %>, data.timeline.id, firebaseUser, attachments => {
+                              requestPost('/user/updateTimelineAttachments', {timelineId: data.timeline.id, attachments: attachments}, data2 => {
+                                  handleTimelineAttachments(data2);
+                              })
+                          })
+                      }
+                  } else {
+                      $('#timeline-' + data.timeline.id + '-title').text(data.timeline.title);
+                      $('#timeline-' + data.timeline.id + '-desc').html(data.timeline.desc.replace(/\n/gi, '<br>'));
+                      $('#timeline-' + data.timeline.id + '-category').css('background-color', data.categoryColor);
+                      $('#timeline-' + data.timeline.id + '-category').text(data.timeline.category);
+                      if(data.timeline.cachedHashtags.length > 0) {
+                          updateHashtags(data.timeline.id, data.timeline.cachedHashtags);
+                      }
+                      updateTimelineLocationInTitleArea(data.timeline, data.timelineLocation);
+
+                      buttonSpinner(obj, false, true);
+                      $('#modal-createTimeline').modal('hide');
+                      showAlert('success', '타임라인이 성공적으로 수정되었습니다.', $('.timeline-container'));
+                  }
+              } else {
+                  buttonSpinner(obj, false, true);
+                  $('#modal-createTimeline').modal('hide');
+                  showAlert('danger', data.message, $('.timeline-container'));
+              }
+          })
+      }
+  }
+  function updateTimelineLocationInTitleArea(timeline, location) {
+      console.log('%c updateTimelineLocationInTitleArea', 'color: yellow');
+      console.log('location =', location);
+      if(location) {
+          if($('#timeline-' + timeline.id + '-location').length <= 0) {
+              let parent = $('#timeline-' + timeline.id + '-title').parent();
+              parent.prepend('<div id="timeline-' + timeline.id + '-location" style="margin-bottom: 0.1rem; font-size: <%= @mobileDevice ? 1 : 1.25 %>rem; margin-right: 0.25rem;" data-locationid="' + location.id + '" data-lat="' + location.lat + '" data-lng="' + location.lng + '" data-name="' + location.name + '" data-address="' + location.address + '"><i class="far fa-map" style="color: #17a2b8;"></i></div>');
+          }
+      } else {
+          let $location = $('#timeline-' + timeline.id + '-location');
+          if($location.length > 0) {
+              $location.remove();
+          }
+      }
+  }
+  function enableTimelineLocation(location) {
+      timelineLocation.enable = true;
+      timelineLocation.lat = location.data('lat');
+      timelineLocation.lng = location.data('lng');
+      timelineLocation.name = location.data('name');
+      timelineLocation.address = location.data('address');
+      // setMapCenterWithMarker(timelineLocation.lat, timelineLocation.lng);
+      let text = $('#select-location').text();
+      $('#select-location').empty().text(text).append('<i class="fas fa-check" style="color: lawngreen; margin-left: 0.25rem"></i>');
+      $('#location-address').text(timelineLocation.address);
+      console.log('location-close-button =', $('#location-close-button'));
+      $('#location-close-button').css('display', 'block');
+  }
+  function disableTimelineLocation() {
+      timelineLocation.enable = false;
+      resetMap();
+      $('#select-location').empty().text('위치 선택하기');
+      $('#location-address').text('');
+      $('#location-close-button').css('display', 'none');
+  }
+  function confirmDeleteTimeline(timelineId, obj) {
+      let firebaseUser = checkFirebaseUser();
+      if(firebaseUser.exist) {
+          buttonSpinner(obj, true, true);
+          let firestoragePath = getFirestorageMybikePath(firebaseUser);
+          requestPost('/user/deleteTimeline', {userId: <%= session[:user]['id'] %>, firestoragePath: firestoragePath, timelineId: timelineId}, data => {
+              buttonSpinner(obj, false, true);
+              $('#modal-deleteTimeline').modal('hide');
+              if(data.result) {
+                  $('#content-timeline-' + timelineId).parent('.cd-timeline-block').remove();
+                  showAlert('success', '타임라인이 성공적으로 삭제되었습니다.', $('.timeline-container'));
+              } else {
+                  showAlert('danger', '유저 혹은 타임라인을 찾을 수 없습니다.', $('.timeline-container'));
+              }
+          });
+      }
+  }
+  function updateHashtags(timelineId, cachedHashtags) {
+      $('#hashtags-' + timelineId).empty().append('<div class="text-ellipsis" style="max-width: 60%; background-color: #a141ad; color: whitesmoke; border-radius: 0.25rem; font-size: 0.9rem; padding: 0 2px">' + cachedHashtags + '</div>');
+  }
+  function confirmYoutubeLink(obj) {
+      var url = $('#input-youtubelink').val();
+      if (url != undefined || url != '') {
+          var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|\?v=)([^#\&\?]*).*/;
+          var match = url.match(regExp);
+          if (match && match[2].length == 11) {
+              // Do anything for being valid
+              // if need to change the url to embed url then use below line
+              // $('#ytplayerSide').attr('src', 'https://www.youtube.com/embed/' + match[2] + '?autoplay=0');
+              console.log('%c right url', 'color: magenta');
+              selectYoutubeLink(url);
+          }
+          else {
+              // Do anything for not being valid
+              $('#thumbs').next('small').next('small').css('display', 'block').text('주소가 올바르지 않습니다.');
+          }
+      }
+      $('#modal-linkYoutube').modal('hide');
+  }
+  <% end %>//unless @guest
+
+  intervalCall1000 = intervalCall(1000);
+  searchWord = "";
+  function confirmSearch(obj) {
+      console.log('Already existed!');
+      var parent = $(obj).parent();
+      var keyword = parent.children('input').val();
+      if(keyword.length > 0) {
+          console.log('keyword = ' + keyword);
+          searchWord = keyword;
+      } else {
+          console.log("There is no keyword");
+          searchWord = "";
+          parent.children('input').remove();
+          parent.children('button').css('border', '1px solid #ced4da');
+      }
+      //기존 타임라인 모두 제거
+      $('#cd-timeline').empty();
+      $(window).scrollTop(0);
+      allLoadingTimeline = false;
+      pageOffset = 0;
+      readMyTimelines();
+  }
+  function onClickSearchButton(obj) {
+      console.log("onClickSearchButton");
+      var parent = $(obj).parent();
+      var searchInput = parent.children('input');
+      if(searchInput.length > 0) {
+          confirmSearch(obj);
+      } else {
+          let basicWidth;
+          var inputSearch = $("<input class=\"form-control search-input enable-bar\" placeholder=\"검색\" type=\"text\" style=\"width: 10px;\">");
+          inputSearch.on('keyup paste', function(event) {
+              var val = $(this).val();
+              console.log('length = ' + val.length + ', basicWidth = ' + basicWidth + ', val = ' + val);
+
+              $('#span-width').text(val);
+              var diff = $('#span-width').outerWidth() - 100;//버튼앞에서 멈추게 함
+              if(diff > 0) {
+                  console.log('diff = ' + diff);
+                  $(this).css('width', basicWidth+diff);
+              } else {
+                  $(this).css('width', basicWidth);
+              }
+              if(event.keyCode == 13) {//press enter key
+                  intervalCall1000(() => {//한글입력하면 두번 발생함 그래서 interval 사용...
+                      console.log('%c enter key', 'color: yellow');
+                      $('#search-button').trigger('click');
+                  });
+              }
+          });
+          inputSearch[0].addEventListener('animationend', () => {
+              basicWidth = $(this).outerWidth();
+              $(this).removeClass('enable-bar');
+              $(this).css('width', basicWidth);
+              console.log('animationend width = ' + basicWidth);
+          })
+          //jQuery 왜 사파리에서 말을 잘 안듣지?
+          // inputSearch.one('animationend', function (e) {
+          //     basicWidth = $(this).outerWidth();
+          //     $(this).removeClass('enable-bar');
+          //     $(this).css('width', basicWidth);
+          //     console.log('animationend width = ' + basicWidth);
+          // });
+          parent.prepend(inputSearch);
+          $(obj).css('border', '');
+          inputSearch.focus();
+      }
+  }
+  <% if session[:logined] %>
+  function subscribeMybike() {
+      requestPost('/user/subscribeMybike', {userId: <%= session[:user]['id'] %>, mybikeId: <%= @currentBike.id %>}, data => {
+          if(data.result) {
+              if(data.subscribe == 1) {
+                  $('#subscribe-button').css('background-color', '#f59999');
+                  $('#subscribe-button').text('구독중 ' + numberWithCommas(data.subscribeCount));
+              } else {
+                  $('#subscribe-button').css('background-color', '#f96363');
+                  $('#subscribe-button').text('구독 ' + numberWithCommas(data.subscribeCount));
+              }
+          } else {
+              showAlert('danger', data.message, $('.timeline-container'));
+          }
+      });
+  }
+  <% end %>
+  function intervalCall(interval){
+      // interval 시간 안에 다시 호출된 함수 콜은 무시한다
+      let elapsed = true
+      return (fn) => {
+          if(!elapsed){
+              return    // 마지막 호출 후 제한된 경과시간이 지나지 않은 경우 리턴
+          }
+          elapsed = false
+          fn()
+          setTimeout(() => {elapsed = true}, interval)
+      }
+  }
+  function displayFloatingMapLoading(rect, zIndex) {
+      $('#floating-map-loading').css({'position': 'fixed', 'left': rect.left, 'top': rect.top, 'width': (rect.right-rect.left), 'height': (rect.bottom-rect.top), 'display': 'flex', 'font-size': (rect.right-rect.left)/3 + 'px', 'z-index': zIndex});
+  }
+</script>
+
+<style>
+  .enable-bar {
+    animation-duration: 0.3s;
+    animation-timing-function: ease-in-out;
+    animation-name: enableBar;
+    animation-fill-mode: forwards;
+  }
+  @keyframes enableBar {
+    from {width: 10px;}
+    to {width: 10rem;}
+  }
+
+  .search-form .search-btn {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    transition: all 200ms ease-in-out;
+  }
+  <% unless @mobileDevice %>
+  .search-form .search-btn:hover {
+    color: #fff;
+    background-color: #007bff;
+  }
+  <% end %>
+
+  .search-form .search-input {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    transition: all 200ms ease-in-out;
+  }
+  <% unless @mobileDevice %>
+  .search-form .search-input:hover {
+    border-color: gray;
+  }
+  <% end %>
+
+  #add-timeline-button {
+    width:60px;
+    height:60px;
+    bottom:20px;
+    right:20px;
+    border-radius:50px;
+    box-shadow: 2px 2px 3px #999;
+  }
+  #subscribe-button {
+    /*min-width: 80px;*/
+    bottom:20px;
+    right:20px;
+    border-radius:5px;
+    padding: 10px;
+    font-weight: 700;
+    color: whitesmoke;
+  }
+  .bottom-float{
+    position:fixed;
+    text-align:center;
+    background-color: #007bff;
+    color:#FFF;
+    z-index: 10;
+    transition: all 200ms ease-in-out;
+  }
+  <% unless @mobileDevice %>
+  .bottom-float:hover {
+    color: #343A40;
+  }
+  #close-detailView:hover {
+    color: ghostwhite;
+  }
+  <% end %>
+
+  .modal-dialog .modal-content {
+    background-color: #333C42;
+    color: ghostwhite;
+  }
+  .modal-dialog .modal-header {
+    border-bottom-color: dimgray
+  }
+  .modal-dialog .modal-body {
+    background-color: #333C42;
+    color: ghostwhite;
+  }
+  .modal-dialog .modal-footer {
+    border-top-color: dimgray
+  }
+
+  .form-control {
+    background-color: #333C42;
+    border-color: #505973;
+    color: ghostwhite;
+  }
+  .form-control:focus {
+    background-color: #333C42;
+    border-color: #9099b5;
+    color: ghostwhite;
+  }
+
+  #description {
+    font-size: 15px;
+    font-weight: 300;
+  }
+
+  #infowindow-content .title {
+    font-weight: bold;
+  }
+
+  #infowindow-content {
+    display: none;
+  }
+
+  #map #infowindow-content {
+    display: inline;
+  }
+
+  .pac-card {
+    margin: 10px 10px 0 0;
+    border-radius: 2px 0 0 2px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    outline: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    background-color: #fff;
+  }
+
+  .pac-container {
+    z-index: 1060;/* bigger than modal-mapview */
+  }
+  #pac-container {
+    padding-bottom: 12px;
+    margin-right: 12px;
+  }
+
+  .pac-controls {
+    display: inline-block;
+    padding: 5px 11px;
+  }
+
+  .pac-controls label {
+    font-size: 13px;
+    font-weight: 300;
+  }
+
+  #pac-input {
+    background-color: #fff;
+    font-size: 15px;
+    font-weight: 300;
+    margin-top: 12px;
+    padding: 0 11px 0 13px;
+    text-overflow: ellipsis;
+    width: 50%;
+    border: 1px solid rgba(0,0,0,0.25);
+  }
+
+  #pac-input:focus {
+    border-color: #4d90fe;
+  }
+
+  #title {
+    color: #fff;
+    background-color: #4d90fe;
+    font-size: 25px;
+    font-weight: 500;
+    padding: 6px 12px;
+  }
+  #target {
+    width: 345px;
+  }
+
+  /*amsify-suggestags*/
+  .amsify-suggestags-input-area .amsify-select-tag.col-bg {
+    /*background-color: #ffc107;*/
+    /*color: #585858;*/
+    background-color: #a141ad;
+    color: whitesmoke;
+  }
+  .amsify-suggestags-area
+  .amsify-suggestags-list {
+    background-color: #333C42;
+    border-color: #757575;
+  }
+  .amsify-suggestags-area
+  .amsify-suggestags-list
+  ul.amsify-list {
+    padding: 5px;
+  }
+  .amsify-suggestags-area
+  .amsify-suggestags-list
+  ul.amsify-list
+  li.active {
+    background-color: #a141ad;
+    border-radius: 0.2rem;
+  }
+  .amsify-suggestags-area
+  .amsify-suggestags-list
+  ul.amsify-list
+  li.amsify-item-pad.active {
+    font-weight: normal;
+  }
+  .amsify-suggestags-input {
+    background-color: #333C42;
+    color: whitesmoke;
+  }
+  .custom-select {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='ghostwhite' d='M2 0L0 2h4zm0 5L0 3h4z'/%3E%3C/svg%3E")
+  }
+  .custom-select-sm {
+    height: calc(1.5em + 0.5rem + 2px);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+  }
+</style>
+
+<div class="search-form" style="position: fixed; top: 80px; right: 10px; z-index: 100;">
+  <button id="search-button" type="button" class="btn btn-link search-btn" style="border: 1px solid #ced4da;" onclick="onClickSearchButton(this)"><i class="fas fa-search"></i></button>
+  <span id="span-width" style="visibility: hidden">나의바이크</span>
+</div>
+
+<% if session[:logined] %>
+<% unless @guest %>
+  <a id="add-timeline-button" class="bottom-float" style="text-decoration: none; display: flex; align-items: center; justify-content: center;" data-toggle="modal" data-kind="create" href="#modal-createTimeline">
+    <i class="fa fa-plus" style="font-size: 200%;"></i>
+  </a>
+<!--  <a id="subscribe-button" class="bottom-float" style="text-decoration: none; background-color:#f96363;">구독 <%#= number_with_delimiter(@currentBike.subscribeCount) %></a>-->
+<% else %>
+    <% if @isSubscribe == true %>
+      <a id="subscribe-button" class="bottom-float" style="text-decoration: none; background-color: #f59999;" href="javascript:void(0)" onclick="subscribeMybike()">구독중 <%= number_with_delimiter(@currentBike.subscribeCount) %></a>
+    <% else %>
+    <a id="subscribe-button" class="bottom-float" style="text-decoration: none; background-color:#f96363;" href="javascript:void(0)" onclick="subscribeMybike()">구독 <%= number_with_delimiter(@currentBike.subscribeCount) %></a>
+    <% end %><%# if @isSubscribe == true %>
+<% end %><%# unless @guest %>
+<div class="modal fade" id="modal-createTimeline" tabindex="-1" role="dialog" aria-labelledby="timelineModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTimeline-Label">타임 라인 생성</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color: ghostwhite; text-shadow: black;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="input-wrap">
+            <div style="display: flex; justify-content: flex-start; margin-bottom: 0.25rem">
+              <select id="input-kind" class="custom-select mr-sm-2 form-control <%= @mobileDevice ? 'custom-select-sm' : '' %>" style="width: 30%; margin-left: 0.25rem" onchange="onChangeTimelineKind(this)">
+                <option selected>사진</option>
+                <option>유튜브</option>
+                <option>영상클립</option>
+              </select>
+            </div>
+            <div style="display: flex; flex-direction: row-reverse;">
+              <div style="flex-grow: 1; display: flex; align-items: flex-end; justify-content: center;">
+                <div class="btn-group btn-group-toggle <%= @mobileDevice ? 'btn-group-sm' : '' %>" data-toggle="buttons">
+                  <label class="btn btn-outline-primary active">
+                    <input type="radio" name="options" id="input-public" autocomplete="off" checked>공개
+                  </label>
+                  <label class="btn btn-outline-primary">
+                    <input type="radio" name="options" id="input-private" autocomplete="off">비공개
+                  </label>
+                </div>
+              </div>
+              <div style="flex-grow: 0.5; color: darkgray">
+                <label for="input-category" style="margin-bottom: 0">카테고리</label>
+                <select id="input-category" class="custom-select mr-sm-2 form-control <%= @mobileDevice ? 'custom-select-sm' : '' %>">
+                  <option selected><%= @timelineCategories[0].name %></option>
+                  <% for i in 1..@timelineCategories.length-1 %>
+                    <option><%= @timelineCategories[i].name %></option>
+                  <% end %>
+                </select>
+              </div>
+              <div id="upload-area" style="display: flex; flex-direction: column; flex-grow: 2; margin: 0.25rem;">
+                <button type="button" class="btn btn-outline-primary <%= @mobileDevice ? 'btn-sm' : '' %>" style="width: 90%; height: 100%;" onclick="fileUploadAction()">사진업로드</button>
+                <input style="display: none; margin-right: 5px;" type="file" id="input_imgs" multiple/>
+              </div>
+            </div>
+
+            <small style="margin-top: 10px;">이미지 클릭시 삭제</small>
+            <div id="thumbs" style="border: 1px solid #505973; border-radius: 3px; padding: 10px; margin-top: 5px">
+              <div class="imgs_wrap">
+                <img id="img"/>
+              </div>
+            </div>
+            <small style="margin-left: 5px">사진은 최대 <%= session[:user]['maxCountTimelinePhoto'] %>개까지 업로드 가능합니다.</small>
+            <small style="display: none; margin-left: 5px; color: red">업로드할 사진이 없습니다.</small>
+
+            <input type="text" class="form-control" id="input-title" style="margin-top: 20px" placeholder="제목"/>
+            <small style="display: none; color: red">제목이 없습니다</small>
+            <textarea class="form-control rounded-3 autosize" id="input-desc" style="margin-top: 5px; resize: none; overflow: hidden" rows="5" placeholder="내용을 입력하세요" maxlength="512"></textarea>
+            <small style="display: none; color: red">내용이 없습니다</small>
+            <div id="tag-area" style="margin-top: 5px">
+              <input class="form-control" name="hash-tags" type="text" row="3" placeholder="태크를 입력하세요">
+              <small>태그구분은 '엔터(enter)'키 혹은 콤마(,)로 구분할 수 있습니다</small>
+            </div>
+            <div style="margin-top: 1rem;">
+              <small style="color: darkgray">필수요소 아님</small>
+            </div>
+            <div style="display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-end">
+              <button id="select-location" type="button" class="btn btn-outline-primary <%= @mobileDevice ? 'btn-sm' : '' %>" data-toggle="modal" data-target="#modal-mapview">위치 선택하기</button>
+              <div id="location-address" class="text-ellipsis" style="font-size: 0.85rem; margin-left: 0.5rem; margin-bottom: 0.5rem; max-width: <%= @mobileDevice ? 45 : 60 %>%;"></div>
+              <div id="location-close-button" class="my-close-button" style="display: none; margin-left: 0.5rem" onclick="disableTimelineLocation()">&times;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="upload-progress" class="progress" style="height: 1px;">
+        <div class="progress-bar" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" onclick="confirmCreateTimeline()">생성</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-deleteTimeline" tabindex="-1" role="dialog" aria-labelledby="deleteTimelineModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteTimeline-Label">타임라인 삭제</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color: ghostwhite; text-shadow: black;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>삭제이후에는 돌이킬 수 없습니다.<br>정말 삭제 할까요?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" onclick="confirmDeleteTimeline(this)">삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+  <div class="modal fade" id="modal-linkYoutube" tabindex="-1" role="dialog" aria-labelledby="linkYoutubeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="linkYoutube-Label">유튜브 링크하기</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true" style="color: ghostwhite; text-shadow: black;">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input id="input-youtubelink" class="form-control" type="text" placeholder="유튜브 링크를 입력하세요">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-primary" onclick="confirmYoutubeLink(this)">적용</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<div class="modal fade" id="modal-mapview" style="overflow: hidden" tabindex="-1" role="dialog" aria-labelledby="mapviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog" style="height: 100%" role="document">
+    <div class="modal-content" style="height: auto; min-height: 95%">
+      <div class="modal-header">
+        <h5 class="modal-title">위치 선택하기</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color: ghostwhite; text-shadow: black;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input id="pac-input" class="controls" type="text" style="display: none" placeholder="검색어를 입력하세요">
+<!--        <div id="map" style="width: 100%; min-height: 100%; padding: 1rem"></div>-->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" disabled onclick="confirmTimelineLocation(this)">적용</button>
+      </div>
+    </div>
+  </div>
+</div>
+<% end %>
+<style>
+  .bike-badge h3{
+    text-align:center;
+    position:relative;
+    top:80px;
+  }
+  /*==================================================
+   * Effect 4
+   * ===============================================*/
+  .effect4
+  {
+    position: relative;
+  }
+  .effect4:after
+  {
+    z-index: -1;
+    position: absolute;
+    content: "";
+    bottom: 12px;
+    right: 4px;
+    left: auto;
+    width: 50%;
+    top: 44%;
+    max-width:300px;
+    background: #777;
+    box-shadow: 0 15px 10px #000;
+    transform: rotate(3deg);
+  }
+
+  @media only screen and (max-width: 768px) {
+    /*최소크기 768보다 작은경우*/
+    .floating-badge {
+      position: fixed;
+      left: <%= @mobileDevice ? -10 : 0 %>px;/* 모바일 경우 화면 좌우 끝까지 다 사용한다 그래서 padding 수치만큼 left 방향으로 이동 */
+      top: 10%;
+      z-index: 20;
+      padding: 10px;
+    }
+    .bike-badge {
+      background:#A0DE21;
+      margin:40px auto;
+    }
+  }
+
+  @media only screen and (min-width: 768px) {
+    /*최소크기 768보다 큰경우*/
+    .floating-badge {
+      position: fixed;
+      left: <%= @mobileDevice ? -10 : 0 %>px;/* 모바일 경우 화면 좌우 끝까지 다 사용한다 그래서 padding 수치만큼 left 방향으로 이동 */
+      /*left: 5%;*/
+      top: 10%;
+      z-index: 20;
+      padding: 10px;
+    }
+    .bike-badge {
+      background:#A0DE21;
+      margin:40px auto;
+    }
+  }
+</style>
+
+<div class="timeline-container">
+
+<!--  <div style="position: fixed; left: 5%; top: 10%; z-index: 20; background-color: #333C42; color: rgba(255,255,255,0.7);"><%#= @currentBike.name %></div>-->
+<!--  <div class="opposite" style="position: fixed; left: 3%; top: 10%; z-index: 20; padding: 10px;">-->
+<!--    <h4><%#= @currentBike.name %></h4>-->
+<!--  </div>-->
+
+  <div class="floating-badge">
+    <div class="bike-badge effect4">
+      <div style="font-size: 1.5rem; padding: 3px 7px;"><%= @currentBike.name %></div>
+    </div>
+  </div>
+
+  <div id="floating-map-loading" class="display-none" style="position: fixed; left: 0; top: 0; justify-content: center; align-items: center; height: 100%; color: whitesmoke; background-color: rgba(0,0,0,0.25);">
+    <i class="fas fa-sync-alt fa-spin"></i>
+  </div>
+
+  <% if @currentBike.timelineCount == 0 %>
+    <div style="width: 100%; margin: auto;">
+      <div class="card" style="display: flex; align-items: center; justify-content: center; width: 300px; height: 260px; margin: auto; margin-top: 10%;">
+        <a style="text-decoration: none; text-align: center;" data-toggle="modal" data-kind="create" href="#modal-createTimeline">
+          <i class="fa fa-plus" style="font-size: 150px; color: #CED4DA;"></i>
+          <div style="color: #CED4DA;">새로운 타임라인을 추가해주세요!</div>
+        </a>
+      </div>
+    </div>
+  <% else %>
+    <section id="cd-timeline" class="cd-container" style="border-radius: 10px">
+
+    </section> <!-- cd-timeline -->
+
+  <% end %>
+</div>
+<script>
+    timelineLocation = {enable: false, lat: 0, lng: 0, name: '', title: '', address: ''};
+    map=null;
+    marker=null;
+    places = new Array();
+    geocode=null;
+    function initMap(location, enableMarker=false) {
+        if(map === null) {
+            map = new google.maps.Map(document.getElementById('map'), {
+                <% if @mobileDevice %>
+                gestureHandling: 'greedy',
+                <% end %>
+                center: {lat: location.lat, lng: location.lng},
+                zoom: 15
+            });
+            geocoder = new google.maps.Geocoder;
+
+            google.maps.event.addListener(map, 'click', function(event) {
+                removeMarker();
+                if(places.length > 0) {
+                    removeAllPlaces();
+                }
+                addMarker(event.latLng);
+                console.log('lat = ' + event.latLng.lat() + ', lng = ' + event.latLng.lng());
+            });
+
+            if(enableMarker) {
+                let latLng = new google.maps.LatLng({lat: location.lat, lng: location.lng});
+                addMarker(latLng);
+            }
+
+            // Create the search box and link it to the UI element.
+            let input = document.getElementById('pac-input');
+            let searchBox = new google.maps.places.SearchBox(input);
+            map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+            $('#pac-input').css('display', 'inline-block');
+
+            // Bias the SearchBox results towards current map's viewport.
+            map.addListener('bounds_changed', function() {
+                console.log('bounds_changed');
+                searchBox.setBounds(map.getBounds());
+            });
+
+            // Listen for the event fired when the user selects a prediction and retrieve
+            // more details for that place.
+            searchBox.addListener('places_changed', function() {
+                var places = searchBox.getPlaces();
+                if (places.length == 0) {
+                    return;
+                }
+                // Clear out the old markers.
+                removeMarker();
+
+                // For each place, get the icon, name and location.
+                var bounds = new google.maps.LatLngBounds();
+                if(places.length == 1) {
+                    let place = places[0];
+                    addMarker(place.geometry.location, map);
+                    let markerPlace = {address: place.formatted_address, name: place.name, lat: place.geometry.location.lat(), lng: place.geometry.location.lng()};
+                    console.log('markerPlace =', markerPlace);
+                    timelineLocation.name = place.name;
+                    if (place.geometry.viewport) {
+                        // Only geocodes have viewport.
+                        bounds.union(place.geometry.viewport);
+                    } else {
+                        bounds.extend(place.geometry.location);
+                    }
+                } else {
+                    places.forEach(function(place) {
+                        if (!place.geometry) {
+                            console.log("Returned place contains no geometry");
+                            return;
+                        }
+                        // addMarker(place.geometry.location, map);
+                        // let markerPlace = {address: place.formatted_address, name: place.name, lat: place.geometry.location.lat(), lng: place.geometry.location.lng()};
+                        // console.log('markerPlace =', markerPlace);
+                        // timelineLocation.name = place.name;
+                        addPlace(place, map);
+                        if (place.geometry.viewport) {
+                            // Only geocodes have viewport.
+                            bounds.union(place.geometry.viewport);
+                        } else {
+                            bounds.extend(place.geometry.location);
+                        }
+                    });
+                }
+                map.fitBounds(bounds);
+            });
+        }
+    }
+    function resetMap() {
+        if(map !== null) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    removeMarker();
+                    map.setCenter({lat: position.coords.latitude, lng: position.coords.longitude});
+                    console.log('reset map pos =', {lat: position.coords.latitude, lng: position.coords.longitude});
+                }, function() {
+                    removeMarker();
+                    let center = map.getCenter();
+                    map.setCenter({lat: center.lat(), lng: center.lng()});
+                });
+            } else {
+                // Browser doesn't support Geolocation
+                removeMarker();
+                let center = map.getCenter();
+                map.setCenter({lat: center.lat(), lng: center.lng()});
+            }
+        }
+    }
+    function setMapCenterWithMarker(lat, lng) {
+        removeMarker();
+        let latLng = new google.maps.LatLng({lat: lat, lng: lng});
+        addMarker(latLng);
+        map.setCenter(latLng);
+    }
+    function addMarker(location, name=null) {
+        marker = new google.maps.Marker({
+            position: location,
+            map: map
+        });
+        geoCodeLatLng(location);
+        timelineLocation.lat = location.lat();
+        timelineLocation.lng = location.lng();
+        if(name !== null) {
+            timelineLocation.name = name;
+        }
+        $('#modal-mapview').find('.modal-footer').children('button').last().attr('disabled', false);
+    }
+    function addPlace(place, map) {
+        let placeMarker = new google.maps.Marker({
+            position: place.geometry.location,
+            map: map
+        });
+        placeMarker.addListener('click', function () {
+            let position = this.getPosition();
+            addMarker(position, place.name);
+            setTimeout(() => {
+                removeAllPlaces();
+            }, 150);
+        });
+        places.push({name: place.name, marker: placeMarker});
+    }
+    function removeAllPlaces() {
+        places.forEach(place => {
+            place.marker.setMap(null);
+        });
+        places.length = 0;
+    }
+    function removeMarker() {
+        if(marker !== null) {
+            marker.setMap(null);
+        }
+    }
+    function geoCodeLatLng(location) {
+        geocoder.geocode({'location': location}, function(results, status) {
+            if (status === 'OK') {
+                if(results[0]) {
+                    console.log('result[0] address =', results[0].formatted_address);
+                    timelineLocation.address = results[0].formatted_address;
+                } else {
+                    console.log('No results found');
+                }
+            } else {
+                window.alert('Geocoder failed due to: ' + status);
+            }
+        });
+    }
+    function confirmTimelineLocation(obj) {
+        timelineLocation.enable = true;
+        console.log('timelineLocation =', timelineLocation);
+        $('#location-address').text(timelineLocation.address);
+        $('#location-close-button').css('display', 'block');
+        $('#modal-mapview').modal('hide');
+    }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= ENV['google_api_key'] %>&libraries=places"async defer></script>
+
+
+
+
+

@@ -1,0 +1,300 @@
+<style>
+	body {
+		background-color:floralwhite;
+		width: 100%;
+		margin: auto
+	}
+</style>
+
+<meta name="google-signin-client_id" content="<%= ENV['google_client_id'] %>">
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+<script src="//developers.kakao.com/sdk/js/kakao.min.js"></script>
+<script>	
+	verifyAccount = false;
+  SNSAccount = {kind: '', uid: '', email: '', nickname: '', avatar: ''};
+  $(document).ready(function() {
+      $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+      documentReady();
+
+      $('#account').change(function() {
+          verifyAccount = false;
+      });
+      $('#modal-mergeAccount').on('show.bs.modal', function (event) {
+          let body = $(this).find('.modal-body');
+          body.empty();
+
+          let mergeWithAccount = '';
+          if(SNSAccount.kind === 'google') {
+              mergeWithAccount = '구글 계정과 통합하시겠습니까?';
+          }
+          else if(SNSAccount.kind === 'kakao') {
+              mergeWithAccount = '카카오 계정과 통합하시겠습니까?';
+          }
+          body.append("<p>해당 이메일로 가입한 계정이 이미 있습니다.('"+ SNSAccount.email + "')<br>" + mergeWithAccount + "</p>");
+      });
+  });
+
+  function confirmEmail(obj) {
+      var account = $('#account').val();
+      if(account.indexOf('@') != -1) {
+          buttonSpinner(obj, true, false);
+          requestPost('/user/checkAccount', {account: account}, data => {
+              if(data.result == true) {
+                  $('#confirm-msg').css('color', 'red');
+                  $('#confirm-msg').text('이미 가입한 이메일입니다.');
+                  console.log('이미 가입한 이메일입니다.');
+                  console.log(data);
+              } else {
+                  $('#confirm-msg').css('color', 'green');
+                  $('#confirm-msg').text('사용할 수 있는 이메일입니다.');
+                  console.log('사용할 수 있는 이메일입니다.');
+                  verifyAccount = true;
+              }
+              buttonSpinner(obj, false, false);
+          })
+      } else {
+          $('#confirm-msg').css('color', 'red');
+          $('#confirm-msg').text('올바른 이메일형식이 아닙니다.');
+          console.log('there is no 골뱅이');
+      }
+  }
+  function refreshWelcome() {
+      $('#form-content').empty();
+      $('#form-content').css('display', 'flex');
+      $('#form-content').css('justify-content', 'center');
+      $('#form-content').css('height', '200px');
+      var sucess = $("<div style='align-self: center; text-align: center; font-size: 1.5rem;'>성공적으로 가입되었습니다!!<br>가입하신 메일로 인증메일이 발송 되었습니다. 인증 후 로그인 해주세요!</div>");
+      $('#form-content').append(sucess);
+  }
+  function refreshMerge() {
+      $('#form-content').empty();
+      $('#form-content').css('display', 'flex');
+      $('#form-content').css('justify-content', 'center');
+      $('#form-content').css('height', '200px');
+      var sucess = $("<div style='align-self: center; text-align: center; font-size: 1.5rem;'>계정 연동이 완료되었습니다.<br>로그인 해주세요!</div>");
+      $('#form-content').append(sucess);
+  }
+  function firebaseSignup(account, callback) {
+      firebase.auth().createUserWithEmailAndPassword(account, '<%= ENV['firebase_public_password'] %>').then(auth => {
+          // console.log('회원가입 성공! welcome to join us!!');
+          // console.log('firebase uid =', auth.user.uid);
+          callback();
+      }).catch(error => {
+          // console.log('파이어 베이스 회원가입 살패!');
+          // console.log('파이어 베이스 error = ', error);
+          console.error('firebase error =', error);
+      });
+  }
+  function confirmSignUp(obj) {
+      if($('#nickname').next('small').is(':visible')) $('#nickname').next('small').hide();
+      if($('#password').next('small').is(':visible')) $('#password').next('small').hide();
+      if($('#rePassword').next('small').is(':visible')) $('#rePassword').next('small').hide();
+      if(verifyAccount == false) {
+          alert('이메일을 확인해주세요!');
+          $('#confirm-msg').css('color', 'red');
+      }
+      else {
+          let password = $('#password').val();
+          let rePassword = $('#rePassword').val();
+          if(password.length < 6) {
+              $('#password').next('small').show();
+              return;
+          }
+          if(password !== rePassword) {
+              $('#rePassword').next('small').show();
+              return;
+          }
+          let params = {account: $('#account').val(), password: password, nickname: $('#nickname').val().replace(/ /gi, '')};
+          buttonSpinner(obj, true);
+          $(obj).next('button').attr('disabled', true);
+          requestPost('/user/create', params, data => {
+              if(data.result) {
+                  firebaseSignup(data.email, () => {
+                      refreshWelcome();
+                      buttonSpinner(obj, false);
+                      $(obj).next('button').attr('disabled', false);
+                  });
+              } else {
+                  buttonSpinner(obj, false);
+                  $(obj).next('button').attr('disabled', false);
+                  showAlert('danger', data.message, $('.content'));
+              }
+          })
+      }
+  }
+  function checkSNSAccount() {
+      requestPost('/user/checkAccount', {account: SNSAccount.email, kind: SNSAccount.kind, uid: SNSAccount.uid}, data => {
+          console.log('checkAccount data =', data);
+          if(data.result == true) {
+              if(data.exist.length == 1) {
+                  if(data.exist[0] == 'email')
+                      $('#modal-mergeAccount').modal('show');
+              } else if(data.exist.length == 2) {//이미 가입한 유저
+                  showAlert('danger', '이미 가입한 계정입니다.', $('.content'));
+              }
+          } else {//신규 가입
+              confirmSignupWithSNS(SNSAccount.kind, SNSAccount.uid, SNSAccount.email, SNSAccount.nickname, SNSAccount.avatar);
+          }
+      })
+  }
+  function mergeAccount(obj) {
+      //confirmSignupWithSNS(SNSAccount.kind, SNSAccount.token, SNSAccount.email, SNSAccount.nickname, SNSAccount.avatar);
+      buttonSpinner(obj, true, true);
+      requestPost('/user/createWithSNS', {kind: SNSAccount.kind, uid: SNSAccount.uid, email: SNSAccount.email, nickname: SNSAccount.nickname, avatar: SNSAccount.avatar}, data => {
+          buttonSpinner(obj, false, true);
+          $('#modal-mergeAccount').modal('toggle');
+          if(data.result == true) {
+              if(data.how === 'merge') {
+                  refreshMerge();
+              } else {
+                  showAlert('danger', '계정연동이 실패하였습니다!', $('.content'));
+              }
+          } else {
+              showAlert('danger', '계정연동이 실패하였습니다!', $('.content'));
+          }
+      })
+  }
+  function confirmSignupWithSNS(kind, uid, email, nickname, avatar) {
+      $('.wrap-loading').removeClass('display-none');
+      requestPost('/user/createWithSNS', {kind: kind, uid: uid, email: email, nickname: nickname.replace(/ /gi, ''), avatar: avatar}, data => {
+          console.log('createWithSNS data =', data);
+          if(data.result == true) {
+              if(data.how === 'new') {
+                  firebaseSignup(email, () => {
+                      refreshWelcome();
+                      $('.wrap-loading').addClass('display-none');
+                  });
+              } else if(data.how === 'merge') {
+                  // window.location.href = '/dashboard/dashboard';
+                  refreshMerge();
+                  $('.wrap-loading').addClass('display-none');
+              } else if(data.how === 'existed') {
+                  // window.location.href = '/dashboard/dashboard';
+                  $('.wrap-loading').addClass('display-none');
+                  showAlert('danger', '해당 계정이 이미 있습니다.', $('.content'));
+              }
+          } else {
+              showAlert('danger', '회원가입이 실패하였습니다!', $('.content'));
+          }
+      })
+  }
+</script>
+
+<div class="modal fade" id="modal-mergeAccount" tabindex="-1" role="dialog" aria-labelledby="mergeAccount-Label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">계정 통합하기</h5>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" onclick="mergeAccount(this)">적용</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="content">
+	<div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: <%= @mobileDevice ? 95 : 45 %>%; max-width: 500px; height:auto; text-align: center; margin: auto">
+    <div id="form-content" style="width: auto; margin: auto; text-align: left;">
+			<form>
+				<h3>회원가입</h3>
+				<div class="form-group" style="margin-bottom: 5px">
+					<label style="display: block;" for="account" class="col-form-label">이메일</label>
+					<input style="width: 75%; vertical-align:bottom; display: inline-block" type="text" class="form-control" id="account" placeholder="이메일을 입력하세요">
+					<button style="display: inline-block" type="button" class="btn btn-primary" onclick="confirmEmail(this)">확인</button>
+					<small id="confirm-msg" style="display: block; color: red">이메일을 확인해주세요</small>
+				</div>
+				<div class="form-group">
+					<label for="nickname" class="col-form-label">별명</label>
+					<input type="text" class="form-control" id="nickname" placeholder="미입력시 이메일주소가 됩니다.(8자이하, 띄어쓰기 안됨)" maxlength="8">
+          <small style="display: none; color: red">8자 이하여야 합니다.</small>
+				</div>
+				<div class="form-group" style="margin-bottom: 1px">
+					<label for="password" class="col-form-label">비밀번호</label>
+					<input type="password" class="form-control" id="password" placeholder="6자리 이상이어야 합니다.">
+          <small style="display: none; color: red">6자리 이상이어야 합니다.</small>
+				</div>
+				<div class="form-group">
+					<label for="rePassword" class="col-form-label">비밀번호 확인</label>
+					<input type="password" class="form-control" id="rePassword" placeholder="한번 더 입력해 주세요">
+          <small style="display: none; color: red">비밀번호가 다릅니다.</small>
+				</div>
+			</form>
+			<button type="button" class="btn btn-primary" style="width: 100%; margin-top: 20px" onclick="confirmSignUp(this)">가입하기</button>
+			<button type="button" class="btn btn-secondary" style="width: 100%; margin: auto; margin-top: 5px" onclick="javascript:history.back()">돌아가기</button>
+
+      <div id="sns-signin-area" style="display: flex; flex-direction: column; align-items: center; margin-top: 50px;">
+        <div style="margin-top: 10px">
+          <div class="g-signin2" style="width: 240px; height: 50px;" data-onsuccess="onGoogleSignIn" data-longtitle="true" data-theme="dark"></div>
+        </div>
+        <div style="margin-top: 10px">
+          <a id="custom-login-btn" href="javascript:loginWithKakao()">
+            <img src="//mud-kage.kakao.com/14/dn/btqbjxsO6vP/KPiGpdnsubSq3a0PHEGUK1/o.jpg" width="238"/>
+          </a>
+        </div>
+      </div>
+
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+    //Google Loign
+    function onGoogleSignIn(googleUser) {
+        let profile = googleUser.getBasicProfile();
+        requestPost('/user/decodeJWT', {token: googleUser.getAuthResponse().id_token}, data => {
+            console.log(data);
+            if(data.result == true) {
+                SNSAccount.kind = 'google';
+                SNSAccount.uid = data.decoded_token[0].sub;
+                SNSAccount.email = profile.getEmail();
+                SNSAccount.nickname = profile.getName();
+                SNSAccount.avatar = profile.getImageUrl();
+                console.log('SNSAccount =', SNSAccount);
+                checkSNSAccount();
+                googleSignOut();
+            } else {
+            }
+        })
+    }
+    function googleSignOut() {
+        var auth2 = gapi.auth2.getAuthInstance();
+        auth2.signOut().then(function () {
+            console.log('User signed out.');
+        });
+    }
+
+    //Kakao Login
+    Kakao.init('<%= ENV['kakao_app_key'] %>');
+    function loginWithKakao() {
+        // 로그인 창을 띄웁니다.
+        Kakao.Auth.login({
+            success: function(authObj) {
+                Kakao.API.request({
+                    url: '/v2/user/me',
+                    success: function(res) {
+                        console.log(res);
+                        if(res.kakao_account.has_email && res.kakao_account.email.length > 0 && res.kakao_account.email.indexOf('@') !== -1) {
+                            SNSAccount.kind = 'kakao';
+                            SNSAccount.uid = res.id;
+                            SNSAccount.email = res.kakao_account.email;
+                            SNSAccount.nickname = res.kakao_account.profile.nickname;
+                            SNSAccount.avatar = res.kakao_account.profile.thumbnail_image_url;
+                            checkSNSAccount();
+                        } else {
+                            alert('이메일 제공 동의가 필요합니다.');
+                        }
+                    },
+                    fail: function(error) {
+                        alert(JSON.stringify(error));
+                    }
+                });
+            },
+            fail: function(err) {
+                alert(JSON.stringify(err));
+            }
+        });
+    };
+</script>

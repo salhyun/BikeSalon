@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  category: MyString
+  desc: MyText
+  good: 1
+  bad: 1
+  public: false
+
+two:
+  category: MyString
+  desc: MyText
+  good: 1
+  bad: 1
+  public: false

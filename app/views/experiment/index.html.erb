@@ -1,0 +1,30 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  .index-button {
+    margin-bottom: 0.75rem;
+  }
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+    });
+
+</script>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: <%= @mobileDevice ? 95 : 45 %>%; height:auto; text-align: center; margin: auto">
+    <div style="display: flex; flex-direction: column;">
+      <button type="button" class="btn btn-outline-primary index-button" onclick="window.open('createMotorbike', '_blank')">Create Motorbike</button>
+      <button type="button" class="btn btn-outline-primary index-button" onclick="window.open('editMotorbike', '_blank')">Edit Motorbike</button>
+      <button type="button" class="btn btn-outline-primary index-button" onclick="window.open('motorbikeReportView', '_blank')">Motorbike Report View</button>
+      <button type="button" class="btn btn-outline-primary index-button" onclick="window.open('reportView', '_blank')">All Report View</button>
+      <button type="button" class="btn btn-outline-primary index-button" onclick="window.open('shootMail', '_blank')">Shoot Mail</button>
+      <button type="button" class="btn btn-outline-primary index-button" onclick="window.open('dailyCheckDB', '_blank')">Daily check some Record</button>
+    </div>
+  </div>
+</div>

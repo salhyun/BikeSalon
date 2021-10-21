@@ -1,0 +1,102 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        $('#userId').on('change keyup paste', function () {
+            let userId = $(this).val();
+            if(userId.length > 0) {
+                requestPost('findUserFromId', {userId: userId}, data => {
+                    let content = "Can't find User"
+                    let textColor = 'red';
+                    if(data.result) {
+                        content = data.account + ', ' + data.name;
+                        textColor = 'dimgray';
+                    }
+                    $('#user-info').empty();
+                    $('#user-info').append('<div style="color: ' + textColor + '; font-size: 1.25rem">' + content + '</div>');
+                })
+            }
+        })
+    });
+
+    function onClickToEveryone(obj) {
+        let subject = $('#everyone-subject').val();
+        let content = $('#everyone-content').val();
+        if(subject.length > 0 && content.length > 0) {
+            buttonSpinner(obj, true, false);
+            requestPost('emailToEveryone', {subject: subject, content: content}, data => {
+                console.log('onClickToOneUser data =', data);
+                if(data.result) {
+                    showAlert('success', 'Everyone 성공적으로 보냈다.', $('.content'));
+                }
+                buttonSpinner(obj, false, false);
+            })
+        } else {
+            showAlert('danger', '뭐 하나 빼먹었다.', $('.content'));
+        }
+    }
+
+    function onClickToOneUser(obj) {
+        let userId = $('#userId').val().replace(/[^0-9]/g,'');
+        let subject = $('#oneUser-subject').val();
+        let content = $('#oneUser-content').val();
+        if(userId.length > 0 && subject.length > 0 && content.length > 0) {
+            buttonSpinner(obj, true, false);
+            requestPost('emailOneUser', {userId: userId, subject: subject, content: content}, data => {
+                console.log('onClickToOneUser data =', data);
+                if(data.result) {
+                    showAlert('success', 'oneUser 성공적으로 보냈다.', $('.content'));
+                }
+                buttonSpinner(obj, false, false);
+            })
+        } else {
+            showAlert('danger', '뭐 하나 빼먹었다.', $('.content'));
+        }
+    }
+</script>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: 90%; height:auto; text-align: center; margin: auto">
+    <div style="display: flex; flex-direction: column; justify-content: center;">
+      <h3>모두에게 공지사항 보내기</h3>
+      <div class="form-group">
+        <input type="text" class="form-control" id="everyone-subject" placeholder="제목을 입력하세요">
+      </div>
+      <div class="form-group">
+        <textarea class="form-control" id="everyone-content" rows="3"></textarea>
+      </div>
+      <div style="display: flex; justify-content: flex-end">
+        <button type="button" class="btn btn-info" onclick="onClickToEveryone(this)">보내기</button>
+      </div>
+    </div>
+  </div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: 90%; height:auto; text-align: center; margin: auto">
+    <div style="display: flex; flex-direction: column; justify-content: center;">
+      <h3>지정해서 보내기</h3>
+      <div style="display: flex; align-items: baseline">
+        <div class="form-group" style="flex-basis: 40%">
+          <input type="number" class="form-control" id="userId" placeholder="input user id">
+        </div>
+        <div id="user-info" style="flex-basis: 60%; text-align: left; padding: 0 1rem">
+        </div>
+      </div>
+      <div class="form-group">
+        <input type="text" class="form-control" id="oneUser-subject" placeholder="제목을 입력하세요">
+      </div>
+      <div class="form-group">
+        <textarea class="form-control" id="oneUser-content" rows="3"></textarea>
+      </div>
+      <div style="display: flex; justify-content: flex-end">
+        <button type="button" class="btn btn-info" onclick="onClickToOneUser(this)">보내기</button>
+      </div>
+    </div>
+  </div>
+</div>

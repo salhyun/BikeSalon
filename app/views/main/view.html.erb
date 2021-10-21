@@ -1,0 +1,573 @@
+<style>
+	body {
+		background-color:floralwhite;
+		margin: auto
+	}
+	.brand_logo {
+		padding: 10px;
+    width: <%= @mobileDevice ? 100 : 150 %>px;
+	}
+	.bike_type {
+		display: inline-block
+	}
+	.type_icon {
+		padding: 10px;
+    width: <%= @mobileDevice ? 100 : 150 %>px;
+	}
+	.budget {
+		margin: 20px
+	}
+	
+	.card {
+		display: inline-block;
+		margin: 5px;
+		vertical-align: top;
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+	}
+  <% unless @mobileDevice %>
+  .card:hover {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  }
+  <% end %>
+  .ratingRibbon {
+    display: inline;
+    position: absolute;
+    left: -1px;
+    top: 0.75rem;
+    text-align: center;
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+  }
+
+  .carousel-inner > .carousel-item > img {
+    max-width: <%= @mobileDevice ? 100 : 80 %>%;
+    margin: auto;
+  }
+  <% unless @mobileDevice %>
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-image: none;
+  }
+  .carousel-control-next-icon:after {
+    position: absolute;
+    right: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f105";
+    font-size: 55px;
+  }
+  .carousel-control-prev-icon:after {
+    position: absolute;
+    left: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f104";
+    font-size: 55px;
+  }
+  <% end %>
+</style>
+<script>
+    commentSize = 6;
+    commentOffset = 0;
+    opendTimelineModal = false;
+    currentTimelineId = 0;
+    ajaxCommentLoading = true;
+    allLoadingComment = false;
+
+    replyReaders = new Map();
+
+    $('.card').click(function() {
+        $('.card-img-top').toggle();
+//            console.log("클릭 디스 카드s");
+    });
+
+    if(firebase.apps.length === 0) {
+        firebase.initializeApp(getFirebaseConfig());
+    }
+    console.log('firebase.apps.length = ' + firebase.apps.length);
+    // bikeNO=2001, MAXNUM_THUMBCOUNT=2646;
+    // intervalId=0;
+
+    $(document).ready(function() {
+        $('.container').css('margin-top', $('.navbar')[0].clientHeight);
+        documentReady();
+
+        console.log('host_ip =', '<%= ENV['host_ip'] %>');
+        console.log('%c current Time = ' + '<%= Time.zone.now %>', 'background-color: green; color: white');
+
+        $('#modal-notice').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var line = button.data('line');
+            let notice = notices[line];
+            $(this).find('.modal-title').text(notice.title);
+            let $modalBody = $(this).find('.modal-body');
+            $modalBody.empty();
+            $modalBody.append('<div>' + notice.content + '</div>');
+        });
+        $('#modal-notice').on('hidden.bs.modal', function (event) {
+        });
+
+        bestMotorbikes();
+        bestTimelines();
+    });
+    <% unless @mobileDevice %>
+    $(window).resize(function(){
+        let containerRect = $('.container').children().first()[0].getBoundingClientRect();
+        $('#notice-area').css('margin-top');
+        $('#notice-area').css({'top': containerRect.top+10, 'right': containerRect.right+25});
+    });
+    <% end %>
+    document.fonts.ready.then(function () {
+        initializeNoticeArea();
+    })
+
+    function getTextLengthInPixel(text, styleOption) {
+        let ruler = $('#span-ruler');
+        ruler.css(styleOption);
+        ruler.text(text);
+        return ruler[0].offsetWidth;
+    }
+    function initializeNoticeArea() {
+        notices = new Array();
+        <% @salonNotices.each do |notice| %>
+        notices.push({title: '<%= notice.title %>', content: '<%= notice.content %>'});
+        <% end %>
+        <% if @mobileDevice %>
+        let $noticeContent = $('#notice-content');
+        if(typeof eventPersisted !== 'undefined') {
+            $noticeContent.empty();
+        }
+        let $listGroup = $('<div class="list-group" style="margin-top: 5px; text-align: left"></div>');
+        notices.forEach((notice, index) => {
+            $listGroup.append('<a class="list-group-item list-group-item-action" data-toggle="modal" data-line="' + index + '" data-target="#modal-notice"><span style="margin-right: 0.35rem"><i class="fas fa-bullhorn"></i></span>' + notice.title + '</a>');
+        })
+        $noticeContent.append($listGroup);
+        <% else %>
+        let containerRect = $('.container').children().first()[0].getBoundingClientRect();
+        console.log('containerRect =', containerRect);
+        $('#notice-area').css('margin-top');
+        $('#notice-area').css({'top': containerRect.top+10, 'right': containerRect.right+25});
+        let $noticeInitial = $('#notice-initial');
+        let noticeInitialRect = $noticeInitial[0].getBoundingClientRect();
+        console.log('noticeInitialRect =', noticeInitialRect);
+        $noticeInitial.css('border-radius', noticeInitialRect.width/2);
+        let $initialChild = $noticeInitial.children().first();
+        let initialRect = $initialChild[0].getBoundingClientRect();
+        console.log('initialRect =', initialRect);
+        $noticeInitial.css('display', 'block');
+        $initialChild.css({'position': 'absolute',
+            'left': initialRect.left-noticeInitialRect.left,
+            'top': initialRect.top-noticeInitialRect.top,
+            'width': initialRect.width,
+            'height': initialRect.height,
+        });
+        // let alphabetWidth = getTextLengthInPixel('o', {'font-family': 'MuseoModerno', 'font-size': '2rem'});
+        // console.log('alphabetWidth =', alphabetWidth);
+        let alphabetWidth = 20;
+        console.log('textWidth =', alphabetWidth);
+        let noticeWords = ['o', 't', 'i', 'c', 'e'];
+        let maxBarWidth = noticeInitialRect.width + (alphabetWidth*noticeWords.length);
+        console.log('maxBarWidth =', maxBarWidth);
+        let lineHeight = 25, marginBottom = 5, letterWidth=18, iconWidth=20, marginRight=10;
+        notices.forEach(notice => {
+            let textLength = getTextLengthInPixel(notice.title, {'font-family': 'Nanum Gothic', 'font-size': '1rem'})+letterWidth+iconWidth+marginRight;
+            maxBarWidth = maxBarWidth < textLength ? textLength : maxBarWidth;
+        })
+        $('#notice-area').css('visibility', 'visible');
+        console.log('maxBarWidth =', maxBarWidth);
+        let noticeCount = notices.length;
+
+        let printSpan = function (now, $initialSpan, hover=false) {
+            let diff = parseInt((now - noticeInitialRect.width)/alphabetWidth);
+            if(diff <= noticeWords.length) {
+                let alphabet = '';
+                for(let i=0; i<diff; i++) {
+                    alphabet += noticeWords[i];
+                }
+                $initialSpan.text(alphabet);
+            } else {
+                if(hover && ($initialSpan.text().length < noticeWords.length)) {
+                    $initialSpan.text('otice');
+                }
+            }
+        }
+        $('#notice-area').hover(function () {
+            if($initialChild.children('span').length == 0) {
+                $initialChild.append($('<span style="font-size: 2rem"></span>'));
+            }
+            $noticeInitial.stop().animate({width: maxBarWidth}, {
+                duration: 200,
+                step: function (now) {
+                    let $initialSpan = $initialChild.children('span:first');
+                    if($initialSpan.text().length < noticeWords.length) {
+                        printSpan(now, $initialSpan, true);
+                    }
+                    $initialChild.css('width', now);
+                },
+                done: function () {
+                    let hrWidth = $noticeInitial[0].getBoundingClientRect().width - (getNumberFromString($initialChild.css('left')))*2;
+                    $initialChild.append('<div style="position: absolute; left: 0; top: ' + ($initialChild[0].getBoundingClientRect().height-5) + 'px; width: ' + hrWidth + 'px"><hr style="margin: 0"></div>');
+                    $noticeInitial.animate({height: initialRect.height+(lineHeight*noticeCount)+marginBottom}, {
+                        duration: 200,
+                        step: function (now) {
+                            let lines = $noticeInitial.data('lines');
+                            if((now-initialRect.height) >= lineHeight*(lines+1)) {
+                                $initialChild.append('<div class="notice-item fade-in" data-toggle="modal" data-line="' + lines + '" data-target="#modal-notice"><span style="margin-right: 0.25rem"><i class="fas fa-bullhorn"></i></span>' + notices[lines].title + '</div>');
+                                $noticeInitial.data('lines', lines+1);
+                            }
+                        }
+                    });
+                }
+            });
+        }, function () {
+            if(getNumberFromString($noticeInitial.css('height')) > noticeInitialRect.height) {
+                $noticeInitial.stop().animate({height: noticeInitialRect.height}, {
+                    duration: 200,
+                    step: function(now) {
+                        let lines = $noticeInitial.data('lines');
+                        if((now-noticeInitialRect.height) < lineHeight*(lines+1)) {
+                            $initialChild.children('div').last().remove();
+                            lines -= 1;
+                            $noticeInitial.data('lines', lines < 0 ? 0 : lines);
+                        }
+                    },
+                    done: function () {
+                        $noticeInitial.animate({width: noticeInitialRect.width}, {
+                            duration: 200,
+                            step: function (now) {
+                                printSpan(now, $initialChild.children('span:first'));
+                                $initialChild.css('width', now);
+                            },
+                            done: function () {
+                                $initialChild.empty().text('N');
+                            }
+                        });
+                    }
+                })
+            } else {
+                $noticeInitial.stop().animate({width: noticeInitialRect.width}, {
+                    duration: 200,
+                    step: function (now) {
+                        printSpan(now, $initialChild.children().first());
+                    },
+                    done: function () {
+                        $initialChild.empty().text('N');
+                    }
+                });
+            }
+        });
+        <% end %>
+    }
+
+    function getBlobFromImg(obj, callback) {
+        const image = new Image();
+        image.src = $(obj).attr('src');
+        image.onload = imageEvent => {
+            let canvas = document.createElement('canvas');
+            canvas.width = $(obj).width();
+            canvas.height = $(obj).height();
+            canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                callback(blob);
+            }, 'image/png', 1);
+        }
+    }
+    function appendBestMotorbike(motorbike, parent) {
+        let outer = $("<a href=\"javascript:void(0)\" onclick=\"window.open('/main/bikeview?bikeId=" + motorbike.id + "', '_blank')\" link=\"windowText\" hover=\"windowText\" active=\"windowText\" style=\"text-decoration: none\"></a>");
+        let card = $("<div id=\"bikeNo-" + motorbike.id + "\" class=\"card\" style=\"width: 16rem; display: inline-block; margin: 5px; vertical-align: top; border-color: rgba(0, 0, 0, .125)\"></div>");
+        let ratingRibbon = $('<div class="ratingRibbon">');
+        colorRating(ratingRibbon, motorbike.totalRating);
+        ratingRibbon.append('<div style="margin: 0 0.5rem">' + motorbike.totalRating.toFixed(1) + '</div>');
+        card.append(ratingRibbon);
+        card.append("<img src=\"" + motorbike.url + "\" style=\"width: 70%; height: auto; display: block; margin: 0.3rem auto auto auto;\" alt=\"" + motorbike.id + "\">");
+        let cardBody = $("<div class=\"card-body\"></div>");
+        cardBody.append("<h4 class=\"card-title\" style=\"color: windowText; text-align: left;\">" + motorbike.year + " " + motorbike.name + "</h4>");
+        cardBody.append("<p class=\"card-text\" style=\"color: windowText; text-align: left; margin-bottom: -4px\">" + motorbike.displacement + "cc</p>");
+
+        let blankPos = motorbike.maxpower.indexOf('(');
+        let maxpower = motorbike.maxpower.substring(0, blankPos === -1 ? motorbike.maxpower.length-1 : blankPos-1);
+        blankPos = motorbike.maxtorque.indexOf('(');
+        let maxtorque = motorbike.maxtorque.substring(0, blankPos === -1 ? motorbike.maxtorque.length-1 : blankPos-1);
+        cardBody.append("<p class=\"card-text\" style=\"color: rgba(0, 0, 0, .3); text-align: left; margin-bottom: 3px\">" + maxpower + "<br>" + maxtorque + "<br>" + motorbike.dry_weight + "</p>");
+        cardBody.append("<p class=\"card-text\" style=\"color: windowText; text-align: left;\">" + motorbike.price + "</p>");
+        card.append(cardBody);
+        outer.append(card);
+        parent.append(outer);
+    }
+    function bestMotorbikes() {
+        requestPost('/main/bestMotorbikes', {}, data => {
+            console.log('bestMotorbikes data =', data);
+            if(data.result && data.bestMotorbikes.length > 0) {
+                if(typeof eventPersisted !== 'undefined') {
+                    $('#bestmotorbikes-area').empty();
+                }
+                <% if @mobileDevice %>
+                appendCarousel(data.bestMotorbikes, 'carousel-bestMotorbikes', $('#bestmotorbikes-area'), (item, parent) => {
+                    let inner = $('<div style="width: 100%; height: auto;"></div>');
+                    appendBestMotorbike(item, inner);
+                    parent.append(inner);
+                });
+                $('#carousel-bestMotorbikes').carousel({
+                    interval: 5000,
+                });
+                <% else %>
+                data.bestMotorbikes.forEach(motorbike => {
+                    appendBestMotorbike(motorbike, $('#bestmotorbikes-area'));
+                })
+                <% end %>
+            }
+        })
+    }
+    function appendBestTimelines(timeline, parent) {
+        let fontSize = {normal: '1rem', level: '0.9rem', title: '1.25rem'};
+        let bodyPadding = '1.25rem';
+        <% if @mobileDevice %>
+        fontSize = {normal: '0.8rem', level: '0.7rem', title: '1rem'};
+        bodyPadding = '0.8rem';
+        <% end %>
+
+        let outer = $('<div style="cursor: pointer;" data-toggle="modal" data-timelineid="' + timeline.id + '" data-target="#DetailViewModal"></div>');
+        // let outer = $('<div style="cursor: pointer;" onclick="window.open(\'/gallery/gallery?timelineId=' + timeline.id + '\', \'_blank\')"></div>');
+        let card = $("<div class=\"card\" style=\"width: 16rem; display: inline-block; margin: 5px; vertical-align: top; border-color: rgba(0, 0, 0, .125)\"></div>");
+        card.append("<img src=\"" + timeline.attachments[0].thumb + "\" style=\"width: 100%; height: auto; display: block; border-top-left-radius: inherit; border-top-right-radius: inherit;\" alt=\"" + timeline.id + "\">");
+
+        let hcv = $("<div style=\"margin-right: 1rem; text-align: right\">");
+        hcv.append(" <i class=\"far fa-heart\" style=\"color: #D6336C\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"좋아요\"></i>");
+        hcv.append(" <span style=\"color: darkgray; font-size: 0.7rem; margin-left: -3px; margin-right: 4px;\">" + numberWithCommas(timeline.likeCount) + "</span>");
+        hcv.append(" <i class=\"far fa-comment\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"댓글수\"></i>");
+        hcv.append(" <span style=\"color: darkgray; font-size: 0.7rem; margin-left: -3px; margin-right: 4px;\">" + numberWithCommas(timeline.commentCount) + "</span>");
+        hcv.append(" <i class=\"far fa-eye\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"조회수\"></i>");
+        hcv.append(" <span style=\"color: darkgray; font-size: 0.7rem; margin-left: -3px\">" + numberWithCommas(timeline.viewCount) + "</span>");
+        card.append(hcv);
+
+        let cardBody = $("<div class=\"card-body\" style=' padding: 1rem; text-align: right;'></div>");
+        cardBody.append("<div style='text-align: right;'><span style=\"margin-right: 5px; color: white; font-size: 0.8rem; background-color: " + timeline.categoryColor + "; border-radius: 2px; padding: 2px;\">" + timeline.category + "</span><div class=\"card-title\" style=\"display: inline-block; margin-bottom: 0; font-size: " + fontSize.title + "\">" + timeline.title + "</div></div>");
+        cardBody.append('<div class="card-text text-ellipsis" style="color: dimgray;">' + timeline.desc + '</div>');
+
+        let content1 = $('<div></div>');
+        if(timeline.avatar_url == null) {
+            content1.append("<img class=\"img-thumbnail\" src=\"/motorcyclist.jpg\" style=\"width: 45px; height: 45px;\">");
+        } else {
+            content1.append("<img class=\"img-thumbnail\" src=\"" + timeline.avatar_url + "\" style=\"width: 45px; height: 45px;\">");
+        }
+        cardBody.append(content1);
+
+        let content2 = $('<div></div>');
+        let nameElement = $('<div>' + timeline.userName + '</div>');
+        nameElement.append(buildUserLevel(timeline.titleOfLevel, fontSize.level));
+        content2.append(nameElement);
+        content2.append("<div style=\"font-size: 0.8rem; color: darkgray\">게시일: " + getDateString(new Date(timeline.created_at)) + "</div>");
+        cardBody.append(content2);
+
+        card.append(cardBody);
+        outer.append(card);
+        parent.append(outer);
+    }
+    function bestTimelines() {
+        requestPost('/main/bestTimelines', {}, data => {
+            console.log('bestTimelines data =', data);
+            if(data.result && data.bestTimelines.length > 0) {
+                let bestTimelineArea = $('#bestTimelines-area');
+                if(typeof eventPersisted !== 'undefined') {
+                    bestTimelineArea.empty();
+                }
+                <% if @mobileDevice %>
+                appendCarousel(data.bestTimelines, 'carousel-bestTimelines', bestTimelineArea, (item, parent) => {
+                    let inner = $('<div style="width: 100%; height: auto;"></div>');
+                    appendBestTimelines(item, inner);
+                    parent.append(inner);
+                });
+                $('#carousel-bestTimelines').carousel({
+                    interval: 5000,
+                });
+                <% else %>
+                bestTimelineArea.css({'display': 'flex', 'flex-direction': 'row', 'justify-content': 'center'});
+                data.bestTimelines.forEach(timeline => {
+                    appendBestTimelines(timeline, bestTimelineArea);
+                })
+                <% end %>
+            }
+        });
+    }
+</script>
+
+<div class="container" style="width: 100%; height: auto; display: flex; flex-direction: column; align-items: center">
+  <% if @mobileDevice %>
+  <div class="shadow-sm p-3 mb-1 bg-white rounded" style="width: <%= @mobileDevice ? 100 : 90 %>%; height:auto; text-align: center; margin-top: 1rem">
+    <button id="notice-collapse-button" class="btn btn-outline-info" type="button" style="font-family: MuseoModerno; font-weight: 200; font-size: 1.25rem; width: 100%" data-toggle="collapse" data-target="#notice-content" aria-expanded="false" aria-controls="notice-content">Notice</button>
+    <div class="collapse" id="notice-content">
+    </div>
+  </div>
+  <% end %>
+  <div class="shadow-sm p-3 mb-1 bg-white rounded" style="width: <%= @mobileDevice ? 100 : 90 %>%; height:auto; text-align: center; margin-top: 1rem">
+    <div style="text-align: left; font-size: 1.1rem; font-weight: bold;">최고 평점 바이크 TOP3</div>
+    <hr style="margin-top: 1px; margin-bottom: 10px">
+    <div id="bestmotorbikes-area">
+    </div>
+  </div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: <%= @mobileDevice ? 100 : 90 %>%; height:auto; text-align: center; margin-top: 1rem">
+    <div style="text-align: left; font-size: 1.1rem; font-weight: bold;">최고 인기 타임라인 TOP3</div>
+    <hr style="margin-top: 1px; margin-bottom: 10px">
+    <div id="bestTimelines-area">
+    </div>
+  </div>
+
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: <%= @mobileDevice ? 100 : 90 %>%; height:auto; text-align: center; margin-top: 1rem">
+    <ul class="nav nav-tabs nav-justified" id="myTab" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="brand-tab" data-toggle="tab" href="#brand" role="tab" aria-controls="brand" aria-selected="true">브랜드</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="style-tab" data-toggle="tab" href="#style" role="tab" aria-controls="style" aria-selected="false">스타일</a>
+      </li>
+<!--      <li class="nav-item">-->
+<!--        <a class="nav-link" id="budget-tab" data-toggle="tab" href="#budget" role="tab" aria-controls="budget" aria-selected="false">예산</a>-->
+<!--      </li>-->
+    </ul>
+    <div class="tab-content" id="myTabContent">
+      <div class="tab-pane fade show active" id="brand" role="tabpanel" aria-labelledby="brand-tab">
+        <% @brands.each do |brand| %>
+          <a href="javascript:void(0)" onclick="window.location='main/brandview?brandId=<%=brand.id%>'"><img class="brand_logo" src="<%=brand.logo%>"></a>
+        <% end %>
+      </div>
+      <div class="tab-pane fade" id="style" role="tabpanel" aria-labelledby="style-tab">
+        <% @styles.each_with_index do |style, index| %>
+          <div class="bike_type"><a href="javascript:void(0)" onclick="window.location='main/searchbike?styleId=<%= (index+1).to_s %>'"><img class="type_icon" src="<%=style.icon%>"><br><%=style.name%></a></div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+<% if @mobileDevice %>
+<style>
+  #notice-collapse-button:hover {
+    background-color: inherit;
+    color: #17a2b8;
+  }
+</style>
+<% else %>
+<div id="notice-area" style="visibility: hidden">
+  <div id="notice-circle">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <div id="notice-bar">
+    <div id="notice-initial" data-lines="0">
+      <div style="font-family: MuseoModerno; font-weight: 900; font-size: 2rem; color: #343a40">N</div>
+    </div>
+  </div>
+</div>
+<span id="span-ruler" style="visibility: hidden; white-space: nowrap; "></span>
+<style>
+  #notice-area {
+    position: fixed;
+    cursor: pointer;
+  }
+  #notice-circle {
+    position: relative;
+    width: 3.5rem;
+    height: 3.5rem;
+    background: linear-gradient(#33ccff 60%, #ff0066 40%);
+    border-radius: 50%;
+    animation: circle-spinning 4s linear infinite;
+  }
+  @keyframes circle-spinning {
+    from {transform: rotate(0deg)}
+    to {transform: rotate(360deg)}
+  }
+  #notice-circle:after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    bottom: 5px;
+    left: 5px;
+    background: floralwhite;
+    border-radius: 50%;
+  }
+  #notice-circle span {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(#33ccff, #ff0066);
+    border-radius: 50%;
+  }
+  #notice-circle span:nth-child(1) {
+    filter: blur(5px);
+  }
+  #notice-circle span:nth-child(2) {
+    filter: blur(10px);
+  }
+  #notice-circle span:nth-child(3) {
+    filter: blur(20px);
+  }
+  #notice-circle span:nth-child(4) {
+    filter: blur(55px);
+  }
+  #notice-bar {
+    position: absolute;
+    border-radius: 50%;
+    top: 5px;
+    right: 5px;
+    bottom: 5px;
+    left: 5px;
+  }
+  #notice-initial {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: floralwhite;
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    transition: box-shadow 200ms ease-in-out;
+  }
+  #notice-initial:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  @keyframes animation-fadein {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+  @keyframes animation-fadeout {
+    from {opacity: 1;}
+    to {opacity: 0;}
+  }
+  .fade-in {
+    animation: animation-fadein;
+    animation-duration: 0.35s;
+  }
+  .fade-out {
+    animation: animation-fadeout;
+    animation-duration: 0.35s;
+  }
+  .notice-item {
+    font-family: Nanum Gothic;
+    font-size: 1rem;
+    color: gray;
+    transition: color 0.1s linear;
+  }
+  .notice-item:hover {
+    color: #343a40;
+  }
+</style>
+<% end %>
+<div class="modal fade" id="modal-notice" tabindex="-1" role="dialog" aria-labelledby="modalNotice-Label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalNotice-Label">삭제하기</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>

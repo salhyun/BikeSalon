@@ -1,0 +1,4 @@
+<p style="font-size: 1rem">바이크 살롱 가입을 환영합니다!!</p>
+<br>
+<p style="font-size: 1rem"><%= @user.name %>님 아래의 링크로 계정을 인증 시켜주세요!</p>
+<a style="font-size: 1rem" href="http://<%= ENV['host_ip'] %>/user/verify?userId=<%= @user.id %>&secure_code=<%= @user.secure_code %>">인증하기</a>

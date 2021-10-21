@@ -1,0 +1,365 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+
+  .carousel-inner > .carousel-item > img {
+    max-width: <%= @mobileDevice ? 100 : 80 %>%;
+    margin: auto;
+  }
+  <% unless @mobileDevice %>
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-image: none;
+  }
+  .carousel-control-next-icon:after {
+    position: absolute;
+    right: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f105";
+    font-size: 55px;
+  }
+  .carousel-control-prev-icon:after {
+    position: absolute;
+    left: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f104";
+    font-size: 55px;
+  }
+  <% end %>
+
+  .gm-style {
+    font-family: "Nanum Gothic", sans-serif;/*기본폰트는 나눔고딕*/
+  }
+  .gm-style-iw {
+    cursor: pointer;
+  }
+  .gm-style-iw-d {
+    overflow: auto !important;
+  }
+  .gm-style-iw.gm-style-iw-c {
+    padding: 0.5rem !important;
+  }
+  .gm-style-iw.gm-style-iw-c > button {
+    display: none !important;
+  }
+</style>
+
+<script>
+    commentSize = 6;
+    commentOffset = 0;
+    opendTimelineModal = false;
+    currentTimelineId = 0;
+    ajaxCommentLoading = true;
+    allLoadingComment = false;
+    clusterDistance = 25;
+
+    replyReaders = new Map();
+
+    categoryColors = new Map();
+    setCategoryColors();
+
+    $(document).ready(function() {
+        let navbarHeight = $('.navbar')[0].clientHeight;
+        $('.content').css('margin-top', navbarHeight);
+        $('#map').css('height', $(window).outerHeight() - $('#view-mode').outerHeight() - navbarHeight - 25);
+        documentReady();
+
+        let d = getDistanceFromLatLng({lat: 35.862709, lng: 128.579199}, {lat: 35.854814, lng: 128.582665});
+        console.log('%c distance = ' + d, 'color: yellow');
+
+        $('input[name="gallery-view"]').change(function () {
+            location.href = 'gallery';
+        });
+
+        $('input[name="search"]').on('change keyup paste', function (event) {
+            let searchButton = $('#search-button');
+            let length = $(this).val().length;
+            if(length > 1 && searchButton.attr('disabled')) {
+                searchButton.attr('disabled', false);
+            }
+
+            let intervalCall1000 = intervalCall(1000);
+            if(event.keyCode == 13 && !searchButton.attr('disabled')) {//press enter key
+                intervalCall1000(() => {//한글입력하면 두번 발생함 그래서 interval 사용...
+                    console.log('%c enter key', 'color: yellow');
+                    $('#search-button').trigger('click');
+                });
+            }
+        });
+
+        setSearchButton();
+    });
+    function readTimelineLocations(sw, ne) {
+        console.log('sw =', sw);
+        console.log('ne =', ne);
+        let searchWord = $('input[name="search"]').val().trim();
+        console.log('searchWord =', searchWord);
+        requestPostSync('readTimelineLocations', {sw: sw, ne: ne, searchWord: searchWord, limit: 12}, data => {
+            if(data.result) {
+                console.log('readTimelineLocations data =', data);
+                let clusterLocations = new Array();
+                data.timelineLocations.forEach(timelineLocation => {
+                    clusterLocations.push({id: timelineLocation.id, latlng: {lat: timelineLocation.lat, lng: timelineLocation.lng}});
+                });
+                console.log('initialize clusterLocations =', clusterLocations);
+                clusterLocations = clusterLocations.map(clusterLocation => {
+                    let clusteredIds = new Array();
+                    let locations = new Array();
+                    for(let n=0; n<data.timelineLocations.length; n++) {
+                        let distance = getDistanceFromLatLng(clusterLocation.latlng, {lat: data.timelineLocations[n].lat, lng: data.timelineLocations[n].lng}, 1000);
+                        if( distance < clusterDistance) {
+                            locations.push(data.timelineLocations[n]);
+                            clusteredIds.push(data.timelineLocations[n].id);
+                        }
+                    }
+                    clusteredIds.forEach(clusteredId => {
+                        const clusteredIndex = data.timelineLocations.findIndex(timelineLocation => {
+                            return timelineLocation.id == clusteredId;
+                        });
+                        if(clusteredIndex > -1) {
+                            data.timelineLocations.splice(clusteredIndex, 1);
+                        }
+                    })
+                    return {...clusterLocation, locations: locations};
+                });
+                clusterLocations.forEach(clusterLocation => {
+                    <% if defined?(@mainLocation) %>
+                    if(clusterLocation.id != <%= @mainLocation.id %>) {
+                        // addInfoWindow(timelineLocation);
+                        if(clusterLocation.locations.length > 1) {
+                            addMultiColumnInfoWindow(clusterLocation);
+                        } else {
+                            if(clusterLocation.locations.length > 0) {
+                                addInfoWindow(clusterLocation.locations[0]);
+                            }
+                        }
+                    }
+                    <% else %>
+                    if(clusterLocation.locations.length > 1) {
+                        addMultiColumnInfoWindow(clusterLocation);
+                    } else {
+                        if(clusterLocation.locations.length > 0) {
+                            addInfoWindow(clusterLocation.locations[0]);
+                        }
+                    }
+                    <% end %>
+                })
+            }
+        });
+    }
+    function getCategoryFontColor(category) {
+        let color = 'white';
+        if(category == '맛집') {
+            color = '#383d41';
+        }
+        return color;
+    }
+    function setCategoryColors() {
+        <% @categories.each do |category| %>
+        categoryColors.set('<%= category.name %>', {backgroundColor: '<%= category.color %>', color: getCategoryFontColor('<%= category.name %>')});
+        <% end %>
+    }
+    function onClickTimelineInfoWindow(timelineId) {
+        console.log('onClickTimelineInfoWindow id =', timelineId);
+    }
+    function setSearchButton() {
+        let inputWidth = $('#search-button').parent().outerWidth() - $('#search-button').outerWidth() - 8;
+        $('#search-button').prev().css('flex-basis', inputWidth + 'px');
+    }
+    function onClickSearch(obj) {
+        removeAllInfoWindows();
+        let ne = bounds.getNorthEast();
+        let sw = bounds.getSouthWest();
+        readTimelineLocations({lat: sw.lat(), lng: sw.lng()}, {lat: ne.lat(), lng: ne.lng()});
+        $(obj).attr('disabled', true);
+    }
+    function getDistanceFromLatLng(location1, location2, scale=1) {
+        function deg2rad(deg) {
+            return deg * (Math.PI/180)
+        }
+        //scale == 1 : Kilometer, scale == 1000 : in Meter
+        var R = 6371 * scale; // Radius of the earth in km
+        var dLat = deg2rad(location2.lat-location1.lat);  // deg2rad below
+        var dLng = deg2rad(location2.lng-location1.lng);
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(location1.lat)) * Math.cos(deg2rad(location2.lat)) * Math.sin(dLng/2) * Math.sin(dLng/2);
+        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        var d = R * c; // Distance in km
+        return d;
+    }
+</script>
+
+<div class="content">
+<!--  <div class="btn-group btn-group-toggle" data-toggle="buttons">-->
+<!--    <label class="btn btn-primary">-->
+<!--      <input type="radio">gellery-->
+<!--    </label>-->
+<!--    <label class="btn btn-primary active">-->
+<!--      <input type="radio" checked>map-->
+<!--    </label>-->
+<!--  </div>-->
+  <% if @mobileDevice %>
+  <div id="view-mode" style="display: flex; flex-direction: column; width:100%; margin: auto; padding: 0.5rem 0.5rem; text-align: left">
+    <div class="btn-group btn-group-toggle" data-toggle="buttons" style="margin-bottom: 0.5rem">
+      <label class="btn btn-outline-primary">
+        <input type="radio" name="gallery-view"> 갤러리 뷰
+      </label>
+      <label class="btn btn-outline-primary active">
+        <input type="radio" name="map-view" checked> 맵 뷰
+      </label>
+    </div>
+    <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: end;">
+      <input class="form-control" type="text" name="search" style="width: auto; margin-bottom: 0.25rem" placeholder="검색어를 입력하세요">
+      <button type="button" id="search-button" class="btn btn-outline-primary" onclick="onClickSearch(this)">검색</button>
+    </div>
+  </div>
+  <% else %>
+  <div id="view-mode" style="display: flex; flex-direction: row; justify-content: space-between; width:85%; margin: auto; padding: 0.5rem 0; text-align: left">
+    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+      <label class="btn btn-outline-primary">
+        <input type="radio" name="gallery-view"> 갤러리 뷰
+      </label>
+      <label class="btn btn-outline-primary active">
+        <input type="radio" name="map-view" checked> 맵 뷰
+      </label>
+    </div>
+    <div style="display: flex; flex-direction: row; align-items: flex-end; margin-left: 2rem">
+      <input class="form-control" type="text" name="search" style="width: auto; min-width: 189px;" placeholder="검색어를 입력하세요">
+      <button type="button" id="search-button" class="btn btn-outline-primary" style="margin-left: 0.5rem" onclick="onClickSearch(this)">검색</button>
+    </div>
+  </div>
+  <% end %>
+  <div id="map" class="shadow-sm p-3 mb-1 bg-white rounded" style="<%= @mobileDevice ? 'width:100%' : 'width:85%' %>; height:400px; text-align: center; margin: auto">
+  </div>
+</div>
+
+<script>
+    map=null;
+    bounds=null;
+    infoWindows = new Array();
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            <% if @mobileDevice %>
+            gestureHandling: 'greedy',
+            <% end %>
+            <% if defined?(@mainLocation) %>
+            center: {lat: <%= @mainLocation.lat %>, lng: <%= @mainLocation.lng %>},
+            zoom: 17,
+            <% else %>
+            center: {lat: 35.859389, lng: 128.573000},
+            zoom: 15,
+            <% end %>
+        });
+
+        <% if defined?(@mainLocation) %>
+        let pos = {lat: <%= @mainLocation.lat %>, lng: <%= @mainLocation.lng %>};
+        initializeMapWithTimelineLocations(pos);
+        addMarker(pos);
+        <% else %>
+          <% if @mobileDevice %>
+          if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(function(position) {
+                  initializeMapWithTimelineLocations({lat: position.coords.latitude, lng: position.coords.longitude});
+              }, function() {
+                  let center = map.getCenter();
+                  initializeMapWithTimelineLocations({lat: center.lat(), lng: center.lng()});
+              });
+          } else {
+              // Browser doesn't support Geolocation
+              let center = map.getCenter();
+              initializeMapWithTimelineLocations({lat: center.lat(), lng: center.lng()});
+          }
+          <% else %>
+            <% if @browserInfo.eql? 'Safari' %>
+            initializeMapWithTimelineLocations({lat: 35.859389, lng: 128.573000});
+            <% else %>
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    initializeMapWithTimelineLocations({lat: position.coords.latitude, lng: position.coords.longitude});
+                }, function() {
+                    handleLocationError(true, infoWindow, map.getCenter());
+                    let center = map.getCenter();
+                    initializeMapWithTimelineLocations({lat: center.lat(), lng: center.lng()});
+                });
+            } else {
+                // Browser doesn't support Geolocation
+                handleLocationError(false, infoWindow, map.getCenter());
+                let center = map.getCenter();
+                initializeMapWithTimelineLocations({lat: center.lat(), lng: center.lng()});
+            }
+            <% end %><%# if @browserInfo.eql? 'Safari' %>
+          <% end %><%# if @mobileDevice %>
+        <% end %><%# if defined?(@mainLocation) %>
+    }
+    function initializeMapWithTimelineLocations(pos) {
+        map.setCenter(pos);
+        google.maps.event.addListener(map, 'bounds_changed', function() {
+            if(bounds == null) {
+                let changedBound = map.getBounds();
+                let ne = changedBound.getNorthEast();
+                let sw = changedBound.getSouthWest();
+                readTimelineLocations({lat: sw.lat(), lng: sw.lng()}, {lat: ne.lat(), lng: ne.lng()});
+                bounds = changedBound;
+                // addMarker(sw);
+                // addMarker(ne);
+            } else {
+                bounds = map.getBounds();
+                $('#search-button').attr('disabled', false);
+            }
+        });
+    }
+    function addMarker(location) {
+        marker = new google.maps.Marker({
+            position: location,
+            // label: '투어까페',
+            map: map
+        });
+    }
+    function removeAllInfoWindows() {
+        infoWindows.forEach(infoWindow => {
+            infoWindow.close();
+        });
+        infoWindows.length = 0;
+    }
+    function addInfoWindow(timelineLocation) {
+        let infoWindow = new google.maps.InfoWindow;
+        infoWindow.setPosition({lat: timelineLocation.lat, lng: timelineLocation.lng});
+        infoWindow.setContent(styleInfoWindow(timelineLocation.category, timelineLocation.title, timelineLocation.timeline_id));
+        infoWindow.open(map);
+        infoWindows.push(infoWindow);
+    }
+    function styleInfoWindow(category, title, timelineId) {
+        let categoryColor = categoryColors.get(category);
+        let content = '<div style="display: flex; flex-direction: row; align-items: center;" data-toggle="modal" data-timelineid="' + timelineId + '" data-target="#DetailViewModal">' +
+            '<div style="margin-right: 5px; font-size: 0.8rem; background-color: ' + categoryColor.backgroundColor + '; color: ' + categoryColor.color + '; border-radius: 2px; padding: 2px 2px;">' + category + '</div>' +
+            '<div class="text-ellipsis" style="font-size: 1rem; max-width: 150px">' + title + '</div>' +
+            '</div>';
+        return content;
+    }
+    function addMultiColumnInfoWindow(clusterLocation) {
+        let infoWindow = new google.maps.InfoWindow;
+        infoWindow.setPosition({lat: clusterLocation.latlng.lat, lng: clusterLocation.latlng.lng});
+        infoWindow.setContent(styleMultiInfoWindow(clusterLocation.locations));
+        infoWindow.open(map);
+        infoWindows.push(infoWindow);
+    }
+    function styleMultiInfoWindow(locations) {
+        let content = '<div style="display: flex; flex-direction: column;">';
+        locations.forEach((location, index) => {
+            content += styleInfoWindow(location.category, location.title, location.timeline_id);
+            if(index < locations.length-1) {
+                content += '<hr style="margin: 0.25rem 0">';
+            }
+        });
+
+        content += '</div>';
+        return content;
+    }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=<%= ENV['google_api_key'] %>&libraries=places&callback=initMap"async defer></script>

@@ -1,0 +1,95 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  .livecast-card {
+    width: 320px;
+    height: 240px;
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        readLivecast();
+
+        // var player = videojs('vid1');
+        // player.play();
+    });
+
+    function readLivecast() {
+        requestPost('readLivecast', {}, data => {
+            if(data.result) {
+                console.log('data.result =', data);
+                data.livecasts.forEach(livecast => {
+                    appendLivecastCard($('#livecast-area'), livecast);
+                })
+            }
+        })
+    }
+    function getThumbnail(url, callback) {
+        var video = document.createElement('video');
+        video.setAttribute('src', url);
+        video.setAttribute('autoplay', true);
+        video.muted = true;
+        video.addEventListener('loadedmetadata', function() {
+            let third = this.seekable.end(0)/3;
+            this.currentTime = third; //Set current time of video after metadat loaded
+        }, false);
+        // Create thumbnail after video data loaded
+        video.addEventListener('loadeddata', function() {
+            let createThumb = function () {
+                var canvas = document.createElement("canvas");
+                canvas.width = 300;
+                canvas.height = 200;
+                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                callback(canvas.toDataURL());
+                $(canvas).remove();
+                video.setAttribute('currentTime', 0); // Reset video current time
+                video.pause();
+                $(video).remove();
+            }
+            setTimeout(createThumb, 500);
+        }, false);
+    }
+    function appendLivecastCard(parent, livecast) {
+        let $card = $('<div class="livecast-card"></div>');
+        let $img = $('<img src="/NoImageAvailable.png" style="width: 300px; height: 200px" crossorigin="anonymous">');
+        // getThumbnail(livecast.url, dataUrl => {
+        //     $img.attr('src', dataUrl);
+        // });
+        // let $video = $('<video src="' + livecast.url + '" type="video/mp4" codecs="avc1, mp4a" style="width: 300px; height: 200px;" controls>');
+        let url = 'http://52.78.99.190:8080/hls/test.m3u8';
+        // let $video = $('<video controls preload="auto" autoplay="true"><source src="' + url + '" type="application/x-mpegURL"></video>');
+        let $video = $('<video id="test-video" class="video-js vjs-default-skin vjs-16-9" controls preload="auto" autoplay data-setup="{}" poster="' + livecast.avatar + '"><source src="' + url + '" type="application/x-mpegURL" /></video>');
+        $video[0].addEventListener('loadedmetadata', function() {
+            console.log('loadedmetadata video');
+        }, false);
+        $card.append($video);
+        parent.append($card);
+    }
+</script>
+
+<div class="content">
+  <div style="font-size: 2.5rem">Test Livecast</div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%;text-align: center; margin: auto">
+    <div id="livecast-area" style="display: flex;">
+    </div>
+
+<!--    <video-->
+<!--      id="livestation-player"-->
+<!--      class="video-js vjs-default-skin"-->
+<!--      controls-->
+<!--      preload="auto"-->
+<!--      data-setup='{}'>-->
+<!--      <source src="http://52.78.99.190:8080/hls/test.m3u8" type="application/x-mpegURL"/>-->
+<!--    </video>-->
+
+  </div>
+</div>

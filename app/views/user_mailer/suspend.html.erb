@@ -1,0 +1,8 @@
+<p style="font-size: 1rem">안녕하세요 바이크 살롱입니다.</p>
+<br>
+<p style="font-size: 1rem">회원님의 부적절한 서비스 이용이 확인되어 아래와 같이 조치함을 알려드립니다.</p>
+<p style="font-size: 1rem">조치: 계정정지(<%= @user.warningCount %>/<%= ENV['user_max_warning'] %>)</p>
+<p style="font-size: 1rem">사유: 경고 <%= ENV['user_max_warning'] %>회를 초과하여 계정이 정지 되었습니다.</p>
+<p style="font-size: 1rem">로그인은 가능 하나 게시물, 댓글, 답들등을 사용할 수 없습니다.
+  <br>내 정보 페이지에서 반성하기 이용하여 복원할 수 있습니다.
+</p>

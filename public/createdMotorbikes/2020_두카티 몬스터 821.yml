@@ -1,0 +1,61 @@
+DUCATI:
+  id: 3073
+  name: 두카티 몬스터 821
+  year: 2020
+  style_id: 11
+  price: 1,780만원
+  brand_id: 8
+  totalRating: 0.0
+  maxpower: 109.0hp @ 9250rpm
+  maxtorque: 86.0Nm @ 7750rpm
+  compression_ratio: 12.8:1
+  gasmileage: 18.52km/리터 (5.40리터/100km)
+  valves: 4
+  fuel_delivery_system: 인젝션
+  fuel_type: 가솔린
+  ignition_type: 정보없음
+  cooling_system: 공기/유체 냉각
+  gearbox_type: 6단
+  transmission_type: 
+  clutch: 제어 케이블이있는 APTC 슬리퍼 및 셀프 서보 습식 멀티 플레이트 클러치
+  front_brakes: 더블 디스크. 세미 플로팅 디스크, 반경 방향으로 장착 된 Monobloc Brembo M4-32 캘리퍼, 4 피스톤, ABS가 표준 인 축형 펌프
+  front_disk: 정보없음
+  rear_disk: 정보없음
+  front_tyre: 120/70-ZR17
+  rear_tyre: 180/55-ZR17
+  front_suspension: 도립식 포크
+  rear_suspension: 조정 가능한 모노 쇼크와의 진보적 인 연계. 알루미늄 양면 스윙 암
+  dry_weight: 180.5kg
+  length: 2170mm
+  width: 800mm
+  height: 1055mm
+  wheelbase: 1480mm
+  seat_height: 785mm
+  fueltank: 16.50리터
+  url: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbikeThumbs%2FNo3073?alt=media&token=c492fc84-b3b5-43cc-8465-9928277ade0c
+  rear_brakes: 싱글 디스크. ABS를 표준 장비로 사용하는 2 피스톤 플로팅 캘리퍼
+  top_speed: 정보없음
+  curb_weight: 206.0kg
+  front_suspension_travel: 정보없음
+  rear_suspension_travel: 정보없음
+  reserve_fuel: 정보없음
+  engine_type: V2, 4 스트로크
+  engine_details: Testastretta 11 ° L- 트윈
+  camshaft: Desmodromic 밸브 제어
+  exhaust_system: 스테인레스 스틸 머플러 및 알루미늄 및 캡; 2 개의 람다 프로브가있는 촉매 변환기가 장착 된 경량 2-1 시스템
+  lights: 정보없음
+  frame_type: 실린더 헤드에 부착 된 튜브형 강철 격자 프레임
+  final_drive: 체인
+  lubrication_system: 정보없음
+  bore_stroke: 88.0x67.5mm
+  co2_emissions: 125.3CO2g/km.
+  emissions: 유로 4
+  trail_size: 93mm
+  ground_clearance: 정보없음
+  instruments: LCD 디스플레이
+  displacement: 821.0
+  msrp: 1780
+  designRating: 0.0
+  performanceRating: 0.0
+  comfortRating: 0.0
+  ratingCount: 0

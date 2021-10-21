@@ -1,0 +1,438 @@
+<script>
+    selectedYear='';
+    selectedBrand={name: '', id: 0};
+    brandList = new Array();
+
+    $(document).ready(function() {
+        documentReady();
+        for(let i=0; i<10; i++) {
+            let year = 2020-i;
+            $('#year-list').append('<a class="dropdown-item" href="javascript:void(0);" onclick="onClickYear(this)">' + year + '</a>');
+        }
+
+        <% @brands.each do |brand| %>
+        $('#brand-list').append('<a class="dropdown-item" href="javascript:void(0);" onclick="onClickBrand(this, ' + '<%= brand.id %>' + ')">' + '<%= brand.name %>' + '</a>');
+        brandList.push({name: '<%= brand.name %>', id: '<%= brand.id %>'});
+        <% end %>
+
+        $('#input_yamls').on('change', function() {
+            selectYamls(this);
+        });
+        $('#input_thumbs').on('change', function() {
+            selectThumbs(this);
+        });
+
+        //정규 표현식
+        // let dd = 'disp 749.41 cc';
+        // let enginesize = '321.00cc (19.59 입방 인치)';
+        // let blankPos = enginesize.indexOf('(');
+        // let qq = enginesize.substring(0, blankPos === -1 ? enginesize.length-1 : blankPos);
+        // console.log('qq =', qq);
+        //
+        // let value = qq.replace(/[a-z]|\s/g, '');
+        // console.log('value =', value)
+        // console.log('value =', parseFloat(value));
+
+        // console.log('value =', value.substring(0, value.indexOf('(')))
+
+        //firebase 메타데이타
+        // let ref = firebase.storage().ref('images/brandLogos/Aprilia.png');
+        // ref.getMetadata().then(function(metadata) {
+        //     // Metadata now contains the metadata for 'images/forest.jpg'
+        //     console.log('metadata =', metadata);
+        //     if(typeof metadata.cacheControl === 'undefined') {
+        //         ref.updateMetadata({cacheControl: 'public,max-age=300'}).then(function(metadata) {
+        //             console.log('updated metadata =', metadata);
+        //         }).catch(function(error) {
+        //             console.log('Uh-oh, an error occurred! error =', error);
+        //         });
+        //     }
+        // }).catch(function(error) {
+        //     // Uh-oh, an error occurred!
+        //     console.log('getMetadata error =', error);
+        // });
+    });
+    function onClickYear(obj) {
+        selectedYear = $(obj).text();
+        $('#year-list-button').text(selectedYear);
+    }
+    function onClickBrand(obj, id) {
+        selectedBrand = {name: $(obj).text(), id: id};
+        $('#brand-list-button').text(selectedBrand.name);
+    }
+
+    function calculateGasmileage(fuelConsumption) {
+        fuelConsumption = fuelConsumption.replace(/ /gi, '');
+        fuelConsumption = fuelConsumption.substring(0, fuelConsumption.indexOf('('));
+        fuelConsumption = fuelConsumption.split('/');
+        let litres = fuelConsumption[0].replace(/[a-z]/g,'');
+        let km = fuelConsumption[1].replace(/[a-z]/g,'');
+        console.log(`litres=${litres}, km=${km}`)
+        let gasmileage = 1.0/parseFloat(litres)*parseFloat(km);
+        return gasmileage.toFixed(2).toString() + 'km/리터';
+    }
+
+    function MayIHelpYou(obj) {
+        buttonSpinner(obj, true, false);
+        requestPostSync('/experiment/MayIHelpYou', {model: 'motorbikes'}, data => {
+            console.log('%cMayIHelpYou', 'color: green');
+            console.log('data =', data);
+            buttonSpinner(obj, false, false);
+        });
+    }
+    function requestModels(brand, t) {
+        setTimeout(() => {
+            requestPost('/experiment/readIds', {year: selectedYear, brandId: brand.id}, data => {
+                console.log('readIds data =', data);
+
+                let content = "";
+                data.models.forEach(model => {
+                    content += model.id + ' ' + model.name + '\n';
+                });
+
+                let blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                let fileURL = $('#downloadModels').get(0);
+                fileURL.href = window.URL.createObjectURL(blob);
+                fileURL.download = selectedYear + '_' + brand.name + '_models.txt';
+                fileURL.click();
+            })
+        }, t);
+    }
+    function readIds(obj) {
+        if(selectedYear.length > 0 && selectedBrand.id > 0) {
+            buttonSpinner(obj, true, false);
+            requestPost('/experiment/readIds', {year: selectedYear, brandId: selectedBrand.id}, data => {
+                console.log('readIds data =', data);
+
+                let content = "";
+                data.models.forEach(model => {
+                    content += model.id + ' ' + model.name + '\n';
+                });
+
+                let blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+                let fileURL = $('#downloadModels').get(0);
+                fileURL.href = window.URL.createObjectURL(blob);
+                fileURL.download = selectedYear + '_' + selectedBrand.name + '_models.txt';
+                fileURL.click();
+                buttonSpinner(obj, false, false);
+            })
+        }
+    }
+    function readAllIds() {
+        if(selectedYear.length > 0 && brandList.length > 0) {
+            brandList.forEach((brand, index) => {
+                requestModels(brand, 1000*index);
+            })
+        }
+    }
+    function removeBracket(model, name) {
+        let value = model[name];
+        if(value != null) {
+            if(value.includes('정보 없음') || value.includes('정보없음')) {
+                model[name] = value;
+            }
+            else if(name == 'Fuel Consumption - MPG - Economy - Efficiency') {
+                value = value.replace(/litres/gi, '리터');
+                value = value.replace(/ /gi, '');
+                model[name] = calculateGasmileage(value) + ' (' + value.substring(0, value.indexOf('(')) + ')';
+            }
+            else if(name == 'Engine size - Displacement - Engine capacity') {
+                let blankPos = value.indexOf('(');
+                value = value.substring(0, blankPos === -1 ? value.length-1 : blankPos);
+                value = value.replace(/[a-z]|\s/g, '');
+                model[name] = parseFloat(value);
+            }
+            else {
+                value = value.replace(/litres/gi, '리터');
+                value = value.replace(/ /gi, '');
+                model[name] = value.substring(0, value.indexOf('('));
+            }
+        }
+    }
+    function updateMotorbikes(models) {
+        models.forEach(model => {
+            removeBracket(model, 'Wheelbase');
+            removeBracket(model, 'Front Brakes Dimensions - Disc Dimensions');
+            removeBracket(model, 'Fuel Tank Capacity');
+            removeBracket(model, 'Dry Weight');
+            removeBracket(model, 'Fuel Consumption - MPG - Economy - Efficiency');
+            removeBracket(model, 'Engine size - Displacement - Engine capacity');
+            removeBracket(model, 'Rear Brakes Dimensions - Disc Dimensions');
+            removeBracket(model, 'Front Suspension Travel');
+            removeBracket(model, 'Rear Suspension Travel');
+            removeBracket(model, 'Top Speed');
+            removeBracket(model, 'Reserve Fuel Capacity');
+            removeBracket(model, 'Seat Height');
+            removeBracket(model, 'Height');
+            removeBracket(model, 'Width');
+            removeBracket(model, 'Curb Weight (including fluids)');
+            removeBracket(model, 'Length');
+            removeBracket(model, 'CO2 emissions');
+            removeBracket(model, 'Bore x Stroke');
+            removeBracket(model, 'Trail size');
+            removeBracket(model, 'Ground Clearance');
+        })
+        requestPostSync('/experiment/updateMotorbikes', {models: models}, data => {
+            console.log('updateMotorbikes successfully!');
+        })
+        console.log('finished updatedMotorbikes');
+    }
+    function readYaml(obj) {
+        console.log('readYaml');
+        buttonSpinner(obj, true, false);
+        requestPost('/experiment/readYaml', {filename: '2019_HONDA_models.yml'}, data => {
+            if(data.result) {
+                console.log('readYaml data =', data);
+                updateMotorbikes(data.models);
+                buttonSpinner(obj, false, false);
+            }
+        })
+    }
+    function readYamls(obj) {
+        console.log('readYamls');
+        buttonSpinner(obj, true, false);
+        if(Array.isArray(selectedYamlFileNames) && selectedYamlFileNames.length > 0) {
+            selectedYamlFileNames.forEach(fileName => {
+                let models;
+                requestPostSync('/experiment/readYaml', {filename: fileName}, data => {
+                    if(data.result) {
+                        console.log('readYaml data =', data);
+                        models = data.models;
+                    }
+                });
+                if(models.length > 0) {
+                    updateMotorbikes(models);
+                }
+                console.log('%c finished updateMotorbikes fileName = ' + fileName, 'color: yellow');
+            })
+        }
+        buttonSpinner(obj, false, false);
+    }
+    function fileUploadAction(id) {
+        console.log('fileUploadAction');
+        $('#' + id).trigger('click');
+    }
+    function selectYamls(e) {
+        var files = e.files;
+        var filesAr = Array.prototype.slice.call(files);
+        if(filesAr.length) {
+            selectedYamlFileNames = [];
+            filesAr.forEach(file => {
+                selectedYamlFileNames.push(file.name);
+            });
+            console.log('selectedYamlFileNames =', selectedYamlFileNames);
+        }
+    }
+    function selectThumbs(e) {
+        var files = e.files;
+        var filesAr = Array.prototype.slice.call(files);
+        if(filesAr.length) {
+            selectedThumbs = [];
+            filesAr.forEach(file => {
+                let reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function () {
+                    let index = file.name.substring(0, file.name.lastIndexOf('.')).split(' ')[0];
+                    let rename = 'No' + index + file.name.substring(file.name.lastIndexOf('.'), file.name.length);
+                    selectedThumbs.push({id: parseInt(index), name: rename, blob: dataURItoBlob(reader.result)})
+                    console.log('push thumb name =', rename);
+
+                    // let filename = file.name.substring(0, file.name.lastIndexOf('.')).split('_');
+                    // if(filename.length == 4) {
+                    //     let rename = 'No' + filename[filename.length-1] + file.name.substring(file.name.lastIndexOf('.'), file.name.length);
+                    //     selectedThumbs.push({id: parseInt(filename[filename.length-1]), name: rename, blob: dataURItoBlob(reader.result)})
+                    //     console.log('push thumb name =', rename);
+                    // }
+                }
+            });
+        }
+    }
+    function readBikezModels(obj) {
+        requestPost('/experiment/readBikezModels', {path: 'public/bikezModels/*.yml'}, data => {
+            console.log('findfiles result data =', data)
+        })
+    }
+    function updateThumb(thumb, index, interval) {
+        setTimeout(() => {
+            requestPost('/experiment/findBikeThumb', {bikeId: thumb.id}, data => {
+                if(data.result) {
+                    console.log('data =', data);
+                    let metadata = {cacheControl: 'public,max-age=2628000'};//one month
+                    firebase.storage().ref('images/bikeThumbs/').child(thumb.name).put(thumb.blob, metadata).then(snapShot => {
+                        snapShot.ref.getDownloadURL().then(downloadURL => {
+                            // console.log('File available at ' + downloadURL);
+                            requestPost('/main/updateBikeThumb', {id: data.bikeId, url: downloadURL}, data2 => {
+                                console.log('thumb updated successfully!');
+                                console.log('data2 =', data2);
+                                console.log('thumb Count: ' + (index+1) + '/' + selectedThumbs.length);
+                            });
+                        });
+                    })
+                } else {
+                }
+            })
+        }, (index * interval));
+    }
+    function updateBikeThumbs(obj) {
+        console.log('selectedThumbs =', selectedThumbs);
+        if(selectedThumbs.length > 0) {
+            selectedThumbs.forEach((thumb, index) => {
+                updateThumb(thumb, index, 2000);
+            });
+        }
+    }
+
+    async function deleteBikeThumbs(obj) {
+        console.log('selectedThumbs =', selectedThumbs);
+        if(selectedThumbs.length > 0) {
+            buttonSpinner(obj, true, false);
+            let filenames = '';
+            await selectedThumbs.map(async (thumb) => {
+                let fileName = thumb.name.split('.')[0];
+                filenames += fileName + '.jpg,';
+                filenames += fileName + '.png,';
+                filenames += fileName + ',';
+            });
+            filenames = filenames.substring(0, filenames.length-1);
+            console.log('%c finished selectedThumbs.map', 'color: yellow');
+
+            let path = 'images/bikeThumbs/';
+            let deleteFiles = '<%= ENV['gcfHost'] %>' + 'deleteFiles?path=' + path + '&filenames=';
+            let result = await requestFetchSync(deleteFiles + filenames);
+            console.log('result =', result);
+            console.log('%c finished deleteFile', 'color: yellow');
+            buttonSpinner(obj, false, false);
+        }
+    }
+
+    function deleteMotorbikesFromIds(obj) {
+        //let ids = [2477,2576,2577,2578,2579,2580,2581,2582,2583,2584,2585,2586,2587,2619];//이거 firebase cloud storage 에서도 삭제해야 한다.
+        let ids = [2846, 2849, 2862];
+        buttonSpinner(obj, true, false);
+        requestPost('/experiment/deleteMotorbikesFromIds', {ids: ids}, data => {
+            console.log('deleteModelsFromIds data =', data);
+            buttonSpinner(obj, false, false);
+        });
+    }
+
+    async function testCloudFunction(obj) {
+        console.log('testCloudFunction');
+        buttonSpinner(obj, true, false);
+
+        let host = '<%= ENV['gcfHost'] %>';
+
+        // let url = host + 'existFile?path=images/tt/&';
+        // let result = await requestFetchSync(url + 'filename=No3');
+        // console.log('result =', result);
+        // console.log('%c finished testCloudFunction', 'color: yellow');
+
+        //파이어베이스 Cloud Function deleteFiles
+        // let url = host + 'deleteFiles?path=images/tt/&';
+        // let result = await requestFetchSync(url + 'filename=No4,No5,No1786.jpg,No1787.jpg,EE');
+        // console.log('result =', result);
+
+        //파이어베이스 Cloud Function deletePath
+        // let url = host + 'deletePath?path=images/nos/';
+        // let result = await requestFetchSync(url);
+        // console.log('result =', result);
+
+        console.log('%c finished testCloudFunction', 'color: yellow');
+
+        buttonSpinner(obj, false, false);
+    }
+
+    function saveYAMLFromModel(obj) {
+        buttonSpinner(obj, true, false);
+        // let models = ['styles', 'users', 'sns_accounts', 'timeline_category'];
+        let models = ['motorbikes'];
+        models.forEach(model => {
+            requestPostSync('saveYAMLFromModel', {model: model}, data => {
+                console.log(`saveYAMLFromModel ${model} data =`, data);
+            })
+        });
+        buttonSpinner(obj, false, false);
+    }
+    function loadYAMLMotorbike(obj) {
+        buttonSpinner(obj, true, false);
+        requestPost('loadYAMLMotorbike', {motorbikeId: 3}, data => {
+            console.log('loadYAMLMotorbike data =', data);
+            buttonSpinner(obj, false, false);
+        })
+    }
+</script>
+
+<h1>
+  ViewTest Page
+</h1>
+<div>
+  <div style="text-align: center; margin-top: 3rem">
+    view for test
+  </div>
+  <div style="display: flex; flex-direction: column">
+    <div style="margin: 0.5rem; display: flex; justify-content: center">
+      <button type="button" class="btn btn-primary" style="margin: auto;" onclick="MayIHelpYou(this)">may I help you?</button>
+    </div>
+    <div style="margin: 0.5rem; display: flex; flex-direction: row; justify-content: space-evenly">
+      <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="year-list-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">year</button>
+        <div id="year-list" class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="z-index: 2000">
+        </div>
+      </div>
+      <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="brand-list-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">brand</button>
+        <div id="brand-list" class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="z-index: 2000; max-height: 450px; overflow-y: scroll">
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="readIds(this)">save</button>
+      <button type="button" class="btn btn-primary" onclick="readAllIds(this)">saveAll</button>
+    </div>
+    <div style="margin: 0.5rem; display: flex; justify-content: center">
+      <button type="button" class="btn btn-primary" style="margin: auto;" onclick="readYaml(this)">readYaml</button>
+    </div>
+    <div style="margin: 0.5rem; display: flex; justify-content: center">
+      <button type="button" class="btn btn-outline-primary" style="margin-right: 5px" onclick="fileUploadAction('input_yamls')">select yamls</button>
+      <input style="display: none" type="file" multiple="multiple" id="input_yamls"/>
+      <button type="button" class="btn btn-primary" style="margin: auto;" onclick="readYamls(this)">readYamls</button>
+    </div>
+  </div>
+  <div style="font-size: 2rem; text-align: center; margin: auto;">bikez.com 으로 만든 yml 파일 로드</div>
+  <div style="margin: 0.5rem; display: flex; justify-content: center">
+    <button type="button" class="btn btn-primary" style="margin: auto;" onclick="readBikezModels(this)">readBikezModels</button>
+  </div>
+  <div style="font-size: 2rem; text-align: center; margin: auto;">bikez.com 포토 업로드</div>
+  <div style="margin: 0.5rem; display: flex; justify-content: space-evenly">
+    <button type="button" class="btn btn-outline-primary" style="margin-right: 5px" onclick="fileUploadAction('input_thumbs')">select thumbs</button>
+    <input style="display: none" type="file" multiple="multiple" id="input_thumbs"/>
+    <div>
+      <button type="button" class="btn btn-primary" style="margin: auto;" onclick="updateBikeThumbs(this)">updateBikeThumbs</button>
+      <button type="button" class="btn btn-primary" style="margin: auto;" onclick="deleteBikeThumbs(this)">deleteBikeThumbs</button>
+    </div>
+  </div>
+  <div style="font-size: 2rem; text-align: center; margin: auto;">ID로 모델 삭제</div>
+  <div style="margin: 0.5rem; display: flex; justify-content: space-evenly">
+    <div>
+      <button type="button" class="btn btn-primary" style="margin: auto;" onclick="deleteMotorbikesFromIds(this)">삭제하기</button>
+    </div>
+  </div>
+  <div style="font-size: 2rem; text-align: center; margin: auto;">Test Firebase cloud functions</div>
+  <div style="margin: 0.5rem; display: flex; justify-content: space-evenly">
+    <div>
+      <button type="button" class="btn btn-danger" style="margin: auto;" onclick="testCloudFunction(this)">Test</button>
+    </div>
+  </div>
+  <div style="font-size: 2rem; text-align: center; margin: auto;">save Yaml from Motorbikes</div>
+  <div style="margin: 0.5rem; display: flex; justify-content: space-evenly">
+    <div>
+      <button type="button" class="btn btn-danger" style="margin: auto;" onclick="saveYAMLFromModel(this)">save Yaml from Model</button>
+      <button type="button" class="btn btn-danger" style="margin: auto;" onclick="loadYAMLMotorbike(this)">load Yaml</button>
+    </div>
+  </div>
+  <div style="text-align: center">
+    <img src="/imgLoading.svg">
+  </div>
+
+  <a id="downloadModels">downloadModels</a>
+  <!--  <div>-->
+  <!--    <img src="https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FbrandLogos%2FBMW.png?alt=media&token=135b4497-e242-4eda-82b7-f97fa530f0bc">-->
+  <!--  </div>-->
+</div>

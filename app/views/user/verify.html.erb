@@ -1,0 +1,29 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+</style>
+
+<script>
+  $(document).ready(function() {
+      $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+      documentReady();
+      console.log('verify = ' + <%= @verify %>);
+  });
+
+</script>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: <%= @mobileDevice ? 95 : 45 %>%; max-width: 500px; height:auto; text-align: center; margin: auto">
+    <div style="display: flex; flex-direction: column; justify-content: center; height: 200px;">
+      <% if @verify == true %>
+        <div style="align-self: center; text-align: center; font-size: 1.5rem;"><%= @message %></div>
+        <div style="align-self: center; text-align: center; font-size: 1.5rem;">로그인 해주세요.</div>
+        <button type="button" class="btn btn-primary" style="width: 60%; align-self: center; margin-top: 2.25rem;" onclick="window.location.href='/user/login'">로그인하기</button>
+      <% else %>
+        <div style="align-self: center; text-align: center; font-size: 1.5rem;"><%= @message %></div>
+      <% end %>
+    </div>
+  </div>
+</div>

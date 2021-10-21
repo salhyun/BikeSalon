@@ -1,0 +1,1408 @@
+<style>
+	@media screen and (max-width: 1000px) {
+		.content {
+			width: 100%;
+			margin: auto;
+		}
+	}
+	@media screen and (min-width: 1001px) {
+		.content {
+			width: 1000px;
+			margin: auto;
+		}
+	}
+
+	body {
+		background-color:floralwhite;
+		width: 100%;
+		margin: auto
+	}
+
+  .card-horz {
+    display: flex;
+    flex-direction: row;
+    border: 1px solid rgba(0, 0, 0, .125);
+    border-radius: 0.35rem;
+    min-width: 230px;
+    width: 230px;
+    height: calc(230px / 1.618);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    cursor: pointer;
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+    margin-bottom: 1.5rem;
+  }
+  <% unless @mobileDevice %>
+  .card-horz:hover {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.25), 0 5px 6px rgba(0,0,0,0.22);
+  }
+  <% end %>
+  .card-horz-leftside {
+    width: 45%; height: 100%;
+  }
+  .card-horz-img {
+    width: 100%; height: 100%;
+    border-top-left-radius: 0.35rem;
+    border-bottom-left-radius: 0.35rem;
+    object-fit: cover;
+  }
+  .card-horz-rightside {
+    width: 55%; height: 100%;
+    display: flex;
+    flex-direction: column-reverse;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    padding-bottom: 1rem;
+    text-align: right;
+  }
+  .card-horz-text {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    color: dimgray;
+    margin-bottom: 0.25rem;
+  }
+
+	.spec-left {
+		width: 24%;
+		height: auto;
+		text-align: left;
+		color: darkgray;
+		margin-top: 10px
+	}
+	.spec-right {
+		width: 32%;
+		height: auto;
+		text-align: left;
+		margin-top: 10px;
+	}
+
+	.td-left1 {
+		width: 15%;
+		color: darkgray;
+	}
+	.td-right1 {
+		width: 35%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+	}
+	.td-left2 {
+		width: 15%;
+		color: darkgray;
+	}
+	.td-right2 {
+		width: 35%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+	}
+	.tr-row {
+		height: 6vh;
+	}
+  @keyframes animation-fadein {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+  @keyframes animation-fadeout {
+    from {opacity: 1;}
+    to {opacity: 0;}
+  }
+  .fade-in {
+    animation: animation-fadein;
+    animation-duration: 0.35s;
+  }
+  .fade-out {
+    animation: animation-fadeout;
+    animation-duration: 0.35s;
+  }
+  #tooltip-spec, #tooltip-report {
+    display: none;
+    position: fixed;
+    border-radius: 0.25rem;
+    background-color: #333C42;
+    color: white;
+    height: auto;
+    padding: 0.35rem 1rem 0.35rem 1rem;
+  }
+  .tooltip-tail-left:after {
+    content: '';
+    position: absolute;
+    border-style: solid;
+    border-width: 10px 10px 10px 0;
+    border-color: transparent #333C42;
+    display: block;
+    width: 0;
+    z-index: 1;
+    left: -10px;
+    top: 10px;
+  }
+  .tooltip-tail-right:after {
+    content: '';
+    position: absolute;
+    border-style: solid;
+    border-width: 10px 0 10px 10px;
+    border-color: transparent #333C42;
+    display: block;
+    width: 0;
+    z-index: 1;
+    right: -10px;
+    top: 10px;
+  }
+  .tooltip-tail-bottom:after {
+    content: '';
+    position: absolute;
+    border-style: solid;
+    border-width: 10px 10px 0;
+    border-color: #333C42 transparent;
+    display: block;
+    width: 0;
+    z-index: 1;
+    bottom: -10px;
+    left: 50%;
+  }
+
+  @keyframes animation-slidedown {
+    from {top: -100px;}
+    to {top: 0px;}
+  }
+  @keyframes animation-slideup {
+    from {top: 0px;}
+    to {top: -100px;}
+  }
+  slide-up {
+    animation: animation-slideup;
+    animation-duration: 0.35s;
+  }
+  slide-down {
+    animation: animation-slidedown;
+    animation-duration: 0.35s;
+  }
+
+  .tiny-card-list {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 1rem;
+  }
+  .tiny-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    min-width: 230px;
+    height: 130px;
+    margin: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0,0,0,.125);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  }
+  <% unless @mobileDevice%>
+  .tiny-card:hover {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.25), 0 5px 6px rgba(0,0,0,0.22);
+  }
+  <% end %>
+  .tiny-card-title {
+    text-align: left;
+  }
+  .tiny-card-thumb {
+    width: 40%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0.35rem;
+  }
+  .tiny-card-desc {
+    display: -webkit-box;
+    width: 60%;
+    height: 100%;
+    font-size: 0.8rem;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    margin-left: 0.25rem;
+  }
+</style>
+
+<script>
+  function buildRatingForm(body, defaultScores) {
+      var flexArea = $("<div style='display: flex;'></div>");
+      var itemsKr = ['디자인', '성능', '편안함'];
+      var itemsEn = ['design', 'performance', 'comfort'];
+      for(var i in itemsKr) {
+          var formGroup = $("<div class='form-group' style='margin: 5px; text-align: center; flex-grow: 1'></div>");
+          let id = 'rating-' + itemsEn[i];
+          formGroup.append("<label for=\"" + id + "\">" + itemsKr[i] + "</label>");
+          var selector = $("<select class=\"form-control\" id=\"" + id + "\">");
+          for(var n=1; n<11; n++) {
+              selector.append("<option value='" + n +"'>" + n + "</option>");
+          }
+          selector.val(defaultScores[i]);
+          flexArea.append(formGroup.append(selector));
+      }
+      body.append(flexArea);
+  }
+
+  commentSize = 6;
+  commentOffset = 0;
+  ajaxCommentLoading = true;
+  allLoadingComment = false;
+
+  mybikeReader = {limit: 12, offset: 0, loading: false, readAll: false};
+  replyReaders = new Map();
+
+  function isEllipsisActive(element) {
+      return element.offsetWidth < element.scrollWidth;
+  }
+  function fitTextInPixel(obj, fontSize, maxWidth, depth=5, marginRightInRem=0.12) {
+      let text = typeof obj === 'object' ? obj.text() : obj;
+      console.log(`fontSize=${fontSize}, maxWidth=${maxWidth}`);
+      let registerWidth = getTextLengthInPixel(text, {'font-size': fontSize + 'rem'});
+      if(registerWidth > maxWidth) {
+          let step = -1;
+          while(depth > 0) {
+              fontSize = fontSize+step;
+              registerWidth = getTextLengthInPixel(text, {'font-size': fontSize + 'rem'});
+              let diff = maxWidth-registerWidth;
+              if( (step < 0 && diff > 0) || (step > 0 && diff < 0) ) {
+                  step = -(step/2);
+                  --depth;
+              }
+          }
+      }
+      return fontSize-marginRightInRem;
+  }
+
+	$(document).ready(function() {
+	    $('.content').css('margin-top', $('.navbar')[0].clientHeight);
+      <% if ENV['enable_advert'].eql?('true') and ENV['advert_bikeview'].eql?('true') %>
+	    $('.advert').each(function () {
+	        let offsetY = $('.navbar')[0].clientHeight + 10;
+	        $(this).css('top', offsetY + 'px');
+      })
+      <% end %>
+      documentReady();
+
+	    let registerWidth = getTextLengthInPixel('등록', {'font-size': '1rem'});
+	    console.log('registerWidth =', registerWidth);
+
+	    <% unless @mobileDevice %>
+      $('#report-button').hover(function () {
+          let tooltipReport = $('#tooltip-report');
+          let content = '잘못된 스펙이 있을 경우 리포트 해주시기 바랍니다.';
+          let textWidth = getTextLengthInPixel(content, {'font-size': $(this).css('font-size')});
+          let rect = $(this)[0].getBoundingClientRect();
+          let left = rect.left-(textWidth+10);
+          tooltipReport.css({left: left, top: rect.top, 'max-width': textWidth});
+          tooltipReport.removeClass('fade-out').addClass('fade-in');
+          tooltipReport.text(content);
+          tooltipReport.show();
+      }, function () {
+          let tooltipReport = $('#tooltip-report');
+          tooltipReport.removeClass('fade-in').addClass('fade-out');
+          setTimeout(function () {
+              if(tooltipReport.hasClass('fade-out')) {
+                  tooltipReport.removeClass('fade-out');
+                  tooltipReport.hide();
+              }
+          }, 350);
+      });
+      <% end %>
+
+      $('[data-toggle="tooltip"]').hover(function () {
+          let tooltipSpec = $('#tooltip-spec');
+          let content = $(this).data('content');
+          let textWidth = getTextLengthInPixel(content, {'font-size': $(this).css('font-size')});
+          if(textWidth > $(this).outerWidth()) {
+              console.log('enter tooltip-spec ', $(this).data('content'));
+              let className = $(this).attr('class');
+              let rect = $(this)[0].getBoundingClientRect();
+              tooltipSpec.css('max-width', rect.width);
+              let eee = $(this).data('content').replace(/\n/g, '<br/>');
+              tooltipSpec.text(eee);
+              <% if @mobileDevice %>
+              tooltipSpec.css({left: rect.left, top: rect.top-tooltipSpec.outerHeight()-10});
+              tooltipSpec.removeClass().addClass('tooltip-tail-bottom');
+              <% else %>
+              if(className.includes('right1')) {
+                  tooltipSpec.css({left: rect.right, top: rect.top});
+                  tooltipSpec.removeClass().addClass('tooltip-tail-left');
+              } else {
+                  tooltipSpec.css({left: rect.left-rect.width-10, top: rect.top});
+                  tooltipSpec.removeClass().addClass('tooltip-tail-right');
+              }
+              <% end %>
+              tooltipSpec.removeClass('fade-out').addClass('fade-in');
+              tooltipSpec.show();
+          }
+      }, function () {
+          console.log('leave tooltip-spec');
+          let tooltipSpec = $('#tooltip-spec');
+          if(tooltipSpec.hasClass('fade-in')) {
+              tooltipSpec.removeClass('fade-in').addClass('fade-out');
+              setTimeout(function () {
+                  if(tooltipSpec.hasClass('fade-out')) {
+                      tooltipSpec.removeClass('fade-out');
+                      tooltipSpec.hide();
+                  }
+              }, 350);
+          }
+      });
+
+      var main_img = document.getElementById("main_img");
+      var key_spec = document.getElementById("key_spec");
+      console.log('main_img width = ' + main_img.clientWidth + ', height = ' + main_img.clientHeight);
+
+      console.log('key_spec = ' + key_spec.clientHeight);
+      //리사이즈 발생할때
+      setTimeout(function () {
+          resizeCardfont();
+      }, 50);
+      $(window).bind('resize', resizeCardfont);
+      function resizeCardfont() {
+          <% if @mobileDevice %>//모바일 경우
+          $('#spec-bike-name').css('font-size', '5rem');
+          var w = 5;
+          // var fs = fitTextInPixel($('#spec-bike-name'), w, $('#spec-bike-name').parent().outerWidth());
+          var fs = fitTextInPixel($('#spec-bike-name'), w, $('#spec-bike-name').parent().innerWidth(), 5, 0.2);
+          $('#spec-bike-name').css('font-size', fs + 'rem');
+
+          $('#spec-bike-name').prev().css('font-size', fs + 'rem');
+
+          let keyspecWidth = $('#key_spec').outerWidth();
+          let basisFontSize = fitTextInPixel('가나다라마', w, keyspecWidth);
+          $('#spec-disp').css('font-size', basisFontSize + 'rem');
+          $('#spec-price').css('font-size', basisFontSize + 'rem');
+
+          let maxfs = 1.5;
+          fs = fitTextInPixel($('#spec-sumy1'), w, keyspecWidth);
+          fs = fs > maxfs ? maxfs : fs;
+          $('#spec-sumy1').css('font-size', fs + 'rem');
+
+          let sumy2 = $('#spec-sumy2').text().trim().split('\n');
+          sumy2 = sumy2.map(text => {return text.trim()});
+          sumy2 = sumy2.map(text => {return fitTextInPixel(text, w, keyspecWidth)});
+          console.log('sumy2 =', sumy2);
+          fs = Math.min.apply(null, sumy2)*0.85;
+          fs = fs > maxfs ? maxfs : fs;
+          console.log('sumy2 fs =', fs);
+          $('#spec-sumy2').css('font-size', fs + 'rem');
+          <% else %>//데스크탑 경우
+          var w = $('#spec-board').width();
+          var s = w/250;
+          // $('#spec-bike-name').css('font-size', fs);
+          var fs = fitTextInPixel($('#spec-bike-name'), s, $('#spec-bike-name').parent().outerWidth());
+          console.log('fontSize =', fs);
+          $('#spec-bike-name').css('font-size', fs + 'rem');
+
+          fs = (s*0.48).toString() +'rem';
+          $('#spec-bike-name').prev().css({'font-size': fs, 'padding-bottom': '5px'});
+          // $('#spec-bike-name').prev().css({'font-size': fs, 'margin-bottom': (-s*0.35).toString() +'rem', 'margin-left': '4px'});
+          // $('#spec-bike-name').prev().css({'font-size': fs, 'margin-bottom': (-s*0.35).toString() +'rem', 'margin-left': '4px'});
+          s = w/400;
+          fs = s.toString() + 'rem';
+          $('#spec-disp').css('font-size', fs);
+          $('#spec-price').css('font-size', fs);
+          s = w/800;
+          fs = s.toString() + 'rem';
+          $('#spec-sumy1').css('font-size', fs);
+          $('#spec-sumy2').css('font-size', fs);
+          <% end %>
+      }
+
+      $('#modal-bikeRating').on('show.bs.modal', function (event) {
+          var button = $(event.relatedTarget);
+          var modal = $(this);
+
+          jQuery.ajax({
+              url: '/main/checkBikeRating',
+              type: 'post',
+              data: {
+                  bikeId: <%= @bike.id %>
+              },
+              success: function(data) {
+                  console.log("success");
+                  console.log(data);
+
+                  if(data.result == true) {
+                      var body = modal.find('.modal-body');
+                      body.empty();
+                      body.append("<p>다음 과 깉이 평가 한적이 있습니다.<br>다시 평가하시겠습니까?</p>");
+                      buildRatingForm(body, [data.rating.design, data.rating.performance, data.rating.comfort]);
+                  } else {
+                      var body = modal.find('.modal-body');
+                      body.empty();
+                      body.append("<p>이 바이크를 평가 한적이 없습니다.<br>평가하시겠습니까?</p>");
+                      buildRatingForm(body, [5, 5, 5]);
+                  }
+              },
+              error: function(request, status, error) {
+                  console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+              }
+          });
+      });
+      $('#comment').on('change keyup paste', function () {
+          $(this).next('button').attr('disabled', $(this).val() == "" ? true : false);
+          $(this).css('height', 'auto').css('height', this.scrollHeight);
+          scrollToElement($(this).parent(), $([document.documentElement, document.body]), 0, 3);
+      });
+      $('#registerComment').hover(function () {
+          if($('#comment').is(':focus')) {
+              $('#comment').blur();
+          }
+      })
+
+      $('#modal-reportMotorbike').on('show.bs.modal', function (event) {
+          $('body').css('overflow', 'hidden');
+          var button = $(event.relatedTarget);
+          var modal = $(this);
+
+          let modalBody = modal.find('.modal-body');
+
+          let dropdownTabs = $('[aria-labelledby="dropdownTabs"]');
+          dropdownTabs.empty();
+          $('[aria-labelledby="dropdownSpecs"]').empty();
+          $('#report-motorbike-content').text('');
+
+          <% if @mobileDevice %>
+          let tabNames = ['엔진&트랜스미션', '브레이크&서스펜션', '사이즈&섀시', '성능'];
+          $('[data-toggle="tab"]').each(function (index) {
+              dropdownTabs.append('<a class="dropdown-item" href="javascript:void(0)" data-tabname="' + $(this).attr('id').split('-')[0] + '" onclick="clickReportMotorbikeTabs(this)">' + tabNames[index] + '</a>');
+          });
+          <% else %>
+          $('[data-toggle="tab"]').each(function () {
+              dropdownTabs.append('<a class="dropdown-item" href="javascript:void(0)" data-tabname="' + $(this).attr('id').split('-')[0] + '" onclick="clickReportMotorbikeTabs(this)">' + $(this).text() + '</a>');
+          });
+          <% end %>
+          dropdownTabs.prev('button').text(dropdownTabs.children('a').first().text());
+          clickReportMotorbikeTabs(dropdownTabs.children('a').first()[0]);
+      });
+      $('#modal-reportMotorbike').on('hide.bs.modal', function (event) {//화면에서 사라지기 직전
+          $('body').css('overflow', 'auto');
+      });
+
+      $('#mybike-list').on('scroll', function () {
+          let diff = $(this)[0].scrollWidth - $(this).width();
+          if(diff - $(this).scrollLeft() <= 0) {
+              console.log('end of scroll mybike-list');
+              if(!mybikeReader.readAll && !mybikeReader.loading) {
+                  readMybikes();
+              }
+          }
+      });
+      readMybikes();
+      readComments('<%= @bike.id %>');
+
+      searchKakaoAPI();
+      searchYoutube();
+
+	});//$(document).ready(function()
+  $(window).scroll(function () {
+      var diff = $(document).height() - $(window).height();
+      if(ajaxCommentLoading == false && allLoadingComment == false) {
+          if($(window).scrollTop() > diff*95/100) {
+              console.log('%c reach bottom', 'background-color: yellow; color: brown');
+              readComments('<%= @bike.id %>');
+          }
+      } else {
+      }
+  });
+
+  function appendYoutubeCard(parent, youtube) {
+      let url = 'https://www.youtube.com/watch?v=' + youtube.videoId;
+      let $card = $('<div class="tiny-card" onclick="window.open(\'' + url + '\', \'_blank\')"></div>');
+      $card.append('<div class="tiny-card-title text-ellipsis">' + youtube.title + '</div>');
+      let $contentArea = $('<div style="height: 70%; display: flex; flex-direction: row; align-items: flex-end; width: 100%;"></div>');
+      $contentArea.append('<img class="tiny-card-thumb" src="' + youtube.thumb + '" onerror="this.src=\'/NoImageAvailable.png\';">');
+      $contentArea.append('<div class="tiny-card-desc">' + youtube.desc + '</div>');
+      $card.append($contentArea);
+      parent.append($card);
+  }
+  function buildYoutubeArea(youtubes) {
+      let $youtubeArea = $('#youtube-area');
+      $youtubeArea.show();
+      youtubes.forEach(youtube => {
+          appendYoutubeCard($youtubeArea.children('.tiny-card-list:first'), youtube);
+      })
+  }
+  function searchYoutube() {
+      let searchWord = '<%= @bike.year.to_s + ' ' + @bike.name %>';
+      requestPost('requestYoutubeSearch', {bikeId: <%= @bike.id %>, searchWord: searchWord, order: 'relevance', limit: 12}, data => {
+          console.log('requestYoutubeSearch data =', data);
+          if(data.youtubes.length > 0) {
+              buildYoutubeArea(data.youtubes);
+          }
+      });
+  }
+  function appendBlogCard(parent, blog) {
+      let $card = $('<div class="tiny-card" onclick="window.open(\'' + blog.url + '\', \'_blank\')"></div>');
+      $card.append('<div class="tiny-card-title text-ellipsis">' + blog.title + '</div>');
+      let $contentArea = $('<div style="height: 70%; display: flex; flex-direction: row; align-items: flex-end; width: 100%;"></div>');
+      $contentArea.append('<img class="tiny-card-thumb" src="' + blog.thumbnail + '" onerror="this.src=\'/NoImageAvailable.png\';">');
+      $contentArea.append('<div class="tiny-card-desc">' + blog.contents + '</div>');
+      $card.append($contentArea);
+      parent.append($card);
+  }
+  function buildBlogAreaFromKakao(blogs) {
+      let $blogArea = $('#blog-area');
+      $blogArea.show();
+      blogs.forEach(blog => {
+          appendBlogCard($blogArea.children('.tiny-card-list:first'), blog);
+      })
+  }
+  function searchKakaoAPI() {
+      let searchKakaoBlog = {category: 'blog', searchWord: '<%= @bike.year + ' ' + @bike.name %>', limit: 12, offset: 1, sort: 'accuracy'};
+      requestPost('/main/requestKakaoSearch', searchKakaoBlog, data => {
+          if(data.result) {
+              let body = JSON.parse(data.body);
+              if(body.documents.length > 0) {
+                  buildBlogAreaFromKakao(body.documents);
+              }
+          }
+      });
+  }
+
+  function clickReportMotorbikeTabs(obj) {
+      let tabName = $(obj).data('tabname');
+      let dropdownSpecs = $('[aria-labelledby="dropdownSpecs"]');
+      let specs = new Array();
+      $('#' + tabName).find('.td-left1').each(function () {
+          specs.push({content: $(this).text(), specName: $(this).data('specname')});
+      });
+      $('#' + tabName).find('.td-left2').each(function () {
+          specs.push({content: $(this).text(), specName: $(this).data('specname')});
+      });
+      console.log('specs =', specs);
+      dropdownSpecs.empty();
+      specs.forEach(spec => {
+          dropdownSpecs.append('<a class="dropdown-item" href="javascript:void(0)" data-specname="' + spec.specName + '" onclick="clickReportMotorbikeSpec(this)">' + spec.content + '</a>');
+      })
+      let firstSpec = dropdownSpecs.children('a').first();
+      $('#dropdownSpecs').text(firstSpec.text());
+      $('#dropdownSpecs').data('specname', firstSpec.data('specname'));
+  }
+  function clickReportMotorbikeSpec(obj) {
+      console.log('clickReportMotorbikeSpec');
+      let button = $('#dropdownSpecs');
+      button.text($(obj).text());
+      button.data('specname', $(obj).data('specname'));
+      console.log('specName =', button.data('specname'));
+  }
+  function confirmReportMotorbike(obj) {
+      console.log('confirmReportMotorbike');
+      <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+      let specName = $('#dropdownSpecs').data('specname');
+      let content = $('#report-motorbike-content').val();
+      if(specName.length > 0 && content.length > 0) {
+          buttonSpinner(obj, true, true);
+          let params = {userId: <%= session[:user]['id'] %>, bikeId: <%= @bike.id %>, specName: specName, content: content};
+          requestPost('/main/reportMotorbike', params, data => {
+              console.log('reportMotorbike data =', data);
+              $('#modal-reportMotorbike').modal('toggle');
+              buttonSpinner(obj, false, false);
+              showAlert('success', '리포트가 성공적으로 접수되었습니다! 감사합니다!', $('.content'));
+          })
+      }
+      <% end %>
+  }
+
+  function updateSVGRating(rating, children) {
+      rating = rating.toFixed(1);
+      console.log('rating =', rating);
+      console.log('children =', children)
+      children.eq(1).attr('stroke-dasharray', (rating*10).toFixed(1) + ', 100');
+      children.eq(2).text(rating);
+  }
+	function confirmRating(obj) {
+      console.log('confirmRating');
+      buttonSpinner(obj, true, true);
+      jQuery.ajax({
+          url: '/main/rateBike',
+          type: 'post',
+          data: {
+              bikeId: <%= @bike.id %>,
+              design: $('#rating-design').val(),
+              performance: $('#rating-performance').val(),
+              comfort: $('#rating-comfort').val()
+          },
+          success: function(data) {
+              if(data.result == true) {
+                  showAlert('success', '평가가 성공적으로 반영되었습니다!', $('.content'));
+                  updateSVGRating(data.rating.total, $('#svg-rating-total').children());
+                  updateSVGRating(data.rating.design, $('#svg-rating-design').children());
+                  updateSVGRating(data.rating.performance, $('#svg-rating-performance').children());
+                  updateSVGRating(data.rating.comfort, $('#svg-rating-comfort').children());
+              } else {
+              }
+              $('#modal-bikeRating').modal('toggle');
+              buttonSpinner(obj, false, false);
+          },
+          error: function(request, status, error) {
+              console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+          }
+      });
+  }
+  function onClickMybike(obj, mybikeId) {
+      console.log('mybikeId =', mybikeId);
+  }
+
+  function getTextLengthInPixel(text, styleOption) {
+      let ruler = $('#span-ruler');
+      ruler.css(styleOption);
+      ruler.text(text);
+      return ruler[0].offsetWidth;
+  }
+  function getButtonWidth(text, styleOption) {
+      let ruler = $('#button-ruler');
+      ruler.css(styleOption);
+      ruler.text(text);
+      return ruler.outerWidth(true);
+  }
+  function loadedMainImg(obj) {
+      let mainImg = $(obj);
+      mainImg.css({'visibility': 'visible', 'height': mainImg.outerWidth()*mainImg[0].naturalHeight/mainImg[0].naturalWidth});
+  }
+
+  function appendMybike(mybike, parent) {
+      let card = $('<div id="mybike-' + mybike.id + '" class="card-horz" onclick="window.open(\'/user/timeline?bikeId=' + mybike.id + ' &amp;guest=true\', \'_blank\')">');
+      let leftside = $('<div class="card-horz-leftside">');
+      leftside.append('<img class="card-horz-img" src="' + mybike.url + '">');
+      card.append(leftside);
+      let rightside = $('<div class="card-horz-rightside">');
+      let userName = $('<div class="card-horz-text" style="font-size: 0.8rem">' + mybike.userName + '</div>');
+      rightside.append(userName.append(buildUserLevel(mybike.titleOfLevel, '0.8rem')));
+      // rightside.append('<div class="card-horz-text" style="font-size: 0.8rem"><span><i class="fas fa-user-plus" style="color: #D6336C; margin-right: 3px"></i></span>' + numberWithCommas(mybike.subscribeCount) + '</div>')
+      // rightside.append('<div><div class="card-horz-text" style="display: inline-block; font-size: 0.8rem; background-color: #f96363; border-radius: 0.25rem; color: white; padding: 0 0.25rem">구독:' + numberWithCommas(mybike.subscribeCount) + '</div></div>')
+      rightside.append('<div class="card-horz-text" style="font-size: 0.8rem; background-color: #f96363; border-radius: 0.25rem; color: white; padding: 0 0.125rem; margin-left: auto;">구독:' + numberWithCommas(mybike.subscribeCount) + '</div>')
+      rightside.append('<div class="card-horz-text" style="color: darkgray; font-size: 0.8rem">' + mybike.desc + '</div>');
+      rightside.append('<div class="card-horz-text" style="color: #212529; font-size: 1.25rem; font-weight: bold; margin-bottom: 0.25rem">' + mybike.name + '</div>');
+      card.append(rightside);
+      parent.append(card);
+  }
+  function readMybikes() {
+      mybikeReader.loading = true;
+      requestPost('/main/readMybikes', {motorbikeId: <%= @bike.id %>, limit: mybikeReader.limit, offset: mybikeReader.offset}, data => {
+          if(data.result) {
+              if(data.count > 0) {
+                  data.mybikes.forEach(mybike => {
+                      appendMybike(mybike, $('#mybike-list'));
+                  })
+                  mybikeReader.offset += data.mybikes.length;
+              } else {
+                  mybikeReader.readAll = true;
+              }
+          }
+          mybikeReader.loading = false;
+      })
+  }
+
+</script>
+
+<style>
+  @media all and (max-width: 640px) {
+    #name-rating-area {
+      flex-wrap: wrap;
+    }
+  }
+  i.fa-star, .fa-star-half {
+    font-size: 1.5rem;
+    color: #e81515;
+    margin-right: -5px;
+    -webkit-text-stroke: 1px transparent;
+    transition: all 200ms ease-in-out;
+  }
+  .fa-star-half.fa-flip-horizontal {
+    margin-left: -23px;
+  }
+  .circular-chart {
+    display: block;
+    margin: 10px auto;
+    max-width: 80%;
+    max-height: 250px;
+  }
+
+  .circle-bg {
+    fill: none;
+    stroke: #eee;
+    stroke-width: 3.8;
+  }
+
+  .circle {
+    fill: none;
+    stroke-width: 2.8;
+    stroke-linecap: round;
+    animation: progress 1s ease-out forwards;
+  }
+
+  @keyframes progress {
+    0% {
+      stroke-dasharray: 0 100;
+    }
+  }
+  .circular-chart.primary .circle {
+    stroke: #2b343a;
+  }
+  .circular-chart.orange .circle {
+    stroke: #ff9f00;
+  }
+  .circular-chart.green .circle {
+    stroke: #4CC790;
+  }
+  .circular-chart.blue .circle {
+    stroke: #3c9ee5;
+  }
+  .percentage {
+    fill: #666;
+    font-size: 0.58em;
+    text-anchor: middle;
+  }
+</style>
+
+<div class="modal fade" id="modal-bikeRating" tabindex="-1" role="dialog" aria-labelledby="modal-bikeRating-Label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal-bikeRating-Label">평가하기</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Will you rating?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" onclick="confirmRating(this)">평가하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-reportMotorbike" tabindex="-1" role="dialog" aria-labelledby="modal-reportMotorbike-Label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal-reportMotorbike-Label">리포트 하기</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex;">
+          <div class="dropdown">
+            <button class="btn btn-info dropdown-toggle" type="button" id="dropdownTabs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+            <div class="dropdown-menu" aria-labelledby="dropdownTabs">
+            </div>
+          </div>
+          <div class="dropdown" style="margin-left: 0.35rem">
+            <button class="btn btn-info dropdown-toggle" type="button" id="dropdownSpecs" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+            <div class="dropdown-menu" aria-labelledby="dropdownSpecs">
+            </div>
+          </div>
+        </div>
+        <textarea class="form-control" id="report-motorbike-content" style="margin-top: 0.5rem" rows="3" placeholder="내용을 입력하세요" maxlength="512"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-info" onclick="confirmReportMotorbike(this)">제출</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+	<div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto">
+		<div id="spec-board" style="width: auto; text-align: center;">
+			<div style="width: <%= @mobileDevice ? 100 : 90 %>%; margin: auto;">
+        <div id="name-rating-area" style="display: flex; width: 100%; flex-direction: <%= @mobileDevice ? 'column' : 'row' %>; justify-content: space-evenly; align-items: center;">
+          <% if @mobileDevice %>
+          <div style="display: flex; flex-direction: column;">
+            <div><%= @bike.year %></div>
+            <div id="spec-bike-name"><%= @bike.name %></div>
+            <hr style="margin: 0 0 0.5rem 0">
+          </div>
+          <% else %>
+          <div style="display: flex; flex-direction: column; align-items: flex-start; flex-basis: 70%">
+            <div style="font-size: 1.25rem; margin-bottom: -1.25rem"><%= @bike.year %></div>
+            <div id="spec-bike-name" style="margin-right: 20px; text-align: left"><%= @bike.name %></div>
+          </div>
+          <% end %>
+          <% if @bike.bike_ratings.count == 0 %>
+            <div style="display: flex; align-items: center; flex-basis: 30%">
+              <div class="alert alert-success" role="alert">
+                <h5 class="alert-heading">평가 부족!</h5>
+                <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+                  <div>당신의 <a data-toggle="modal" href="#modal-bikeRating" class="alert-link" style="font-size: 1.1rem;">평가</a>를 기다립니다!</div>
+                <% else %>
+                  <div>당신의 평가를 기다립니다!</div>
+                <% end %>
+              </div>
+            </div>
+          <% else %>
+            <div style="display: flex; flex-direction: column; flex: 1">
+              <div style="text-align: right; margin-bottom: -28px; z-index: 1">
+                <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+                  <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#modal-bikeRating">평가하기</button>
+                <% else %>
+                  <button type="button" class="btn btn-info btn-sm" disabled>평가하기</button>
+                <% end %>
+              </div>
+              <div id="rating-area" style="display: flex; align-items: flex-end;">
+                <div style="width: 100px; font-size: larger;">총점
+                  <svg id="svg-rating-total" viewBox="0 0 36 36" class="circular-chart primary">
+                    <path class="circle-bg"
+                          d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    <path class="circle"
+                          stroke-dasharray="<%= (@bike.totalRating*10.0).round(1) %>, 100"
+                          d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    <text x="18" y="21.35" class="percentage" style="font-size: 0.7rem"><%= @bike.totalRating.round(1) %></text>
+                  </svg>
+                </div>
+                <div style="width: 65px;">디자인
+                  <svg id="svg-rating-design" viewBox="0 0 36 36" class="circular-chart orange">
+                    <path class="circle-bg"
+                          d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    <path class="circle"
+                          stroke-dasharray="<%= (@bike.designRating*10.0).round(1) %>, 100"
+                          d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    <text x="18" y="20.35" class="percentage"><%= @bike.designRating.round(1) %></text>
+                  </svg>
+                </div>
+                <div style="width: 65px;">성능
+                  <svg id="svg-rating-performance" viewBox="0 0 36 36" class="circular-chart blue">
+                    <path class="circle-bg"
+                          d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    <path class="circle"
+                          stroke-dasharray="<%= (@bike.performanceRating*10.0).round(1) %>, 100"
+                          d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    <text x="18" y="20.35" class="percentage"><%= @bike.performanceRating.round(1) %></text>
+                  </svg>
+                </div>
+                <div style="width: 65px;">편안함
+                  <svg id="svg-rating-comfort" viewBox="0 0 36 36" class="circular-chart green">
+                    <path class="circle-bg"
+                          d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    <path class="circle"
+                          stroke-dasharray="<%= (@bike.comfortRating*10.0).round(1) %>, 100"
+                          d="M18 2.0845
+                          a 15.9155 15.9155 0 0 1 0 31.831
+                          a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    <text x="18" y="20.35" class="percentage"><%= @bike.comfortRating.round(1) %></text>
+                  </svg>
+                </div>
+              </div>
+              <% if @mobileDevice %>
+              <hr style="margin: 0 0 0.5rem 0">
+              <% end %>
+            </div>
+          <% end %>
+				</div>
+        <% if @mobileDevice %>
+          <div style="display: flex; flex-direction: column; padding-left: 2rem; padding-right: 2rem">
+            <img id="main_img" src="<%= @bike.url.nil? ? Style.find(@bike.style.id).icon : @bike.url %>" onload="loadedMainImg(this)" style="max-width: 100%; height: auto; object-fit: contain; margin-right: 1vw">
+            <div id="key_spec">
+              <p id="spec-disp" style="width: 100%; margin-bottom: 0"><%= @bike.displacement %>cc</p>
+              <hr style="margin-top: 1px; margin-bottom: 1px">
+              <p id="spec-price" style="width: 100%; margin-bottom: 0"><%= @bike.msrp > 0 ? @bike.price : '가격미정' %></p>
+              <hr style="margin-top: 1px; margin-bottom: 5px">
+              <p id="spec-sumy1" style="width: 100%; margin-bottom: 0"><%= @bike.engine_type %></p>
+              <p id="spec-sumy2" style="color: dimgray">
+                <%= @bike.maxpower[0..(@bike.maxpower.index('(').nil? ? @bike.maxpower.length : @bike.maxpower.index('('))-1] %><br>
+                <%= @bike.maxtorque[0..(@bike.maxtorque.index('(').nil? ? @bike.maxtorque.length : @bike.maxtorque.index('('))-1] %>
+              </p>
+            </div>
+          </div>
+        <% else %>
+        <div style="display: flex; justify-content: space-evenly; padding-left: 2rem; padding-right: 2rem">
+          <img id="main_img" src="<%= @bike.url.nil? ? Style.find(@bike.style.id).icon : @bike.url %>" onload="loadedMainImg(this)" style=" width: 50%; height: auto; object-fit: contain; margin-right: 1vw; visibility: hidden">
+          <div id="key_spec" style="width: 35%">
+            <p id="spec-disp" style="width: 100%; margin-bottom: 0"><%= @bike.displacement %>cc</p>
+            <hr style="margin-top: 1px; margin-bottom: 1px">
+            <p id="spec-price" style="width: 100%; margin-bottom: 0"><%= @bike.msrp > 0 ? @bike.price : '가격미정' %></p>
+            <hr style="margin-top: 1px; margin-bottom: 5px">
+            <p id="spec-sumy1" style="width: 100%; margin-bottom: 0"><%= @bike.engine_type %></p>
+            <p id="spec-sumy2" style="color: dimgray">
+              <%= @bike.maxpower[0..(@bike.maxpower.index('(').nil? ? @bike.maxpower.length : @bike.maxpower.index('('))-1] %><br>
+              <%= @bike.maxtorque[0..(@bike.maxtorque.index('(').nil? ? @bike.maxtorque.length : @bike.maxtorque.index('('))-1] %><br>
+            </p>
+          </div>
+        </div>
+        <% end %>
+			</div>
+		</div>
+	</div>
+  <% if ENV['enable_advert'].eql?('true') and ENV['advert_bikeview'].eql?('true') and @mobileDevice %>
+    <div>
+      <ins class="kakao_ad_area" style="display:none;"
+           data-ad-unit    = "DAN-1k1x94hftrdio"
+           data-ad-width   = "320"
+           data-ad-height  = "100"></ins>
+    </div>
+  <% end %>
+
+  <% if @mobileDevice %>
+    <div class="shadow-sm p-3 mb-3 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto">
+      <nav>
+        <div class="nav nav-tabs nav-justified" id="nav-tab" role="tablist">
+          <a class="nav-item nav-link active" id="engine-tab" data-toggle="tab" href="#engine" role="tab" aria-controls="engine" aria-selected="true"><img src="<%=asset_path 'engine.svg'%>" style="width: 100%"></a>
+          <a class="nav-item nav-link" id="brake-tab" data-toggle="tab" href="#brake" role="tab" aria-controls="brake" aria-selected="false"><img src="<%=asset_path 'disk.svg'%>" style="width: 100%"></a>
+          <a class="nav-item nav-link" id="dimen-tab" data-toggle="tab" href="#dimen" role="tab" aria-controls="dimen" aria-selected="false"><img src="<%=asset_path 'chassis.svg'%>" style="width: 100%"></a>
+          <a class="nav-item nav-link" id="performance-tab" data-toggle="tab" href="#performance" role="tab" aria-controls="performance" aria-selected="false"><img src="<%=asset_path 'performance.svg'%>" style="width: 100%"></a>
+        </div>
+      </nav>
+      <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="engine" role="tabpanel" aria-labelledby="engine-tab">
+          <table style="width: 100%; height: auto; table-layout: fixed">
+            <tbody style="text-align: left; font-size: 90%">
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="displacement">배기량</td>
+              <td class="td-right1"><%= @bike.displacement %>cc</td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="compression_ratio">압축비</td>
+              <td class="td-right1"><%= @bike.compression_ratio %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="maxpower">최대출력</td>
+              <td class="td-right1" data-toggle="tooltip" data-content="<%= @bike.maxpower %>"><%= @bike.maxpower %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="maxtorque">최대토크</td>
+              <td class="td-right1" data-toggle="tooltip" data-content="<%= @bike.maxtorque %>"><%= @bike.maxtorque %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="bore_stroke">보어x스트로크</td>
+              <td class="td-right1"><%= @bike.bore_stroke %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="valves">밸브</td>
+              <td class="td-right1"><%= @bike.valves %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="fuel_delivery_system">연료분사</td>
+              <td class="td-right1"><%= @bike.fuel_delivery_system %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="fuel_type">연료타입</td>
+              <td class="td-right1"><%= @bike.fuel_type %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="ignition_type">점화</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.ignition_type %>"><%= @bike.ignition_type %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="camshaft">캠샤프트</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.camshaft %>"><%= @bike.camshaft %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="cooling_system">냉각장치</td>
+              <td class="td-right2"><%= @bike.cooling_system %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="lubrication_system">윤활방식</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.lubrication_system %>"><%= @bike.lubrication_system %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="gearbox_type">기어타입</td>
+              <td class="td-right2"><%= @bike.gearbox_type %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="final_drive">구동방식</td>
+              <td class="td-right2"><%= @bike.final_drive %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="clutch">클러치</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.clutch %>"><%= @bike.clutch %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="exhaust_system">배기 시스템</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.exhaust_system %>"><%= @bike.exhaust_system %></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-pane fade" id="brake" role="tabpanel" aria-labelledby="brake-tab">
+          <table style="width: 100%; height: auto; table-layout: fixed">
+            <tbody style="text-align: left; font-size: 90%">
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="front_brakes">앞 브레이크</td>
+              <td class="td-right1" data-toggle="tooltip" data-content="<%= @bike.front_brakes %>"><%= @bike.front_brakes %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="front_disk">앞 디스크</td>
+              <td class="td-right1"><%= @bike.front_disk %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="rear_brakes">뒤 브레이크</td>
+              <td class="td-right1" data-toggle="tooltip" data-content="<%= @bike.rear_brakes %>"><%= @bike.rear_brakes %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="rear_disk">뒤 디스크</td>
+              <td class="td-right1"><%= @bike.rear_disk %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="front_suspension_travel">앞 서스펜션<br>트래블</td>
+              <td class="td-right1"><%= @bike.front_suspension_travel %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="front_tyre">앞 타이어</td>
+              <td class="td-right2"><%= @bike.front_tyre %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="rear_tyre">뒤 타이어</td>
+              <td class="td-right2"><%= @bike.rear_tyre %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="front_suspension">앞 서스펜션</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.front_suspension %>"><%= @bike.front_suspension %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="rear_suspension">뒤 서스펜션</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.rear_suspension %>"><%= @bike.rear_suspension %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="rear_suspension_travel">뒤 서스펜션<br>트래블</td>
+              <td class="td-right2"><%= @bike.rear_suspension_travel %></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-pane fade" id="dimen" role="tabpanel" aria-labelledby="dimen-tab">
+          <table style="width: 100%; height: auto; table-layout: fixed">
+            <tbody style="text-align: left; font-size: 90%">
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="dry_weight">건조중량</td>
+              <td class="td-right1"><%= @bike.dry_weight %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="curb_weight">공차(Curb)중량</td>
+              <td class="td-right1"><%= @bike.curb_weight %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="length">전장</td>
+              <td class="td-right1"><%= @bike.length %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="width">전폭</td>
+              <td class="td-right1"><%= @bike.width %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="height">전고</td>
+              <td class="td-right1"><%= @bike.height %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="trail_size">트레일</td>
+              <td class="td-right1"><%= @bike.trail_size %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="wheelbase">휠베이스</td>
+              <td class="td-right2"><%= @bike.wheelbase %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="seat_height">시트고</td>
+              <td class="td-right2"><%= @bike.seat_height %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="fueltank">연료탱크용량</td>
+              <td class="td-right2"><%= @bike.fueltank %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="reserve_fuel">리저브연료</td>
+              <td class="td-right2"><%= @bike.reserve_fuel %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="frame_type">프레임</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.frame_type %>"><%= @bike.frame_type %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="ground_clearance">지상고</td>
+              <td class="td-right2"><%= @bike.ground_clearance %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="lights">라이트</td>
+              <td class="td-right2"><%= @bike.lights %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="instruments">계기판</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.instruments %>"><%= @bike.instruments %></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-pane fade" id="performance" role="tabpanel" aria-labelledby="performance-tab">
+          <table style="width: 100%; height: auto; table-layout: fixed">
+            <tbody style="text-align: left; font-size: 90%">
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="top_speed">최고속력</td>
+              <td class="td-right1"><%= @bike.top_speed %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="gasmileage">연비</td>
+              <td class="td-right2"><%= @bike.gasmileage %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="co2_emissions">CO2 배출</td>
+              <td class="td-right1"><%= @bike.co2_emissions %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left2" data-specname="emissions">배출 제어</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.emissions %>"><%= @bike.emissions %></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+        <hr style="margin-top: 1px; margin-bottom: 10px">
+        <div style="display: flex; justify-content: flex-end; margin: auto">
+          <button id="report-button" type="button" class="btn btn-info" data-toggle="modal" data-target="#modal-reportMotorbike">리포트하기</button>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="shadow-sm p-3 mb-3 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto">
+      <nav>
+        <div class="nav nav-tabs nav-justified" id="nav-tab" role="tablist">
+          <a class="nav-item nav-link active" id="engine-tab" data-toggle="tab" href="#engine" role="tab" aria-controls="engine" aria-selected="true">엔진&트랜스미션</a>
+          <a class="nav-item nav-link" id="brake-tab" data-toggle="tab" href="#brake" role="tab" aria-controls="brake" aria-selected="false">브레이크&서스펜션</a>
+          <a class="nav-item nav-link" id="dimen-tab" data-toggle="tab" href="#dimen" role="tab" aria-controls="dimen" aria-selected="false">사이즈&섀시</a>
+          <a class="nav-item nav-link" id="performance-tab" data-toggle="tab" href="#performance" role="tab" aria-controls="performance" aria-selected="false">성능</a>
+        </div>
+      </nav>
+      <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="engine" role="tabpanel" aria-labelledby="engine-tab">
+          <table style="width: 100%; height: auto; table-layout: fixed">
+            <tbody style="text-align: left; font-size: 90%">
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="displacement">배기량</td>
+              <td class="td-right1"><%= @bike.displacement %>cc</td>
+              <td class="td-left2" data-specname="ignition_type">점화</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.ignition_type %>"><%= @bike.ignition_type %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="compression_ratio">압축비</td>
+              <td class="td-right1"><%= @bike.compression_ratio %></td>
+              <td class="td-left2" data-specname="camshaft">캠샤프트</td>
+              <td class="td-right2"><%= @bike.camshaft %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="maxpower">최대출력</td>
+              <td class="td-right1" data-toggle="tooltip" data-content="<%= @bike.maxpower %>"><%= @bike.maxpower %></td>
+              <td class="td-left2" data-specname="cooling_system">냉각장치</td>
+              <td class="td-right2"><%= @bike.cooling_system %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="maxtorque">최대토크</td>
+              <td class="td-right1" data-toggle="tooltip" data-content="<%= @bike.maxtorque %>"><%= @bike.maxtorque %></td>
+              <td class="td-left2" data-specname="lubrication_system">윤활방식</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.lubrication_system %>"><%= @bike.lubrication_system %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="bore_stroke">보어x스트로크</td>
+              <td class="td-right1"><%= @bike.bore_stroke %></td>
+              <td class="td-left2" data-specname="gearbox_type">기어타입</td>
+              <td class="td-right2"><%= @bike.gearbox_type %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="valves">밸브</td>
+              <td class="td-right1"><%= @bike.valves %></td>
+              <td class="td-left2" data-specname="final_drive">구동방식</td>
+              <td class="td-right2"><%= @bike.final_drive %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="fuel_delivery_system">연료분사</td>
+              <td class="td-right1"><%= @bike.fuel_delivery_system %></td>
+              <td class="td-left2" data-specname="clutch">클러치</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.clutch %>"><%= @bike.clutch %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="fuel_type">연료타입</td>
+              <td class="td-right1"><%= @bike.fuel_type %></td>
+              <td class="td-left2" data-specname="exhaust_system">배기 시스템</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.exhaust_system %>"><%= @bike.exhaust_system %></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-pane fade" id="brake" role="tabpanel" aria-labelledby="brake-tab">
+          <table style="width: 100%; height: auto; table-layout: fixed">
+            <tbody style="text-align: left; font-size: 90%">
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="front_brakes">앞 브레이크</td>
+              <td class="td-right1" data-toggle="tooltip" data-content="<%= @bike.front_brakes %>"><%= @bike.front_brakes %></td>
+              <td class="td-left2" data-specname="front_tyre">앞 타이어</td>
+              <td class="td-right2"><%= @bike.front_tyre %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="front_disk">앞 디스크</td>
+              <td class="td-right1"><%= @bike.front_disk %></td>
+              <td class="td-left2" data-specname="rear_tyre">뒤 타이어</td>
+              <td class="td-right2"><%= @bike.rear_tyre %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="rear_brakes">뒤 브레이크</td>
+              <td class="td-right1" data-toggle="tooltip" data-content="<%= @bike.rear_brakes %>"><%= @bike.rear_brakes %></td>
+              <td class="td-left2" data-specname="front_suspension">앞 서스펜션</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.front_suspension %>"><%= @bike.front_suspension %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="rear_disk">뒤 디스크</td>
+              <td class="td-right1"><%= @bike.rear_disk %></td>
+              <td class="td-left2" data-specname="rear_suspension">뒤 서스펜션</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.rear_suspension %>"><%= @bike.rear_suspension %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="front_suspension_travel">앞 서스펜션 트래블</td>
+              <td class="td-right1"><%= @bike.front_suspension_travel %></td>
+              <td class="td-left2" data-specname="rear_suspension_travel">뒤 서스펜션 트래블</td>
+              <td class="td-right2"><%= @bike.rear_suspension_travel %></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-pane fade" id="dimen" role="tabpanel" aria-labelledby="dimen-tab">
+          <table style="width: 100%; height: auto; table-layout: fixed">
+            <tbody style="text-align: left; font-size: 90%">
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="dry_weight">건조중량</td>
+              <td class="td-right1"><%= @bike.dry_weight %></td>
+              <td class="td-left2" data-specname="wheelbase">휠베이스</td>
+              <td class="td-right2"><%= @bike.wheelbase %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="curb_weight">공차(Curb)중량</td>
+              <td class="td-right1"><%= @bike.curb_weight %></td>
+              <td class="td-left2" data-specname="seat_height">시트고</td>
+              <td class="td-right2"><%= @bike.seat_height %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="length">전장</td>
+              <td class="td-right1"><%= @bike.length %></td>
+              <td class="td-left2" data-specname="fueltank">연료탱크용량</td>
+              <td class="td-right2"><%= @bike.fueltank %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="width">전폭</td>
+              <td class="td-right1"><%= @bike.width %></td>
+              <td class="td-left2" data-specname="reserve_fuel">리저브연료</td>
+              <td class="td-right2"><%= @bike.reserve_fuel %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="height">전고</td>
+              <td class="td-right1"><%= @bike.height %></td>
+              <td class="td-left2" data-specname="frame_type">프레임</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.frame_type %>"><%= @bike.frame_type %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="trail_size">트레일</td>
+              <td class="td-right1"><%= @bike.trail_size %></td>
+              <td class="td-left2" data-specname="ground_clearance">지상고</td>
+              <td class="td-right2"><%= @bike.ground_clearance %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="lights">라이트</td>
+              <td class="td-right1"><%= @bike.lights %></td>
+              <td class="td-left2" data-specname="instruments">계기판</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.instruments %>"><%= @bike.instruments %></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tab-pane fade" id="performance" role="tabpanel" aria-labelledby="performance-tab">
+          <table style="width: 100%; height: auto; table-layout: fixed">
+            <tbody style="text-align: left; font-size: 90%">
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="top_speed">최고속력</td>
+              <td class="td-right1"><%= @bike.top_speed %></td>
+              <td class="td-left2" data-specname="gasmileage">연비</td>
+              <td class="td-right2"><%= @bike.gasmileage %></td>
+            </tr>
+            <tr class="tr-row">
+              <td class="td-left1" data-specname="co2_emissions">CO2 배출</td>
+              <td class="td-right1"><%= @bike.co2_emissions %></td>
+              <td class="td-left2" data-specname="emissions">배출 제어</td>
+              <td class="td-right2" data-toggle="tooltip" data-content="<%= @bike.emissions %>"><%= @bike.emissions %></td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+        <hr style="margin-top: 1px; margin-bottom: 10px">
+        <div style="display: flex; justify-content: flex-end; margin: auto">
+          <button id="report-button" type="button" class="btn btn-info" data-toggle="modal" data-target="#modal-reportMotorbike">리포트하기</button>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+  <% if @mybikes.count > 0 %>
+    <div class="shadow-sm p-3 mb-3 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto;">
+      <div style="text-align: left">해당 모델 관련 유저들</div>
+      <hr style="margin-top: 0.125rem">
+      <div id="mybike-list" style="display: flex; flex-direction: row; width: 100%; height: 100%; overflow: auto;"></div>
+    </div>
+  <% end %>
+  <div id="blog-area" class="shadow-sm p-3 mb-3 bg-white rounded" style="display: none; width:90%; height:auto; text-align: center; margin: auto;">
+    <div style="text-align: left;">관련 블로그들</div>
+    <hr style="margin-top: 0.125rem">
+    <div class="tiny-card-list"></div>
+  </div>
+  <div id="youtube-area" class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto;">
+    <div style="text-align: left;">관련 유튜브영상들</div>
+    <hr style="margin-top: 0.125rem">
+    <div class="tiny-card-list"></div>
+  </div>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto">
+    <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; margin-top: 5px;">
+        <textarea class="form-control autosize" id="comment" rows="1" placeholder="댓글을 입력하세요" maxlength="512"></textarea>
+        <button id="registerComment" type="button" class="btn btn-primary" style="margin-top: 5px;" disabled="" onclick="onClickComment(<%= @bike.id %>, <%= session[:user]['id'] %>)">등록</button>
+      </div>
+    <% end %>
+    <div id="comments-area" style="text-align: left; margin-top: 40px;"></div>
+  </div>
+  <div id="tooltip-spec">TOOLTIP</div>
+  <div id="tooltip-report">TOOLTIP-REPORT</div>
+  <span id="span-ruler" style="visibility: hidden; white-space: nowrap; "></span>
+</div>
+<% unless @mobileDevice %>
+  <% if ENV['enable_advert'].eql?('true') and ENV['advert_bikeview'].eql?('true') %>
+    <div class="advert" id="adfit-left" style="position: fixed; top: 0; left: 15px; width: 160px; height: 600px;">
+      <ins class="kakao_ad_area" style="display:none;"
+           data-ad-unit    = "DAN-urmwb34pwb3p"
+           data-ad-width   = "160"
+           data-ad-height  = "600"></ins>
+    </div>
+    <div class="advert" id="adfit-right" style="position: fixed; top: 0; right: 15px; width: 160px; height: 600px;">
+      <ins class="kakao_ad_area" style="display:none;"
+           data-ad-unit    = "DAN-1h84rm3tdm52t"
+           data-ad-width   = "160"
+           data-ad-height  = "600"></ins>
+    </div>
+  <% end %>
+<% end %>

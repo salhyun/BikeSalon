@@ -1,0 +1,226 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  .ranking-list {
+    <% unless @mobileDevice %>
+    width:45%;
+    <% else %>
+    width: 90%;
+    <% end %>
+    max-width: 500px;
+    height:auto;
+    text-align: center;
+    margin: 0 1rem;
+  }
+  .rank-item-index {
+    flex-basis: 9%;
+  }
+  .rank-item-name {
+    flex-basis: 73%;
+  }
+  .rank-item-number {
+    flex-basis: 12%;
+  }
+
+  .carousel-inner > .carousel-item > img {
+    max-width: <%= @mobileDevice ? 100 : 80 %>%;
+    margin: auto;
+  }
+  <% unless @mobileDevice %>
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-image: none;
+  }
+  .carousel-control-next-icon:after {
+    position: absolute;
+    right: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f105";
+    font-size: 55px;
+  }
+  .carousel-control-prev-icon:after {
+    position: absolute;
+    left: -0.625rem;
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    color: darkgray;
+    content: "\f104";
+    font-size: 55px;
+  }
+  <% end %>
+</style>
+
+<script>
+    commentSize = 6;
+    commentOffset = 0;
+    opendTimelineModal = false;
+    currentTimelineId = 0;
+    ajaxCommentLoading = true;
+    allLoadingComment = false;
+
+    replyReaders = new Map();
+
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 50);
+        documentReady();
+
+        let archiveParams = new Array();
+        <% @archives.each do |archive| %>
+        archiveParams.push({kind: '<%= archive[:kind] %>', content: '<%= archive[:content] %>'});
+        <% end %>
+        console.log('archiveParams =', archiveParams);
+
+        readBestMotorbikes(archiveParams[0]);
+        readBestBrands(archiveParams[1])
+        readBestMybikes(archiveParams[2]);
+        readBestTimelines(archiveParams[3]);
+    });
+
+    function getColorStylesOfTotalRating(totalRating) {
+        let colorStyles = {backgroundColor: '#A0DE21', textColor: 'black'};
+        if(totalRating >= 10) {
+            colorStyles = {backgroundColor: '#000000', textColor: 'white'};
+        } else if(totalRating > 6) {
+            colorStyles = {backgroundColor: '#dc3545', textColor: 'white'};
+        } else if(totalRating > 3) {
+            colorStyles = {backgroundColor: '#ffc107', textColor: 'black'};
+        }
+        return colorStyles;
+    }
+    function readBestMotorbikes(archive) {
+        requestPost('readBestMotorbikes', {content: archive.content}, data => {
+            console.log('readBestMotorbikes data =', data);
+            let listArea = $('<div style="padding: 0.5rem 1rem 1rem 1rem"></div>');
+            let item = $('<div style="display: flex; flex-direction: row; align-items: center; cursor: pointer;"></div>');
+            item.append('<div class="rank-item-index" style="font-size: 0.8rem;">순위</div>');
+            item.append('<div class="rank-item-name text-ellipsis" style="margin-left: 1rem; text-align: left; font-size: 0.8rem;">이름</div>');
+            let totalRating = $('<div class="rank-item-number" style="text-align: right;"></div>');
+            totalRating.append('<span style="padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.8rem;">평점</span>');
+            item.append(totalRating);
+            listArea.append(item);
+            listArea.append('<hr style="margin: 0.125rem 0 0.5rem 0">');
+            for(let i=0; i<data.motorbikes.length; i++) {
+                let motorbike = data.motorbikes[i];
+                item = $('<div style="display: flex; flex-direction: row; align-items: center; cursor: pointer;" onclick="window.open(\'/main/bikeview?bikeId=' + motorbike.id + '\', \'_blank\')"></div>');
+                item.append('<div class="rank-item-index" style="font-weight: bold;">' + (i+1) + '</div>');
+                item.append('<div class="rank-item-name text-ellipsis" style="margin-left: 1rem; text-align: left;">' + motorbike.year + ' ' + motorbike.name + '</div>');
+                let colorStyles = getColorStylesOfTotalRating(motorbike.totalRating);
+                totalRating = $('<div class="rank-item-number" style="text-align: right;"></div>');
+                totalRating.append('<span style="background-color: ' + colorStyles.backgroundColor + '; color: ' + colorStyles.textColor + '; padding: 0.125rem 0.25rem; border-radius: 0.25rem;">' + motorbike.totalRating.toFixed(1) + '</span>');
+                item.append(totalRating);
+                listArea.append(item);
+                listArea.append('<hr style="margin: 0.5rem 0">');
+            }
+            $('#best-motorbikes').append(listArea);
+        })
+    }
+    function readBestBrands(archive) {
+        requestPost('readBestBrands', {content: archive.content}, data => {
+            console.log('readBestBrands data =', data);
+            let listArea = $('<div style="padding: 0.5rem 1rem 1rem 1rem"></div>');
+            let item = $('<div style="display: flex; flex-direction: row; align-items: center; cursor: pointer;"></div>');
+            item.append('<div class="rank-item-index" style="font-size: 0.8rem;">순위</div>');
+            item.append('<div class="rank-item-name text-ellipsis" style="margin-left: 1rem; text-align: left; font-size: 0.8rem;">이름</div>');
+            let rating = $('<div class="rank-item-number" style="text-align: right;"></div>');
+            rating.append('<span style="padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.8rem;">평점</span>');
+            item.append(rating);
+            listArea.append(item);
+            listArea.append('<hr style="margin: 0.125rem 0 0.5rem 0">');
+            for(let i=0; i<data.brands.length; i++) {
+                let brand = data.brands[i];
+                item = $('<div style="display: flex; flex-direction: row; align-items: center; cursor: pointer;" onclick="window.open(\'/main/brandview?brandId=' + brand.id + '\', \'_blank\')"></div>');
+                item.append('<div class="rank-item-index" style="font-weight: bold;">' + (i+1) + '</div>');
+                item.append('<div class="rank-item-name text-ellipsis" style="margin-left: 1rem; text-align: left;">' + brand.name + '</div>');
+                let colorStyles = getColorStylesOfTotalRating(brand.rating);
+                rating = $('<div class="rank-item-number" style="text-align: right;"></div>');
+                rating.append('<span style="background-color: ' + colorStyles.backgroundColor + '; color: ' + colorStyles.textColor + '; padding: 0.125rem 0.25rem; border-radius: 0.25rem;">' + brand.rating.toFixed(1) + '</span>');
+                item.append(rating);
+                listArea.append(item);
+                listArea.append('<hr style="margin: 0.5rem 0">');
+            }
+            $('#best-brands').append(listArea);
+        })
+    }
+    function readBestMybikes(archive) {
+        requestPost('readBestMybikes', {content: archive.content}, data => {
+            console.log('readBestMybikes data =', data);
+            let listArea = $('<div style="padding: 0.5rem 1rem 1rem 1rem"></div>');
+            let item = $('<div style="display: flex; flex-direction: row; align-items: center; cursor: pointer;"></div>');
+            item.append('<div class="rank-item-index" style="font-size: 0.8rem;">순위</div>');
+            item.append('<div class="rank-item-name text-ellipsis" style="margin-left: 1rem; text-align: left; font-size: 0.8rem;">이름</div>');
+            let subscribeCount = $('<div class="rank-item-number" style="flex-basis: 30%; text-align: right;"></div>');
+            subscribeCount.append('<span style="padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.8rem;">구독수</span>');
+            item.append(subscribeCount);
+            listArea.append(item);
+            listArea.append('<hr style="margin: 0.125rem 0 0.5rem 0">');
+            for(let i=0; i<data.mybikes.length; i++) {
+                let mybike = data.mybikes[i];
+                item = $('<div style="display: flex; flex-direction: row; align-items: center; cursor: pointer;" onclick="window.open(\'/user/timeline?bikeId=' + mybike.id + '&guest=true' + '\', \'_blank\')"></div>');
+                item.append('<div class="rank-item-index" style="font-weight: bold;">' + (i+1) + '</div>');
+                item.append('<div class="rank-item-name text-ellipsis" style="margin-left: 1rem; text-align: left;">' + mybike.name + '</div>');
+                subscribeCount = $('<div class="rank-item-number" style="text-align: right; flex-basis: 30%;"></div>');
+                subscribeCount.append('<span style="padding: 0.125rem 0.25rem; border-radius: 0.25rem; background-color: #f96363; color: white">' + numberWithCommas(mybike.subscribeCount) + '</span>');
+                item.append(subscribeCount);
+                listArea.append(item);
+                listArea.append('<hr style="margin: 0.5rem 0">');
+            }
+            $('#best-mybikes').append(listArea);
+        })
+    }
+    function readBestTimelines(archive) {
+        requestPost('readBestTimelines', {content: archive.content}, data => {
+            console.log('readBestTimelines data =', data);
+            let listArea = $('<div style="padding: 0.5rem 1rem 1rem 1rem"></div>');
+            let item = $('<div style="display: flex; flex-direction: row; align-items: center; cursor: pointer;"></div>');
+            item.append('<div class="rank-item-index" style="font-size: 0.8rem;">순위</div>');
+            item.append('<div class="rank-item-name text-ellipsis" style="margin-left: 1rem; text-align: left; font-size: 0.8rem;">제목</div>');
+            let likeCount = $('<div class="rank-item-number" style="flex-basis: 30%; text-align: right;"></div>');
+            likeCount.append('<span style="padding: 0.125rem 0.25rem; border-radius: 0.25rem; font-size: 0.8rem; color: black">좋아요</span>');
+            item.append(likeCount);
+            listArea.append(item);
+            listArea.append('<hr style="margin: 0.125rem 0 0.5rem 0">');
+            for(let i=0; i<data.timelines.length; i++) {
+                let timeline = data.timelines[i];
+                item = $('<div style="display: flex; flex-direction: row; align-items: center; cursor: pointer;" data-toggle="modal" data-timelineid="' + timeline.id + '" data-target="#DetailViewModal"></div>');
+                item.append('<div class="rank-item-index" style="font-weight: bold;">' + (i+1) + '</div>');
+                item.append('<div class="rank-item-name text-ellipsis" style="margin-left: 1rem; text-align: left;">' + timeline.title + '</div>');
+                likeCount = $('<div class="rank-item-number" style="text-align: right; flex-basis: 30%;"></div>');
+                likeCount.append('<i class="fas fa-heart" style="color: #D6336C">');
+                likeCount.append('<span style="padding: 0.125rem 0.25rem; border-radius: 0.25rem; color: black">' + numberWithCommas(timeline.likeCount) + '</span>');
+                item.append(likeCount);
+                listArea.append(item);
+                listArea.append('<hr style="margin: 0.5rem 0">');
+            }
+            $('#best-timelines').append(listArea);
+        })
+    }
+</script>
+<div class="content">
+  <div style="display: flex; flex-direction: column">
+    <div style="display: flex; flex-direction: row; justify-content: center; flex-wrap: wrap">
+      <div id="best-motorbikes" class="shadow-sm mb-5 bg-white rounded ranking-list">
+        <div style="padding-top: 1rem; font-size: 1.3rem; font-weight: bold;">베스트 TOP 10 바이크</div>
+        <hr style="margin-top: 1px; margin-bottom: 1px">
+      </div>
+      <div id="best-brands" class="shadow-sm mb-5 bg-white rounded ranking-list">
+        <div style="padding-top: 1rem; font-size: 1.3rem; font-weight: bold;">베스트 TOP 10 브랜드</div>
+        <hr style="margin-top: 1px; margin-bottom: 1px">
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: row; justify-content: center; flex-wrap: wrap">
+      <div id="best-mybikes" class="shadow-sm mb-5 bg-white rounded ranking-list">
+        <div style="padding-top: 1rem; font-size: 1.3rem; font-weight: bold;">베스트 TOP 10 내 바이크</div>
+        <hr style="margin-top: 1px; margin-bottom: 1px">
+      </div>
+      <div id="best-timelines" class="shadow-sm mb-5 bg-white rounded ranking-list">
+        <div style="padding-top: 1rem; font-size: 1.3rem; font-weight: bold;">베스트 TOP 10 타임라인</div>
+        <hr style="margin-top: 1px; margin-bottom: 1px">
+      </div>
+    </div>
+  </div>
+</div>

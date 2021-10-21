@@ -1,0 +1,64 @@
+No5:
+  id: 5
+  account: salhyun@naver.com
+  password: 3ea87a56da3844b420ec2925ae922bc731ec16a4fc44dcbeafdad49b0e61d39c
+  name: 엔요
+  avatar: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2FH8YndGuC5yV1ddMJSX6Hs5mxvbB2%2Favatar_thumb?alt=media&token=6ae93679-2f9f-43ba-9741-7887a0c0ba16
+  verified: true
+  secure_code: 
+  state: normal
+  exp: 0
+  level: 19
+  titleOfLevel: 달인
+  warningCount: 0
+  maxCountMybike: 3
+  maxCountTimelinePhoto: 3
+
+No9:
+  id: 9
+  account: salhyun@gmail.com
+  password: 7edbabf9a1c392f76f361087111790c4b90c2ac67c5b1cae23181e025cb8ac3d
+  name: Do Hyun Kim
+  avatar: https://lh3.googleusercontent.com/a-/AOh14Gj5c7DLjo2WzAYZsxHt1bzoEK1-Vq5JhZf47_4HPQ=s96-c
+  verified: true
+  secure_code: 
+  state: normal
+  exp: 0
+  level: 0
+  titleOfLevel: 뉴비
+  warningCount: 0
+  maxCountMybike: 1
+  maxCountTimelinePhoto: 3
+
+No10:
+  id: 10
+  account: salhyun@daum.net
+  password: 3ea87a56da3844b420ec2925ae922bc731ec16a4fc44dcbeafdad49b0e61d39c
+  name: hide
+  avatar: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2F8TGmLWCjc1hU3zYesiKleXdtAgJ3%2Favatar_thumb?alt=media&token=7f3925d1-75d5-4566-9202-35f8e364de3c
+  verified: true
+  secure_code: 
+  state: normal
+  exp: 0
+  level: 1
+  titleOfLevel: 초보
+  warningCount: 1
+  maxCountMybike: 3
+  maxCountTimelinePhoto: 5
+
+No11:
+  id: 11
+  account: withdraw@bikesalon.kr
+  password: 3ea87a56da3844b420ec2925ae922bc731ec16a4fc44dcbeafdad49b0e61d39c
+  name: 탈퇴유저
+  avatar: https://firebasestorage.googleapis.com/v0/b/bikesalon-d86d9.appspot.com/o/images%2Fwithdrawuser.png?alt=media&token=9496fae8-b9c1-4195-9c83-fca508a47d91
+  verified: true
+  secure_code: 
+  state: normal
+  exp: 0
+  level: 0
+  titleOfLevel: 뉴비
+  warningCount: 0
+  maxCountMybike: 1
+  maxCountTimelinePhoto: 3
+

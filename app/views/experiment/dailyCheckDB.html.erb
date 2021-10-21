@@ -1,0 +1,292 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  /*modal foreverCalendar*/
+  #modal-foreverCalendar .modal-dialog {
+    transition: none;
+    transform: none;
+  }
+  #modal-foreverCalendar > .modal-dialog {
+    position: absolute;
+  }
+  #modal-foreverCalendar tr {
+    border: 1px solid transparent;
+  }
+  #modal-foreverCalendar tr > td {
+    border: 1px solid transparent;
+  }
+  #modal-foreverCalendar .td-day {
+    min-width: 30px;
+    min-height: 30px;
+    margin: auto;
+    text-align: center;
+    border-radius: 50%;
+    transition: border-radius 50ms ease-in-out;
+    font-family: "B612 Mono";
+  }
+  #modal-foreverCalendar .td-day:hover {
+    background-color: lightgray;
+  }
+</style>
+
+<script>
+    selectedRecord = 'timeline';
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        $('#modal-foreverCalendar').on('show.bs.modal', function (event) {
+            present();
+        });
+        $('#modal-foreverCalendar').on('hide.bs.modal', function (event) {
+        });
+    });
+    function onClickCalendar(obj) {
+        let rect = obj.getBoundingClientRect();
+        $('#modal-foreverCalendar').children('.modal-dialog').css('top', rect.bottom);
+        $('#modal-foreverCalendar').children('.modal-dialog').css('left', rect.right);
+        $('#modal-foreverCalendar').modal('toggle');
+    }
+    function numberPad(n, width) {
+        n = n + '';
+        return n.length >= width ? n : new Array(width - n.length + 1).join('0') + n;
+    }
+    function choiceDay() {
+        selectedDay = pickedDate.year + '-' + numberPad(pickedDate.month, 2)  + '-' + numberPad(parseInt(pickedDate.day), 2);
+        $('#choice-day').text(selectedDay);
+        $('#modal-foreverCalendar').modal('hide');
+    }
+    function onChangeRecord(obj) {
+        let records = new Map([['타임라인', 'timeline'], ['유저', 'user']]);
+        selectedRecord = records.get($(obj).val());
+    }
+    function appendTimelines(timelines) {
+        let recordList = $('#record-list');
+        timelines.forEach(timeline => {
+            let $timeline = $('<div style="display: flex; flex-direction: row"></div>');
+            $timeline.append('<div style="margin-right: 1rem">' + timeline.title + '</div>');
+            $timeline.append('<div style="margin-right: 1rem">' + timeline.created_at + '</div>');
+            $timeline.append('<div>' + timeline.account + '</div>');
+            recordList.append($timeline);
+        })
+    }
+    function appendUsers(users) {
+    }
+    function onClickGo(obj) {
+        console.log('selectedDay =', selectedDay);
+        console.log('selectedRecord =', selectedRecord);
+        requestPost('getRecordInADay', {record: selectedRecord, day: selectedDay}, data => {
+            console.log('data =', data);
+            if(data.result) {
+                if(data.records.length > 0) {
+                    $('#record-list').empty();
+                    if(selectedRecord == 'timeline') appendTimelines(data.records);
+                    else if(selectedRecord == 'user') appendUsers(data.records);
+                }
+            }
+        });
+    }
+</script>
+<div class="content">
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: 90%; height:auto; text-align: center; margin: auto">
+    <div>Daily check Database</div>
+    <button type="button" id="choice-day" class="btn btn-primary" onclick="onClickCalendar(this)">달력</button>
+    <select id="input-kind" class="custom-select mr-sm-2 form-control" style="width: 30%; margin-left: 0.25rem" onchange="onChangeRecord(this)">
+      <option selected>타임라인</option>
+      <option>유저</option>
+    </select>
+    <button type="button" class="btn btn-primary" onclick="onClickGo(this)">가자</button>
+    <div id="record-list" style="display: flex; flex-direction: column">
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="modal-foreverCalendar" tabindex="-1" role="dialog" aria-labelledby="foreverCalendarModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        <table class = "blueText" border="1" id = "tab">
+          <tr>
+            <td align="center" id="prev" style="width: 23px;"><label style="margin: 0; cursor: pointer;" onclick="prevmonth()"><i class="fas fa-angle-double-left"></i></label></td>
+            <td colspan="5" align="center" id="Ymd" style="width: 150px; height: 30px;"></td>
+            <td align="center" id="next" style="width: 23px;"><label style="margin: 0; cursor: pointer;" onclick="nextmonth()"><i class="fas fa-angle-double-right"></i></label></td>
+          </tr>
+          <tr align="center">
+            <td align="center">일</td>
+            <td align="center">월</td>
+            <td align="center">화</td>
+            <td align="center">수</td>
+            <td align="center">목</td>
+            <td align="center">금</td>
+            <td align="center">토</td>
+          </tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" onclick="choiceDay()">선택</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script language="javascript">
+    pickedDate = {picked: false, year: '2008', month: '1', day: '10', ampm: 'AM', hour: '2', minute: '30'};
+    previousPickDay = null;
+    currentPickDay = null;
+    tr_today = null;
+
+    var today = new Date();
+    var year = today.getFullYear();
+    var month = today.getMonth();
+    var day = today.getDay();
+
+    month += 1;
+
+    function dayy(year, month){ //월의 일수를 구함
+        switch(month){
+            case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+                return 31;
+
+            case 4: case 6: case 9: case 11:
+                return 30;
+
+            case 2:
+                if(((year%400)==0||(year%4)==0&&(year%100)!=0)){
+                    return 29;
+                }
+                else{
+                    return 28;
+                }
+        }
+
+    }
+
+    function prevmonth(){ //이전 월로 가는 함수
+        var ymda = document.getElementById("prev");
+        var yg = document.getElementById("Ymd");
+
+        month--; //month를 계속 감소시켜준다
+        if(month < 1){ // month가 1보다 작아지면
+            month = 12; // month를 12로 만들어줌
+            year -= 1; //year를 1 감소시켜준다
+        }
+        if(year < 1970){ //1970년 밑으로는 내려가지 않음..
+            alert("기원전");
+            for(var i=1;i<100;i--){
+                window.top.moveTo(i ,i *=-1);
+            }
+        }
+
+        var ymda = year + "년" + (month)+"월";
+
+        present();
+    }
+
+    function nextmonth(){  //다음 월로 가는 함수
+        var ymda = document.getElementById("next");
+        var yg = document.getElementById("Ymd");
+
+        month++; //month 를 계속 증가시켜줌
+        if(month > 12){ //만약 month가 12를 넘어가면
+            month = 1; // month를 1로 만듦
+            year += 1; //year을 1 증가시켜준다
+        }
+
+        var ymda = year + "년" + month+"월";
+
+        present(); //present()함수를 호출하여 다시 찍어줌
+    }
+
+    function present(){
+
+        var start = new Date(year, month-1, 1);
+        var ymda = document.getElementById("Ymd");
+        var Tab = document.getElementById("tab");
+
+        var row = null;
+        var cnt = 0;
+
+        var ym = year + "년" + (month)+"월";
+
+        ymda.innerHTML = ym;
+
+        while(tab.rows.length >2){     //테이블의 행의 길이가 2보다 크면 테이블의 행 제거함.
+            tab.deleteRow(tab.rows.length -1);
+        }
+
+        row = Tab.insertRow();
+
+
+        for(var j = 0; j<start.getDay(); j++){ //달력의 시작 일 구함
+            cell = row.insertCell();
+            cnt+=1;
+        }
+
+        console.log('previousPickDay');
+        console.log(previousPickDay);
+        console.log('month = ' + month);
+
+        console.log('today : ');
+        var today = new Date();
+        console.log(today.getFullYear() + ', ' + today.getMonth() + ', ' + today.getDate());
+
+        for(var i = 0; i< dayy(year, month); i++){ //달력 일수만큼 찍어줌
+            cell = row.insertCell();
+            cell.innerHTML = i+1;
+
+            console.log('month : ' + month);
+
+            $(cell).css('cursor', 'pointer');
+            $(cell).addClass('td-day');
+
+            if(year == today.getFullYear() && month == (today.getMonth()+1) && parseInt($(cell).text()) == today.getDate()) {
+                $(cell).css('color', 'red');
+                $(cell).addClass('today');
+                tr_today = $(cell);
+            }
+            if(pickedDate.picked == true) {
+                if(pickedDate.year == year && pickedDate.month == month && pickedDate.day == $(cell).text()) {
+                    currentPickDay = $(cell);
+                    currentPickDay.css('background-color', '#ffc107');
+                    currentPickDay.css('border-radius', '10px');
+                    previousPickDay = currentPickDay;
+                }
+            }
+
+            $(cell).on('click', function() {
+                console.log($(this).text());
+
+                if(currentPickDay) {
+                    if(previousPickDay) {
+                        previousPickDay.css('background-color', '');
+                        previousPickDay.css('border-radius', '');
+                    }
+                    currentPickDay = $(this);
+                } else {
+                    previousPickDay = currentPickDay = $(this);
+                }
+
+                if(currentPickDay.hasClass('today')) currentPickDay.css('color', 'red');
+                else currentPickDay.css('color', 'black');
+
+                currentPickDay.css('background-color', '#ffc107');
+                currentPickDay.css('border-radius', '10px');
+
+                pickedDate.day = currentPickDay.text();
+                pickedDate.year = year;
+                pickedDate.month = month;
+                pickedDate.picked = true;
+
+                previousPickDay = currentPickDay;
+            });
+
+            cnt += 1;
+
+            if(cnt%7 ==0){ //cnt가 7이면 행을 늘려줌
+                row = tab.insertRow();
+            }
+        }
+    }
+</script>

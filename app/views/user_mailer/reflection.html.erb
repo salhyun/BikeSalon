@@ -1,0 +1,4 @@
+<p style="font-size: 1.25rem"><%= @user.name + '(' + @user.account + ')' %>님의 반성입니다.</p>
+<br>
+<p style="font-size: 1rem"><%= @content %></p>
+<a style="font-size: 1rem" href="http://<%= ENV['host_ip'] %>/experiment/confirmReflection?userId=<%= @user.id %>">복원하러가기</a>

@@ -1,0 +1,302 @@
+<style>
+  body {
+    background-color:floralwhite;
+    width: 100%;
+    margin: auto
+  }
+  .host-info {
+    width: max-content;
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background-color: #efefef;
+  }
+  .host-info > span {
+    color: #007bff;
+    font-size: 0.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 200ms linear ;
+  }
+  .host-info > span:hover {
+    color: #0069d9;
+  }
+  #chatting-area {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(0,0,0,.125);
+    border-radius: 0.25rem;
+  }
+</style>
+
+<script>
+    messageCount=0;
+    posterImage = null;
+    livecast = {category: '잡담', title: '', poster: '/poster.jpg'};
+    intervalCall100 = intervalCall(100);
+    user = {id: 0, name: ''};
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight + 100);
+        documentReady();
+
+        <% if defined? @livecast %>
+        livecast = {category: '<%= @livecast.category %>', title: '<%= @livecast.title %>', poster: '<%= @livecast.poster %>'};
+        $('input[name="title"]').val('<%= @livecast.title %>');
+        $('#poster-area').find('img')[0].src = '<%= @livecast.poster %>';
+        $('select[name="category"]').children('option').each(function () {
+            console.log('option =', $(this).text());
+            if($(this).text() ==  '<%= @livecast.category %>') {
+                $(this).attr('selected', true);
+            } else {
+                $(this).attr('selected', false);
+            }
+        });
+        <% end %>
+
+        user.id = <%= session[:user]['id'] %>;
+        user.name = '<%= session[:user]['name'] %>';
+
+        buildCategoryChangeButton();
+        initializeChattingElements();
+
+        $('input[name="poster"]').change(function () {
+            console.log('change poster');
+            if(this.files) {
+                let reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#poster-area').find('img')[0].src = e.target.result;
+                    posterImage = e.target.result;
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        })
+    });
+
+    function initializeChattingElements() {
+        // $('#message-input').append('<input class="form-control" type="text" placeholder="메시지를 입력하세요">');
+        let $messageArea = $('#message-area');
+        <% if @mobileDevice %>
+        <% else %>
+        setTimeout(() => {
+            let size = {'width': $messageArea.css('width'), 'height': $messageArea.css('height')};
+            // let size = {'height': $messageArea.css('height')};
+            console.log('chatting size =', size);
+            console.log('chattingArea width =', $('#chatting-area').css('width'))
+            $messageArea.css(size);
+            console.log('messageArea Height =', $messageArea.css('height'));
+        }, 250);
+        <% end %>
+
+        $('textarea[name="message"]').on('keyup', function (event) {
+            if(event.keyCode == 13) {//press enter key
+                if(!event.shiftKey) {
+                    let message = $(this).val();
+                    $(this).val('');
+                    if(message.length > 0) {
+                        intervalCall100(() => {//한글입력하면 두번 발생함 그래서 interval 사용...
+                            console.log('%c enter key', 'color: yellow');
+                            console.log('message =', message[message.length-1]);
+                            if(message[message.length-1] == '\n' ) {
+                                console.log('%c last return char', 'color: yellow');
+                                message = message.substring(0, message.length-1);
+                            }
+                            sendMessage(message.replace(/\n/gi, '<br>'));
+                        });
+                    }
+                    event.preventDefault();
+                }
+            }
+        })
+    }
+    function buildCategoryChangeButton() {
+        let buttonWidth = $('#change-title').outerWidth() + 2;
+        let $parent = $('select[name="category"]').parent();
+        $parent.css({'display': 'flex', 'flex-direction': 'row'});
+        $parent.append('<button class="btn btn-outline-secondary" type="button" id="change-category" style="min-width: ' + buttonWidth + 'px" onclick="toggleCategoryChange(this)">변경</button>');
+    }
+    function toggleCategoryChange(obj) {
+        let $select = $('select[name="category"]');
+        if($select.prop('disabled')) {
+            $select.attr('disabled', false);
+        } else {
+            $select.attr('disabled', true);
+        }
+    }
+    function onChangeCategory(obj) {
+
+    }
+    function onChangeTitle(obj) {
+        let $input = $(obj).parent().prev('input');
+        if($input.prop('readonly')) {
+            $input.attr('readonly', false);
+        } else {
+            let title = $input.val();
+            if(title.length > 0) {
+                $input.attr('readonly', true);
+            }
+        }
+    }
+    function onClickPoster(obj) {
+        $('input[name="poster"]').trigger('click');
+    }
+    function copyTextFromElement(obj, offset) {
+        let targetElement = $(obj).parent()[0];
+        var range = document.createRange();
+        range.selectNode(targetElement.childNodes[0]); //텍스트 정보를 Range 객체에 저장
+        range.setStart(targetElement.childNodes[0], offset); //추가
+        range.setEnd(targetElement.childNodes[0], targetElement.childNodes[0].length-1); //추가
+        var sel = window.getSelection();
+        sel.removeAllRanges(); //기존 선택정보 삭제
+        sel.addRange(range); //텍스트 정보 선택
+        document.execCommand("copy"); //복사
+        sel.removeRange(range); //선택 정보 삭제
+        $(obj).text('copied');
+    }
+    async function startLivecast(obj) {
+        if($(obj).text() == '시작하기') {
+            let requestStartLivecast = function (params) {
+                requestPost('startLivecast', params, data => {
+                    console.log('startLivecast data =', data);
+                    if(data.result) {
+                        let hostAddress = '<%= ENV['hlsHost'] %>';
+                        let $hlsHost = $('<div style="margin-top: 1rem; border: 1px solid rgba(0,0,0,.125); color: dimgray; border-radius: 0.5rem; padding: 1rem; text-align: left"></div>');
+                        $hlsHost.append('<div class="host-info">서버주소: ' + hostAddress + ' <span onclick="copyTextFromElement(this, 6)">copy</span></div>');
+                        $hlsHost.append('<div class="host-info" style="margin-top: 0.5rem">스트림키: ' + data.livecast.streamkey + ' <span onclick="copyTextFromElement(this, 6)">copy</span></div>');
+                        $('#poster-area').after($hlsHost);
+
+                        let messageAreaHeight = $('#chatting-area').height() - $('#message-input').height();
+                        $('#message-area').css('height', messageAreaHeight);
+                    }
+                    buttonSpinner(obj, false, false);
+                })
+            }
+
+            let title = $('input[name="title"]').val();
+            console.log('title =', title);
+            if(title.length > 0) {
+                buttonSpinner(obj, true, false);
+                let category = $('select[name="category"]').val();
+                let params = {userId: <%= session[:user]['id'] %>, title: title, category: category};
+
+                if(posterImage !== null) {
+                    let user = firebase.auth().currentUser;
+                    if(user) {
+                        console.log('firebase user =', user);
+                        let metadata = {cacheControl: 'public,max-age=2628000'};//one month
+                        let resizedPosterBlob = await resizeImage(posterImage, 320);
+                        firebase.storage().ref('<%= @firebase_users_path %>' + user.uid + '/').child('poster').put(resizedPosterBlob, metadata).then(snapShot => {
+                            snapShot.ref.getDownloadURL().then(posterUrl => {
+                                console.log('File available at ' + posterUrl);
+                                params.poster = posterUrl;
+                                requestStartLivecast(params);
+                            })
+                        })
+                    }
+                } else {
+                    requestStartLivecast(params);
+                }
+                $(obj).text('중단하기');
+            } else {
+                showAlert('danger', '제목을 입력해야 합니다.', $('.content'));
+            }
+        } else if($(obj).text() == '중단하기') {
+            $(obj).text('시작하기');
+        }
+        console.log('finished startLivecast');
+    }
+    function addMessage(message, name) {
+        console.log('message =', message);
+        console.log('name =', name);
+        let $message = $('<div style="display: flex; flex-direction: row; margin: 0.125rem 0"></div>');
+        $message.append('<div style="width: 50px; font-weight: bold; color: black">' + name + '</div>');
+        $message.append('<div style="width: calc(100% - 50px); color: dimgray">' + message + '</div>');
+        $('#message-area').append($message);
+        // $('#message-area').append('<div>' + message + '</div>');
+        $('#message-area').animate({scrollTop: $('#message-area')[0].scrollHeight}, 200);
+    }
+    function sendMessage(message) {
+        if(message.length > 0) {
+            App.livecast.speak(message, user.name);
+        }
+    }
+</script>
+<div class="content">
+  <% if defined?(@livecast) %>
+  <div id="livecast-property" data-livecastid="<%= @livecast.id %>" data-userid="<%= session[:user]['id'] %>" style="display: none"></div>
+  <% end %>
+  <div class="shadow-sm p-3 mb-5 bg-white rounded" style="width: 90%; height:auto; text-align: center; margin: auto">
+    <div style="font-size: 2rem; text-align: left">라이브 스튜디오</div>
+    <% if @mobileDevice %>
+    <div id="mid-area" style="display: flex; flex-direction: column">
+      <div id="top-side" style="width: 100%">
+        <div id="input-area">
+          <div>
+            <select name="category" class="custom-select mr-sm-2 form-control" onchange="onChangeCategory(this)">
+              <option selected>잡담</option>
+              <option>라이딩</option>
+            </select>
+          </div>
+          <div class="input-group mb-3" style="margin-top: 0.5rem">
+            <input type="text" class="form-control" name="title" placeholder="제목을 입력하세요" aria-label="제목을 입력하세요" aria-describedby="change-title">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button" id="change-title" onclick="onChangeTitle(this)">변경</button>
+            </div>
+          </div>
+        </div>
+        <div id="poster-area" style="text-align: left">
+          <div style="color: dimgray">방송 포스터(사이즈: 320x200)</div>
+          <img src="/poster.jpg" style="width: 100%; border-radius: 0.5rem; object-fit: cover; cursor: pointer;" onclick="onClickPoster(this)">
+          <input type="file" name="poster" accept=".jpg, .png" style="display: none"/>
+        </div>
+      </div>
+      <div id="bottom-side" style="margin-top: 1rem">
+        <div id="chatting-area" style="width: 100%; height: 500px">
+          <div id="message-area" style="height: calc(100% - 100px); text-align: left; overflow-y: auto; overflow-x: hidden; padding: 0.25rem"></div>
+          <div id="message-input" style="height: 100px; padding: 0 0.5rem">
+            <textarea class="form-control" rows="2" name="message" style="resize: none; -webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none;" placeholder="메시지를 입력하세요" maxlength="512"></textarea>
+            <!--            <input type="text" class="form-control" name="message" style="-webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none;" placeholder="메시지를 입력하세요" maxlength="512">-->
+            <div style="text-align: right"><button type="button" class="btn btn-warning btn-sm" style="margin-top: 0.125rem; text-align: right" onclick="sendMessage()">보내기</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% else %>
+    <div id="mid-area" style="display: flex; flex-direction: row;">
+      <div id="left-side" style="width: calc(100% - 400px)">
+        <div id="input-area">
+          <div>
+            <select name="category" class="custom-select mr-sm-2 form-control" onchange="onChangeCategory(this)">
+              <option selected>잡담</option>
+              <option>라이딩</option>
+            </select>
+          </div>
+          <div class="input-group mb-3" style="margin-top: 0.5rem">
+            <input type="text" class="form-control" name="title" placeholder="제목을 입력하세요" aria-label="제목을 입력하세요" aria-describedby="change-title">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button" id="change-title" onclick="onChangeTitle(this)">변경</button>
+            </div>
+          </div>
+        </div>
+        <div id="poster-area" style="text-align: left">
+          <div style="color: dimgray">방송 포스터(사이즈: 320x200)</div>
+          <img src="/poster.jpg" style="width: 360px; border-radius: 0.5rem; object-fit: cover; cursor: pointer;" onclick="onClickPoster(this)">
+          <input type="file" name="poster" accept=".jpg, .png" style="display: none"/>
+        </div>
+      </div>
+      <div id="right-side" style="width: 400px; padding: 0 0.25rem">
+        <div id="chatting-area" style="width: 100%;">
+          <div id="message-area" style="height: calc(100% - 100px); text-align: left; overflow-y: auto; overflow-x: hidden; padding: 0.25rem"></div>
+          <div id="message-input" style="height: 100px; padding: 0 0.5rem">
+            <textarea class="form-control" rows="2" name="message" style="resize: none; -webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none;" placeholder="메시지를 입력하세요" maxlength="512"></textarea>
+<!--            <input type="text" class="form-control" name="message" style="-webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none;" placeholder="메시지를 입력하세요" maxlength="512">-->
+            <div style="text-align: right"><button type="button" class="btn btn-warning btn-sm" style="margin-top: 0.125rem; text-align: right" onclick="sendMessage()">보내기</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% end %>
+    <div style="text-align: center">
+      <button class="btn btn-danger btn-lg" type="button" id="live-start" style="margin-top: 0.5rem" onclick="startLivecast(this)">시작하기</button>
+    </div>
+  </div>
+</div>

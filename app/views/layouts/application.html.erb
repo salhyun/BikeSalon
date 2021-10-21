@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <% if @mobileDevice and (@request_url.eql? 'timeline' or @request_url.eql? 'mapview') %>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+    <% else %>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <% end %>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=MuseoModerno:wght@400;900&display=swap" rel="stylesheet">
+
+    <title>BikeSalon</title>
+	  
+	<!--    실시간 미리보기가 안되서 이렇게 했음-->
+<!--    <script type="text/javascript" src="https://code.jquery.com/jquery-latest.min.js"></script>-->
+<!--    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">-->
+<!--    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>-->
+<!--    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>-->
+<!--	  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt" crossorigin="anonymous">-->
+
+    <%= csrf_meta_tags %>
+
+    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+    <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+
+    <script type="text/javascript" src="<%=asset_path 'core.min.js'%>"></script>
+    <script type="text/javascript" src="<%=asset_path 'sha256.min.js'%>"></script>
+    <script type="text/javascript" src="<%=asset_path 'myUtil.js' %>"></script>
+    <% if @request_url.eql? 'timeline' %>
+    <link href="<%= asset_path 'amsify.suggestags.css' %>" rel="stylesheet">
+    <script type="text/javascript" src="<%= asset_path 'jquery.amsify.suggestags.js' %>"></script>
+    <% end %>
+
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-app.js"></script>
+
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/6.2.0/firebase-storage.js"></script>
+<!--    구글 애드센스-->
+<!--    <script data-ad-client="ca-pub-8565065936594472" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>-->
+<!--    카카오 애드핏-->
+    <% if ENV['enable_advert'].eql?('true') %>
+    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+    <% end %>
+    <meta name="naver-site-verification" content="959d3f2d0bb9114a5953b9a7c64da3ab967eadae" />
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.8.1/video-js.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/7.8.1/video.min.js"></script>
+
+    <style>
+      body {
+        font-family: "Nanum Gothic", sans-serif;/*기본폰트는 나눔고딕*/
+      }
+      .wrap-loading {
+        position: fixed;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        filter: progid:DXImageTransform.Microsoft.Gradient(startColorstr='#20000000', endColorstr='#20000000');
+        z-index: 50000;
+      }
+      .wrap-loading div {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        margin-left: -21px;
+        margin-top: -21px;
+      }
+      .display-none {
+        display: none;
+      }
+      <% if session[:enable_detailview] == true %>
+      #close-detailView {
+        display: none;
+        position: fixed;
+        /*right: 10.5%;*/
+        top: 5px;
+        color: #b9b9b9;
+        cursor: pointer;
+        transition: color 200ms ease-in-out;
+      }
+      <% if @mobileDevice %>
+      .comment-text, .reply-text {
+        font-size: 0.9rem;
+      }
+      <% end %>
+      <% end %>
+      <% if session[:enable_comment] == true %>
+      .tbutton-sm {
+        font-size: 0.8rem;
+        color: darkgray;
+        transition: color 200ms ease-in-out;
+      }
+      <% unless @mobileDevice%>
+      .tbutton-sm:hover {
+        <% if @request_url == 'gallery' %>
+        color: #5a5a5a;
+        <% elsif @request_url == 'timeline' %>
+        color: ghostwhite;
+        <% else %>
+        color: #5a5a5a;
+        <% end %>
+      }
+      <% end %>
+      .img-thumbnail {
+        background-color: transparent;
+        width: <%= @mobileDevice ? 2.8125 : 4.0625 %>rem;
+        height: <%= @mobileDevice ? 2.8125 : 4.0625 %>rem;
+      <% if @request_url == 'timeline' %> border-color: dimgray;
+      <% end %>
+      }
+      <% end %>
+
+      .btn-salon {
+        color: #ffffff;
+        background-color: #FF7738;
+        border-color: #FF7738;
+      }
+
+      .btn-salon:hover,
+      .btn-salon:focus,
+      .btn-salon:active,
+      .btn-salon.active,
+      .open .dropdown-toggle.btn-salon {
+        color: #ffffff;
+        background-color: #FF5100;
+        border-color: #FF7738;
+      }
+
+      .btn-salon:active,
+      .btn-salon.active,
+      .open .dropdown-toggle.btn-salon {
+        background-image: none;
+      }
+
+      .btn-salon.disabled,
+      .btn-salon[disabled],
+      fieldset[disabled] .btn-salon,
+      .btn-salon.disabled:hover,
+      .btn-salon[disabled]:hover,
+      fieldset[disabled] .btn-salon:hover,
+      .btn-salon.disabled:focus,
+      .btn-salon[disabled]:focus,
+      fieldset[disabled] .btn-salon:focus,
+      .btn-salon.disabled:active,
+      .btn-salon[disabled]:active,
+      fieldset[disabled] .btn-salon:active,
+      .btn-salon.disabled.active,
+      .btn-salon[disabled].active,
+      fieldset[disabled] .btn-salon.active {
+        background-color: #FF7738;
+        border-color: #FF7738;
+      }
+
+      .btn-salon .badge {
+        color: #FF7738;
+        background-color: #ffffff;
+      }
+      .scrollTop {
+        position: fixed;
+        right: 10px;
+        bottom: 25px;
+        z-index: 100;
+        transition: all 200ms ease-in-out;
+      }
+      <% unless @mobileDevice %>
+      .scrollTop:hover {
+        color: #fff;
+        background-color: #8fbe00;
+      }
+      <% end %>
+      .text-ellipsis {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      /*user-level*/
+      .level-bg {
+        border: 1px solid silver;
+        border-radius: 0.25rem;
+        padding: 0 0.125rem;
+      }
+      .level-0 {
+        background-color: antiquewhite;
+        color: #585858;
+      }
+      .level-1 {
+        background-color: #f4ec4d;
+        color: #585858;
+      }
+      .level-3 {
+        background-color: #b4d472;
+        color: #585858;
+      }
+      .level-6 {
+        background-color: #14a539;
+        color: whitesmoke;
+      }
+      .level-12 {
+        background-color: #1691cc;
+        color: whitesmoke;
+      }
+      .level-36 {
+        background-color: #f16f79;
+        color: whitesmoke;
+      }
+      .level-72 {
+        background-color: #b02c3a;
+        color: whitesmoke;
+      }
+      .level-144 {
+        background-color: black;
+        color: whitesmoke;
+      }
+
+      .hashtag-span {
+        background-color: #a141ad;
+        color: whitesmoke;
+        border-radius: 0.125rem;
+        font-size: 0.9rem;
+        margin: 2px 2px;
+        padding: 0 2px;
+        cursor: pointer;
+      }
+      .advert {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+
+    <script>
+        // Initialize Firebase
+        function getFirebaseConfig() {
+            let config=null;
+            jQuery.ajax({
+                url: '/user/getFirebaseConfig',
+                type: 'post',
+                async: false,
+                data: {},
+                success: function(data) {
+                    if(data.result) {
+                        config = JSON.parse(data.config.replace(/&quot;/gi, '\"'));
+                    }
+                },
+                error: function(request, status, error) {
+                    console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+                }
+            });
+            return config;
+<!--            return JSON.parse('<%#= ENV['firebase_config'] %>'.replace(/&quot;/gi, '\"'));-->
+        }
+        if(firebase.apps.length === 0) {
+            firebase.initializeApp(getFirebaseConfig());
+        }
+        console.log('firebase.apps.length = ' + firebase.apps.length);
+    </script>
+
+    <script type="text/javascript">
+      primaryColor = '#2b343a';
+      secondaryColor = '#333C42';
+      pathName = '<%= @request_url %>';
+      ctlName = '<%= @request_ctl %>';
+      console.log('%c request_url = ' + pathName, 'background: darkgray; color: #d6336c');
+      console.log('%c request_ctl = ' + ctlName, 'background: darkgray; color: #d6336c');
+      console.log('%c enable_comment = ' + <%= session[:enable_comment] %>, 'background: darkgray; color: #d6336c');
+      console.log('%c enable_detailview = ' + <%= session[:enable_detailview] %>, 'background: darkgray; color: #d6336c');
+
+      function getFileSizeFromDataUrl(dataUrl) {
+          return atob(dataUrl.split(',')[1]).length;
+      }
+      function dataURItoBlob(dataURI)
+      {
+          var byteString = atob(dataURI.split(',')[1]);
+          var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+          var ab = new ArrayBuffer(byteString.length);
+          var ia = new Uint8Array(ab);
+          for (var i = 0; i < byteString.length; i++)
+          {
+              ia[i] = byteString.charCodeAt(i);
+          }
+          var bb = new Blob([ab], { "type": mimeString });
+          return bb;
+      }
+      async function resizeImage(src, size) {
+          const image = new Image();
+          image.src = src;
+          return new Promise((resolve, reject) => {
+              image.onload = imageEvent => {
+                  let canvas = document.createElement('canvas');
+
+                  let width = image.width;
+                  let height = image.height;
+                  if(width > height) {
+                      if(width > size) {
+                          height *= size/width;
+                          width = size;
+                      }
+                  } else {
+                      if(height > size) {
+                          width *= size/height;
+                          height = size;
+                      }
+                  }
+                  canvas.width = width;
+                  canvas.height = height;
+                  canvas.getContext("2d").drawImage(image, 0, 0, width, height);
+                  canvas.toBlob(blob => {
+                      resolve(blob);
+                      setTimeout(() => {$(canvas).remove()}, 500);
+                  }, 'image/jpeg', 1);
+              }
+          });
+          console.log('END resizeSrc');
+      }
+      function resizeOriginalThumb2(src, originalSize, thumbSize, uploadImage) {
+          resizeImage(src, thumbSize).then(thumbBlob => {
+              resizeImage(src, originalSize).then(originalBlob => {
+                  uploadImage(originalBlob, thumbBlob);
+              })
+          })
+      }
+      async function resizeOriginalThumb2Sync(src, originalSize, thumbSize) {
+          let thumbBlob = await resizeImage(src, thumbSize);
+          let originalBlob = await resizeImage(src, originalSize);
+          return {thumbBlob: thumbBlob, originalBlob: originalBlob};
+      }
+      //resize thumb and upload
+      function resizeOriginalThumb(src, size, fileName, uploadImage) {
+          const image = new Image();
+          image.src = src;
+          image.onload = imageEvent => {
+              let canvas = document.createElement('canvas');
+
+              let width = image.width;
+              let height = image.height;
+              if(width > height) {
+                  if(width > size) {
+                      height *= size/width;
+                      width = size;
+                  }
+              } else {
+                  if(height > size) {
+                      width *= size/height;
+                      height = size;
+                  }
+              }
+              canvas.width = width;
+              canvas.height = height;
+              canvas.getContext("2d").drawImage(image, 0, 0, width, height);
+              canvas.toBlob(blob => {
+                  // const file = new File([blob], fileName, {
+                  //     type: 'image/jpeg',
+                  //     lastModified: Date.now()
+                  // });
+                  uploadImage(dataURItoBlob(src), blob);
+              }, 'image/jpeg', 1);
+          }
+      };
+
+      function generateAjaxUrl(request) {
+          var url = null;
+          if(pathName == 'gallery') {
+              url = '/gallery/' + request;
+          } else if(pathName == 'mapview') {
+              url = '/gallery/' + request;
+          } else if(pathName == 'timeline') {
+              url = '/gallery/' + request;
+          } else if(pathName == 'mybike') {
+              url = '/gallery/' + request;
+          } else if(pathName == 'bikeview') {
+              url = '/main/' + request;
+          } else if(pathName == 'rankings') {
+              url = '/gallery/' + request;
+          } else if(pathName == 'compareView') {
+              url = '/compare/' + request;
+          } else if(pathName == 'reportView') {
+              url = '/gallery/' + request;
+          } else if(pathName == '<%= ENV['host_ip'] %>') {
+              url = '/gallery/' + request;
+          }
+          return url;
+      }
+      function requestPost(url, params, callback) {
+          jQuery.ajax({
+              url: url,
+              type: 'post',
+              data: params,
+              success: function(data) {
+                  callback(data)
+              },
+              error: function(request, status, error) {
+                  console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+              }
+          });
+      }
+      function requestPostSync(url, params, callback) {
+          jQuery.ajax({
+              url: url,
+              type: 'post',
+              async: false,
+              data: params,
+              success: function(data) {
+                  callback(data)
+              },
+              error: function(request, status, error) {
+                  console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+              }
+          });
+      }
+      function requestFetch(url, callback) {
+          fetch(url).then(response => {
+              return response.json();
+          }).then(json => {
+              callback(json);
+          });
+      }
+      async function requestFetchSync(url) {
+          let response = await fetch(url);
+          return await response.json();
+      }
+      function buttonSpinner(obj, enable, prev) {
+          if(enable) {
+              $(obj).attr('disabled', enable);
+              $(obj).text(' ' + $(obj).text());
+              $(obj).prepend("<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span>");
+              if(prev) {
+                  $(obj).prev().attr('disabled', enable);
+              }
+          } else {
+              $(obj).children('span').remove();
+              $(obj).attr('disabled', enable);
+              if(prev) {
+                  $(obj).prev().attr('disabled', enable);
+              }
+          }
+      }
+      async function parallelSync(items, callback) {
+          await Promise.all(
+              items.map(async(item) => {
+                  await callback(item);
+              })
+          );
+      }
+      async function parallelSyncWithIndex(items, callback) {
+          await Promise.all(
+              items.map(async(item, index) => {
+                  await callback(item, index);
+              })
+          );
+      }
+      function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+      }
+      async function parallelSyncWithSleep(items, interval, callback) {
+          await Promise.all(
+              items.map(async(item) => {
+                  await callback(item);
+                  await sleep(interval);
+              })
+          );
+      }
+      function scrollToTop() {
+          $(window).scrollTop(0);
+          // document.body.scrollTop(0);
+      }
+      function checkFirebaseUser() {
+          <% if session[:logined] %>
+          let currentUser = firebase.auth().currentUser;
+          if(currentUser) {
+              if(currentUser.email == '<%= session[:user]['account'] %>') {
+                  return {exist: true, user: currentUser};
+              } else {
+                  return {exist: false, message: 'different user'};
+              }
+          }
+          return {exist: false, message: 'no exist user'};
+          <% else %>
+          return {exist: false, message: "don't logined"};
+          <% end %>
+      }
+      function createAlertElement(kind, message) {
+          let alert = $('<div class="alert alert-' + kind + ' alert-dismissible fade show" role="alert" style="margin-bottom: 0.2rem"></div>');
+          alert.text(message);
+          alert.append('<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+          return alert;
+      }
+      function showAlert(kind, message, parent) {
+          let navbar = $('.navbar');
+          let rect = navbar[0].getBoundingClientRect();
+          if($('#alert-parent').length > 0) {
+              $('#alert-parent').append(createAlertElement(kind, message));
+          } else {
+              let top = rect.bottom;
+              let zIndex = navbar.css('z-index') + 1;
+              if($('#DetailViewModal').length > 0) {
+                  zIndex = navbar.css('z-index') + 500;
+              }
+              let alertParent = $('<div id="alert-parent" style="position: fixed; left: 0; top: ' + top + 'px; width: 100%; margin: auto; z-index: ' + zIndex + '"></div>');
+              alertParent.append(createAlertElement(kind, message));
+              parent.prepend(alertParent);
+          }
+      }
+      function colorRating(ratingRibbon, rating) {
+          if(rating >= 10) {
+              ratingRibbon.css({'background-color': '#000000', 'color': 'white'});
+          } else if(rating > 6) {
+              ratingRibbon.css({'background-color': '#dc3545', 'color': 'white'});
+          } else if(rating > 3) {
+              ratingRibbon.css({'background-color': '#ffc107', 'color': 'black'});
+          } else {
+              ratingRibbon.css({'background-color': '#A0DE21', 'color': 'black'});
+          }
+      }
+      function getUserLevel(titleOfLevel) {
+          if(titleOfLevel == '뉴비') {
+              return {level: 'N', class: 'level-0'};
+          } else if(titleOfLevel == '초보') {
+              return {level: 'B', class: 'level-1'};
+          } else if(titleOfLevel == '중수') {
+              return {level: 'I', class: 'level-3'};
+          } else if(titleOfLevel == '고수') {
+              return {level: 'E', class: 'level-6'};
+          } else if(titleOfLevel == '달인') {
+              return {level: 'M', class: 'level-12'};
+          } else if(titleOfLevel == '대가') {
+              return {level: 'G', class: 'level-36'};
+          } else if(titleOfLevel == '원로') {
+              return {level: 'S', class: 'level-72'};
+          } else if(titleOfLevel == '전설') {
+              return {level: 'L', class: 'level-144'};
+          }
+          return null;
+      }
+      function buildUserLevel(titleOfLevel, fontSize) {
+          let content = getUserLevel(titleOfLevel);
+          return $("<span class='level-bg " + content.class + "' style='margin-left: 2px; font-family: Rubik Mono One; font-size:" + fontSize + "'>" + content.level + "</span>");
+      }
+      function appendCarousel(items, carouselId, parent, itemCallback) {
+          let carousel = $('<div id="' + carouselId + '" class="carousel slide" data-ride="carousel">');
+          let indicators = $('<ol class="carousel-indicators">');
+          items.forEach((item, index) => {
+              let active = index == 0 ? 'class="active"' : '';
+              indicators.append('<li data-target="#' + carouselId + '" data-slide-to="' + index + '" ' + active + '></li>')
+          });
+          carousel.append(indicators);
+          let carouselInner = $('<div class="carousel-inner">');
+          items.forEach((item, index) => {
+              let className = index == 0 ? 'carousel-item active' : 'carousel-item';
+              let carouselItem = $('<div class="' + className + '">');
+              itemCallback(item, carouselItem);
+              carouselInner.append(carouselItem);
+          });
+          carousel.append(carouselInner);
+          let carouselPrev = $('<a class="carousel-control-prev" href="#' + carouselId + '" role="button" data-slide="prev" style="justify-content: flex-start">');
+          carouselPrev.append('<span aria-hidden="true"><i class="fas fa-chevron-left" style="font-size: 2rem; color: #adb5bd"></i></span>');
+          carouselPrev.append('<span class="sr-only">Previous</span>');
+          carousel.append(carouselPrev);
+          let carouselNext = $('<a class="carousel-control-next" href="#' + carouselId + '" role="button" data-slide="next" style="justify-content: flex-end">');
+          carouselNext.append('<span aria-hidden="true"><i class="fas fa-chevron-right" style="font-size: 2rem; color: #adb5bd"></i></span>');
+          carouselNext.append('<span class="sr-only">Next</span>');
+          carousel.append(carouselNext);
+          parent.append(carousel);
+      }
+      //사파리에서 페이지 앞뒤로 와리가리할때 사용해야함.
+      <% if @browserInfo.eql? 'Safari' %>
+      $(window).bind("pageshow", function (event) {
+          if (event.originalEvent.persisted) {
+              eventPersisted = true;
+              console.log('%c BFCahe로부터 복원됨', 'color: yellow');
+          }
+          else {
+              console.log('%c 새로 열린 페이지', 'color: yellow');
+          }
+      });
+      <% end %>
+
+      console.log('%c after pageshow', 'background: red; color: yellow');
+      console.log('document =', $(document));
+
+      function documentReady() {
+          if(ctlName == 'main') {
+              if(pathName == 'view')
+                  enableNavlink('메인');
+          } else if(ctlName == 'gallery') {
+              if(pathName == 'gallery' || pathName == 'mapview')
+                  enableNavlink('갤러리');
+          } else if(ctlName == 'compare') {
+              if(pathName == 'index') {
+                  enableNavlink('바이크비교');
+              }
+          }
+          console.log('%c registed in document ready', 'background: red; color: yellow');
+          <% if session[:enable_detailview] == true %>
+          $('#DetailViewModal').on('show.bs.modal', function (event) {//화면에 로드되기 직전
+              $('body').css('overflow', 'hidden');
+
+              $(this).css('-webkit-overflow-scrolling', 'touch');
+              let button = $(event.relatedTarget);
+              let timelineId = button.data('timelineid');//data-timelineid 이것은 소문자밖에 안됨
+              console.log('timelineId = ' + timelineId);
+              let modal = $(this);
+              modal.find('.modal-body').empty();
+              requestPost('/gallery/gallery', {timelineId: timelineId}, data => {
+                  if(data.result) {
+                      console.log('show detailview modal data =', data);
+                      buildDetailView(data.timeline, data.attachments, data.comment_count, data.myRating, data.writer, data.mybikeId, data.timelineLocation, data.hashtags, modal);
+
+                      currentTimelineId = timelineId;
+                      commentOffset = 0;
+                      allLoadingComment = false;
+                      readComments(timelineId);
+                  } else {
+                      currentTimelineId = -1;
+                  }
+              });
+          });
+          $('#DetailViewModal').on('shown.bs.modal', function (event) {//화면에서 완전하게 로드가 된 이후에 해야 되는 것들
+              var dialog = $(this).find('.modal-dialog');
+              $('#close-detailView').css('left', dialog.offset().left + dialog.outerWidth() - $('#close-detailView').outerWidth());
+              $('#close-detailView').css({'display': 'block', 'z-index': $('#DetailViewModal').css('z-index')});
+              if(currentTimelineId < 0) {
+                  $(this).modal('hide');
+                  showAlert('danger', '타임라인을 로드할 수 없습니다. 새로고침 후 다시 시도해주세요.', $('.content'));
+              }
+          });
+          $('#DetailViewModal').on('hide.bs.modal', function (event) {//화면에서 사라지기 직전
+              console.log('%c hide DetailViewModal', 'color: yellow');
+              $('body').css('overflow', 'auto');
+              let ytPlayer = $('#ytplayer');
+              if(ytPlayer.length > 0) {
+                  console.log('ytPlayer =', ytPlayer);
+                  // ytPlayer[0].contentWindow.postMessage('{"event":"command","func":"' + 'stopVideo' + '","args":""}', '*');
+                  ytPlayer.remove();
+              }
+              let videoPlayer = $('#video-player');
+              if(videoPlayer.length > 0) {
+                  videoPlayer[0].pause();
+                  videoPlayer.remove();
+              }
+
+              if($('#close-detailView').css('display') == 'block') {
+                  $('#close-detailView').css('display', 'none');
+              }
+          });
+          $('#DetailViewModal').on('scroll', function () {
+              // console.log('%c scrollTop = ' + $(this).scrollTop(), 'background: #222; color: yellow');
+              var dialog = $(this).children('.modal-dialog');
+              var diff = dialog.height() - $(window).height();
+              if(diff - $(this).scrollTop() <= 0) {
+                  console.log('%c reach bottom', 'background: #222; color: yellow');
+                  if(ajaxCommentLoading == false && allLoadingComment == false) {
+                      readComments(currentTimelineId);
+                  }
+              }
+              //스크롤할때 textarea focus가 왜 이런지 모르게따...
+              // $(this).find('textarea').each(function () {
+              //     if($(this).is(':focus')) {
+              //         $(this).blur();
+              //     }
+              // })
+          });
+          <% end %>
+          <% if session[:enable_comment] == true %>
+          $('#reportModal').on('show.bs.modal', function (event) {
+              var button = $(event.relatedTarget);
+              var kind = button.data('kind');
+              let modalBody = $(this).find('.modal-body');
+              let modalFooter = $(this).find('.modal-footer');
+              modalBody.empty();
+              modalFooter.empty();
+              if(kind == 'timeline') {
+                  var timelineId = button.data('timelineid');
+                  modalBody.append('<p>타임라인 ' + button.data('title') + '를 아래 내용으로 신고합니다.</p>');
+                  modalFooter.append('<button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>');
+                  modalFooter.append('<button type="button" class="btn btn-danger" onclick="confirmReportTimeline(' + timelineId + ', this)">신고</button>');
+              } else if(kind == 'comment') {
+                  var commentId = button.data('commentid');
+                  modalBody.append('<p>해당 댓글을 아래 내용으로 신고합니다.</p>');
+                  modalFooter.append('<button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>');
+                  modalFooter.append('<button type="button" class="btn btn-danger" onclick="confirmReportComment(' + commentId + ', this)">신고</button>');
+              } else if(kind == 'reply') {
+                  var replyId = button.data('replyid');
+                  modalBody.append('<p>해당 답글을 아래 내용으로 신고합니다.</p>');
+                  modalFooter.append('<button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>');
+                  modalFooter.append('<button type="button" class="btn btn-danger" onclick="confirmReportReply(' + replyId + ', this)">신고</button>');
+              }
+
+              var formArea = $("<div id='report-items' style='margin: 10px;'></div>");
+              var reportContents = new Array();
+              var reportIds = new Array();
+              <% @reportItems.each do |item| %>
+              reportIds.push('<%= item.name %>');
+              reportContents.push('<%= item.content %>');
+              <% end %>
+              for(var i=0; i<reportIds.length; i++) {
+                  var formCheck = $("<div class='form-check'></div>");
+                  var reportId = 'report-' + reportIds[i];
+                  formCheck.append("<input class='form-check-input' type='radio' name='reportRadios' id='" + reportId + "' value='option" + (i+1) + "'>");
+                  formCheck.append("<label class='form-check-label' for='" + reportId + "'>" + reportContents[i] + "</label>");
+                  formArea.append(formCheck);
+              }
+              modalBody.append(formArea);
+              let textArea = $('<textarea class="form-control autosize" rows="3" placeholder="추가적인 내용을 입력하세요" maxlength="512"></textarea>');
+              modalBody.append(textArea);
+              textArea.val('');
+          });
+          $('#reportModal').on('hidden.bs.modal', function (event) {
+              console.log('hidden reportModal');
+              $('#DetailViewModal').css('overflow', 'auto');//요거해줘야 DetailViewModal 스크롤이 활성화된다.
+          });
+          <% end %>
+          $('#confirmModal').on('show.bs.modal', function (event) {
+              let button = $(event.relatedTarget);
+              let kind = button.data('kind');
+              $(this).find('.modal-body').empty();
+              if(kind == 'deleteComment') {
+                  $(this).find('#confirmModal-Label').text('댓글 삭제하기');
+                  let commentId = button.data('commentid');
+                  $(this).find('.modal-body').append("<p>삭제 이후에는 돌이킬 수 없습니다.<br>정말 아래 삭제할까요?</p>");
+                  let content = $('#comment-' + commentId).children().last().children('.comment-text').first().text();
+                  $(this).find('.modal-body').append("<p class='text-ellipsis' style='width: 65%; margin: auto; text-align: center;'>\"" + content + "\"</p>");
+                  let confirmButton = $(this).find('.modal-footer').children('button').last();
+                  confirmButton.replaceWith("<button type=\"button\" class=\"btn btn-primary\" onclick=\"confirmDeleteComment(this, " + commentId + ")\">삭제</button>");
+              }
+          });
+          $('#confirmModal').on('hide.bs.modal', function (event) {
+              if($('#DetailViewModal').length > 0)
+                  $('#DetailViewModal').css('overflow', 'auto');
+          });
+
+          visualviewportRect = null;
+          if(self.visualViewport) {
+              function handleViewport(event) {
+                  visualviewportRect = event.target;
+              }
+              visualViewport.addEventListener('resize', handleViewport);
+              visualViewport.addEventListener('scroll', handleViewport);
+          } else {
+              console.log('%c visualviewport is not supprot', 'background: gray; color: red');
+          }
+      }//documentReady
+
+      function enableNavlink(itemName) {
+          if(itemName == null) {
+              $('#navbarSupportedContent').children('ul').children('li').each(function () {
+                  $(this).removeClass('active');
+              });
+          } else {
+              $('#navbarSupportedContent').children('ul').children('li').each(function () {
+                  $(this).removeClass('active');
+                  if($(this).children('a').text().indexOf(itemName) >= 0) {
+                      $(this).addClass('active');
+                  }
+              });
+          }
+      }
+      function onClickBikeSalon() {
+          enableNavlink(null);
+          location.href = '/';
+      }
+      function onClickGallery() {
+          if($('#timeline-container').length) {
+              console.log('%c onClickGallery', 'background: #222; color: #bada55');
+              console.log($('#timeline-container').length);
+          } else {
+              console.log('%c onClickGallery but no exist timeline-container', 'background: #222; color: blue');
+          }
+          // location.href = "/gallery/gallery?page=0&scroll=0";
+          location.href = "/gallery/gallery";
+      }
+      console.log('session[:enable_detailview] = ' + <%= session[:enable_detailview] %>);
+    </script>
+
+  </head>
+
+  <body>
+	  
+	  <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+<!--			<a class="navbar-brand" href="/" 이렇게 가면 document.ready가 호출 안됨>바이크 살롱</a>-->
+      <a class="navbar-brand" href="javascript:void(0)" onclick="onClickBikeSalon()">바이크 살롱</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="navbarSupportedContent">
+				<ul class="navbar-nav mr-auto">
+					<li class="nav-item">
+<!--            <a class="nav-link" href="navbar_example.html">TimeLine <span class="sr-only">(current)</span></a>-->
+            <%# if session[:logined] %>
+<!--              <a class="nav-link" href="/gallery/gallery">갤러리<span class="sr-only">(current)</span></a>-->
+            <%# end %>
+<!--            <a class="nav-link" href="/gallery/gallery?page=0&scroll=0">갤러리<span class="sr-only">(current)</span></a>-->
+            <a class="nav-link" href="javascript:void(0)" onclick="onClickGallery()">갤러리<span class="sr-only">(current)</span></a>
+					</li>
+          <li class="nav-item">
+            <a class="nav-link" href="javascript:void(0)" onclick="window.location='/main/livecast'">라이브<span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="javascript:void(0)" onclick="window.location='/compare/index'">바이크비교<span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="javascript:void(0)" onclick="window.location='/main/searchbike'">바이크검색<span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="javascript:void(0)" onclick="window.location='/ranking/rankings'">랭킹<span class="sr-only">(current)</span></a>
+          </li>
+<!--          <li class="nav-item">-->
+<!--            <a class="nav-link" href="javascript:void(0)" onclick="window.location='/main/view'">메인<span class="sr-only">(current)</span></a>-->
+<!--          </li>-->
+<!--					<li class="nav-item">-->
+<!--						<a class="nav-link" href="#">Link</a>-->
+<!--					</li>-->
+				</ul>
+				<form class="form-inline my-2 my-lg-0">
+					<% if session[:logined] %>
+						<button id="logout-button" class="btn btn-outline-success my-2 my-sm-0" type="button" style="margin-right: 5px" onclick="location.href='/user/logout'">로그아웃</button>
+            <div id="welcome-user" style="color: white"><%= session[:user]['name'] %>님 환영합니다!</div>
+<!--            <a id="myinfo-link" class="nav-link" href="/user/mybike" 이렇게 하면 document.ready가 호출되지않는다!!! style="color: #45dd52; padding: 8px">나의바이크</a> -->
+            <a class="nav-link" href="javascript:void(0)" onclick="window.location='/user/mybike'" style="color: #28a745; padding: 8px">내 바이크</a>
+            <a class="nav-link" href="javascript:void(0)" onclick="window.location='/user/mylivestudio'" style="color: #28a745; padding: 8px">내 라이브</a>
+						<a class="nav-link" href="javascript:void(0)" onclick="window.location='/user/myinfo/'" style="color: #28a745; padding: 8px">내 정보</a>
+					<% else %>
+						<button id="signup-button" class="btn btn-outline-success my-2 my-sm-0" type="button" style="margin-right: 5px" onclick="window.location='/user/new'">회원가입</button>
+						<button id="login-button" class="btn btn-outline-success my-2 my-sm-0" type="button" onclick="window.location='/user/login'">로그인</button>
+						<button id="logout-button" class="btn btn-outline-success my-2 my-sm-0" type="button" style="display: none; margin-right: 5px" onclick="window.location='/user/logout'">로그아웃</button>
+						<!-- <button id="myinfo-button" class="btn btn-success my-2 my-sm-0" type="button" style="display: none; margin-right: 5px">내정보</button> -->
+						<!-- <div id="welcome-user" style="display: none; color: white">유저님 환영합니다.</div>
+						<a id="myinfo-link" class="nav-link" href="#" style="display: none; color: #45dd52" href="user/myinfo">내정보</a> -->
+					<% end %>
+				</form>
+			</div>
+		</nav>
+	  
+    <%= yield %>
+
+    <div id="page-footer" style="width: 90%; margin: 0.5rem auto">
+      <hr style="margin: 0.5rem 0">
+      <div style="color: dimgray; text-align: center">Copyright 2020 by bikesalon. All Rights Reserved.</div>
+    </div>
+
+    <% if session[:enable_detailview] == true %>
+    <div class="modal fade" id="DetailViewModal" tabindex="-1" role="dialog" aria-labelledby="DetailViewModal-Label" aria-hidden="true">
+      <div class="modal-dialog" role="document" style="width: <%= @mobileDevice ? 90 : 80 %>%; height: auto; margin: auto; min-width: 80%;">
+        <div class="modal-content">
+          <div class="modal-body">
+          </div>
+          <!--      <div class="modal-footer" style="background-color: #333C42;">-->
+          <!--        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>-->
+          <!--        <button type="button" class="btn btn-primary">올리기</button>-->
+          <!--      </div>-->
+        </div>
+      </div>
+    </div>
+
+    <div id="close-detailView" onclick="onClickCloseDetailView(this)">
+      <i class="fas fa-times-circle" style="font-size: <%= @mobileDevice ? 225 : 400 %>%;"></i>
+    </div>
+    <% end %>
+
+    <% if session[:enable_comment] == true %>
+    <div class="modal fade" id="reportModal" tabindex="-1" role="dialog" aria-labelledby="reportModal-Label" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="reportModal-Label">신고하기</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <% if @request_url == 'timeline'%>
+                <span aria-hidden="true" style="color: ghostwhite; text-shadow: black;">&times;</span>
+              <% else %>
+                <span aria-hidden="true">&times;</span>
+              <% end %>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>정말 신고 할까요?</p>
+            <textarea class="form-control autosize" rows="2" placeholder="추가적인 내용을 입력하세요" maxlength="512"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+            <button type="button" class="btn btn-danger" onclick="confirmReportTimeline()">신고</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% end %>
+    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModal-Label" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmModal-Label">삭제하기</h5>
+          </div>
+          <div class="modal-body">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+            <button type="button" class="btn btn-primary">적용</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap-loading display-none">
+      <div style="display: flex; justify-content: center; align-items: center">
+        <i class="fas fa-sync-alt fa-spin" style="font-size: 7rem; color: white"></i>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script type="text/javascript">
+  <% if session[:enable_comment] == true %>
+  <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+  function handleAutoTextarea(parent, $textArea, $button) {
+      let $body = $('#DetailViewModal').length > 0 ? $('#DetailViewModal') : $([document.documentElement, document.body]);
+      $textArea.on('change keyup paste', function () {
+          $button.attr('disabled', $(this).val() == "" ? true : false);
+          // var fontSize = getNumberFromString(getComputedStyle(document.documentElement).fontSize);
+          $(this).css('height', 'auto').css('height', this.scrollHeight);
+          scrollToElement(parent, $body, 0, 3);
+      });
+      scrollToElement(parent, $body, 150, 10);
+  }
+  function handleAutoModifyTextarea(parent, $textArea, rows, $button) {
+      let $body = $('#DetailViewModal').length > 0 ? $('#DetailViewModal') : $([document.documentElement, document.body]);
+      $textArea.css('height', 'auto').css('height', $textArea[0].scrollHeight);
+      $textArea.on('change keyup paste', function () {
+          $button.attr('disabled', $(this).val() == "" ? true : false);
+          // var fontSize = getNumberFromString(getComputedStyle(document.documentElement).fontSize);
+          $(this).css('height', 'auto').css('height', this.scrollHeight);
+          scrollToElement(parent, $body, 0, 3);
+      });
+      scrollToElement(parent, $body, 150, 10);
+  }
+  function onClickCommentRating(rating, commentId, obj) {
+      jQuery.ajax({
+          url: generateAjaxUrl('rateComment'),// '/gallery/rateComment',
+          type: 'post',
+          data: {
+              userId: <%= session[:user]['id'] %>,
+              commentId: commentId,
+              rating: rating
+          },
+          success: function(data) {
+              console.log("success");
+              console.log(data);
+
+              if(data.result == true) {
+                  if(data.rating) {
+                      if(data.rating.rating == 1) {
+                          $(obj).attr('class', 'fas fa-heart');
+                          $(obj).attr('onclick', 'onClickCommentRating(1,' + commentId + ', this)');
+                      } else {
+                          $(obj).attr('class', 'far fa-heart');
+                          $(obj).attr('onclick', 'onClickCommentRating(0,' + commentId + ', this)');
+                      }
+                      $(obj).next('span').text(data.likeCount);
+                  }
+              }
+          },
+          error: function(request, status, error) {
+              console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+          }
+      });
+  }
+  function cancelReply(commentId, obj) {
+      var current = $('#comment-' + commentId);
+      var replyArea = current.find('.reply-area');
+      if(replyArea.length > 0) {
+          console.log('%c exist replyArea', 'background-color: black; color: yellow');
+      } else {
+          console.log('%c does not replyArea', 'background-color: black; color: red');
+      }
+      // $(obj).parent().remove();
+      $('#inputReply-' + commentId).remove();
+  }
+  function confirmReply(commentId, replyId, obj) {
+      var current = $('#comment-' + commentId);
+      var replyArea = current.find('.reply-area');
+      var content = $('#inputReply-' + commentId).children('textarea').first().val();
+      console.log('content =', content);
+      if(content.length > 0) {
+          jQuery.ajax({
+              url: generateAjaxUrl('createReply'),// '/gallery/createReply',
+              type: 'post',
+              data: {
+                  content: content,
+                  commentId: commentId,
+                  userId: <%= session[:user]['id'] %>
+              },
+              success: function(data) {
+                  $('#inputReply-' + commentId).remove();
+                  if(data.result) {
+                      var replyviewing = $('#comment-' + commentId + '-replyviewing');
+                      if(replyviewing.length <= 0) {//답글이 하나도 없는 경우
+                          var replyViewing = $("<div><span id=\"comment-" + commentId + "-replyviewing\" class='tbutton-sm' style=\"cursor: pointer\" onclick=\"readReplies(" + commentId + ")\">댓글1개 숨기기</span></div>");
+                          current.children().last().append(replyViewing);
+                          replyArea = $("<div class=\"reply-area\"></div>");
+                          appendReply(replyArea, data.reply, data.writer, 0, commentId);
+                          current.children().last().append(replyArea);
+                          replyviewing.text('댓글1개 숨기기');
+                      } else {
+                          if(replyArea.length > 0) {//댓글보기 클릭 한 상태 '댓글 숨기기'
+                              let readMoreReply = null;
+                              if(replyArea.find('.readmore-reply').length > 0) {
+                                  readMoreReply = replyArea.find('.readmore-reply').clone();
+                                  replyArea.find('.readmore-reply').remove();
+                              }
+                              if(replyId === null) {
+                                  appendReply(replyArea, data.reply, data.writer, 0, commentId, true);
+                              } else {
+                                  afterReply(replyId, data.reply, data.writer, 0, commentId);
+                              }
+                              if(readMoreReply !== null) {
+                                  replyArea.append(readMoreReply);
+                              }
+                              if(replyviewing.text().indexOf('보기') >= 0) {
+                                  replyArea.css('display', 'block');
+                                  replyviewing.text(replyviewing.text().replace('보기', '숨기기'));
+                              }
+                              let replyCount = getNumberFromString(replyviewing.text())+1;
+                              replyArea.prev().children('span').text('댓글' + replyCount + '개 숨기기');
+                          } else {//댓글 보기 아직 클릭 안한 상태(reply-area 없음) '댓글n개 보기'
+                              let replyCount = getNumberFromString(replyviewing.text())+1;
+                              replyviewing.text('댓글' + replyCount + '개 숨기기');
+                              replyArea = $("<div class=\"reply-area\"></div>");
+                              appendReply(replyArea, data.reply, data.writer, 0, commentId);
+                              replyArea.append("<div><span class='tbutton-sm' style='cursor: pointer' onclick='onClickReadMoreReply(" + commentId + ", this)'>답글 더보기</span></div>");
+                              current.children().last().append(replyArea);
+                          }
+                      }
+                  } else {
+                      showAlert('danger', data.message, $('.content'));
+                  }
+              },
+              error: function(request, status, error) {
+                  console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+              }
+          });
+      }
+  }
+
+  function onClickReplyRating(rating, replyId, obj) {
+      requestPost(generateAjaxUrl('rateReply'), {replyId: replyId, rating: rating, userId: <%= session[:user]['id'] %>}, data => {
+          if(data.result == true) {
+              if(data.rating) {
+                  if(data.rating.rating == 1) {
+                      $(obj).attr('class', 'fas fa-heart');
+                      $(obj).attr('onclick', 'onClickReplyRating(1,' + replyId + ', this)');
+                  } else {
+                      $(obj).attr('class', 'far fa-heart');
+                      $(obj).attr('onclick', 'onClickReplyRating(0,' + replyId + ', this)');
+                  }
+                  $(obj).next('span').text(data.likeCount);
+              }
+          }
+      });
+  }
+
+  function cancelModifyReply(replyId, obj) {
+      console.log("cancelModifyReply");
+      console.log(replyId);
+      let parent = $(obj).parent().parent();
+      let content = parent.data('origin');
+      if(typeof content !== 'string') {
+          content = content.toString();
+      }
+      parent.empty();
+      parent.attr('class', 'reply-text');
+      parent.css('display' , 'block');
+      parent.html(content.replace(/\n/gi, '<br>'));//html로 입력해야 줄바꿈이 들어간다. '\n' => '<br>'
+  }
+  function confirmModifyReply(replyId, obj) {
+      let $textArea = $('#reply-' + replyId).find('.reply-edit').first().children('textarea').first();
+      let content = $textArea.val();
+      console.log('$textArea text =', content);
+      if(content.length > 0) {
+          requestPost(generateAjaxUrl('modifyReply'), {userId: <%= session[:user]['id'] %>, replyId: replyId, content: content}, data => {
+              if(data.result == true) {
+                  var parent = $(obj).parent().parent();
+                  parent.empty();
+                  parent.attr('class', 'reply-text');
+                  parent.css('display' , 'block');
+                  if(data.content[0] === '@') {
+                      let to = data.content.substring(0, data.content.indexOf(' '));
+                      let content = data.content.substring(data.content.indexOf(' '), data.content.length-1);
+                      parent.html(content.replace(/\n/gi, '<br>'));
+                      parent.prepend('<span style="color: #007bff">' + to + '</span>');
+                  } else {
+                      parent.html(data.content.replace(/\n/gi, '<br>'));//html로 입력해야 줄바꿈이 들어간다. '\n' => '<br>'
+                  }
+              } else {
+                  showAlert('danger', data.message, $('.content'));
+              }
+          })
+      }
+  }
+  function onClickModifyReply(replyId, obj) {
+      console.log("onClickModifyReply");
+
+      var replyObj = $(obj).prev('span').prev('i').prev('div');
+      if(replyObj.attr('class') == 'reply-text') {
+          var prevReply = $(replyObj).html();//이걸로 받아야 <br>이 넘어온다 .text()로 받으면 안넘어옴
+          let content = '';
+          if(prevReply.includes('</span>')) {
+              let $temp = $('<div></div>');
+              $temp.html(prevReply.replace(/<br>/gi, '\n'));
+              content = $temp.text();
+          } else {
+              content = prevReply.replace(/<br>/gi, '\n');
+          }
+          var contentRows = content.split('\n').length;
+
+          replyObj.empty();
+          replyObj.attr('class', 'reply-edit');
+          replyObj.attr('data-origin', prevReply);
+          // replyObj.css('display', 'flex');
+          // replyObj.css('align-items', 'flex-end');
+          // replyObj.css('justify', 'space-between');
+          replyObj.css({'display': 'flex', 'flex-direction': 'column'});
+
+          var $textArea = $("<textarea class=\"form-control autosize\" style=\"margin-right: 5px;\" rows=\"" + contentRows +"\" placeholder=\"댓글을 입력하세요\" maxlength='512'>" + content + "</textarea>");
+          replyObj.append($textArea);
+          // replyObj.append("<button type=\"button\" class=\"btn btn-primary\" style=\"flex-grow: 2; margin-right: 5px\" onclick=\"confirmModifyReply(" + replyId + ", this)\">등록</button>");
+          // replyObj.append("<button type=\"button\" class=\"btn btn-secondary\" style=\"flex-grow: 2\" onclick=\"cancelModifyReply(" + replyId + ", this)\">취소</button>");
+          let below = $('<div style="display: flex; justify-content: flex-end; margin-top: 5px"></div>');
+          below.append("<button type=\"button\" class=\"btn btn-secondary\" style=\"margin-right: 5px\" onclick=\"cancelModifyReply(" + replyId + ", this)\">취소</button>");
+          let $button = $("<button type=\"button\" class=\"btn btn-primary\" onclick=\"confirmModifyReply(" + replyId + ", this)\">등록</button>");
+          $button.hover(function () {
+              if($textArea.is(':focus')) {
+                  $textArea.blur();
+              }
+          })
+          below.append($button);
+          replyObj.append(below);
+          handleAutoModifyTextarea(replyObj, $textArea, contentRows, $button);
+
+      } else {
+          console.log('%c already exist', 'background-color: yellow; color: red');
+      }
+  }
+  function onClickDeleteReply(replyId, obj) {
+
+      jQuery.ajax({
+          url: generateAjaxUrl('deleteReply'),// '/gallery/deleteReply',
+          type: 'post',
+          data: {
+              replyId: replyId,
+              userId: <%= session[:user]['id'] %>
+          },
+          success: function(data) {
+              console.log("success");
+              console.log(data);
+
+              if(data.result == true) {
+                  var a = $('.reply-area').children('#reply-' + replyId);
+                  a.prev().remove();
+                  a.remove();
+
+                  var c = getNumberFromString($('.reply-area').prev().children('span').text())-1;
+                  $('.reply-area').prev().children('span').text('댓글' + c + '개 숨기기');
+              }
+          },
+          error: function(request, status, error) {
+              console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+          }
+      });
+  }
+  function onClickReply(commentId, replyId, obj) {
+      var parent = $(obj).parent();
+      var inputReply = parent.find('#inputReply-' + commentId);
+      if(inputReply.length == 0) {
+          var inputArea = $("<div id=\"inputReply-" + commentId + "\"></div>");
+
+          var grandfather = $(obj).parent().parent();
+          let $textArea = $("<textarea class=\"form-control autosize\" style=\"margin-right: 5px;\" rows=\"1\" placeholder=\"댓글을 입력하세요\" maxlength='512'></textarea>");
+          if(grandfather.attr('id').indexOf('reply') >= 0) {
+              var writerName = '@' + grandfather.children().eq(1).children().first().clone().children().remove().end().text() + ' ';
+              $textArea.val(writerName);
+              // inputArea.append("<textarea class=\"form-control autosize\" style=\"margin-right: 5px;\" rows=\"1\" placeholder=\"댓글을 입력하세요\" maxlength='512'>" + writerName + "</textarea>");
+          } else {
+              // inputArea.append("<textarea class=\"form-control autosize\" style=\"margin-right: 5px;\" rows=\"1\" placeholder=\"댓글을 입력하세요\" maxlength='512'></textarea>");
+          }
+          inputArea.append($textArea);
+
+          // inputArea.append("<button type=\"button\" class=\"btn btn-primary\" style=\"flex-grow: 2; margin-right: 5px\" disabled onclick=\"confirmReply(" + commentId + ', ' + userId + ", this)\">등록</button>");
+          // inputArea.append("<button type=\"button\" class=\"btn btn-secondary\" style=\"flex-grow: 2\" onclick=\"cancelReply(" + commentId + ", this)\">취소</button>");
+          let buttonArea = $('<div style="text-align: right; margin-top: 0.5rem;"></div>');
+          buttonArea.append("<button type=\"button\" class=\"btn btn-secondary\" style=\"flex-grow: 2\" onclick=\"cancelReply(" + commentId + ", this)\">취소</button>");
+          let $button = $("<button type=\"button\" class=\"btn btn-primary\" style=\"margin-left: 5px\" disabled onclick=\"confirmReply(" + commentId + ", " + replyId + ", this)\">등록</button>");
+          $button.hover(function () {
+              if($textArea.is(':focus')) {
+                  $textArea.blur();
+              }
+          })
+          buttonArea.append($button);
+          inputArea.append(buttonArea);
+
+          // $(obj).after(inputArea);
+          // $(obj).parent().append(inputArea);
+          let replyArea = $(obj).parent().children('.reply-area');
+          if(replyArea.length > 0) {
+              replyArea.first().before(inputArea);
+          } else {
+              $(obj).parent().append(inputArea);
+          }
+          handleAutoTextarea(inputArea, $textArea, $button);
+      } else {
+          console.log('%c already exist', 'background-color: yellow; color: red');
+      }
+  }
+  <% end %>//if session[:logined]
+  function scrollToElement(to, body, duration, offset=0) {
+      let rect = to[0].getBoundingClientRect();
+      let height = visualviewportRect !== null ? visualviewportRect.height : $(window).height();
+      let diff = rect.bottom - height ;
+      if(diff > 0) {
+          body.animate({scrollTop : body.scrollTop() + diff + offset}, duration);
+      }
+  }
+  function onClickReadMoreReply(commentId, obj) {
+      let replyviewing = $('#comment-' + commentId + '-replyviewing');
+      let replyArea = $(obj).parent().parent();
+      $(obj).parent().remove();
+      let reader = replyReaders.get(replyviewing.attr('id'));
+      console.log('reply reader =', reader);
+      var spinColor = 'black';
+      if(pathName == "timeline")  spinColor = 'white';
+      replyArea.append("<div style=\"text-align: center;\"><i class=\"fas fa-sync-alt fa-spin\" style=\"font-size: 2rem; color: " + spinColor + "\"></i></div>");
+      requestPost(generateAjaxUrl('readReplies'), {commentId: commentId, total: reader.total, limit: reader.limit, offset: reader.offset}, data => {
+          console.log('readMoreReply data =', data);
+          replyArea.children().last().remove();
+          if(data.result) {
+              for(var reply of data.replies) {
+                  if(replyArea.find('#reply-' + reply.id).length <= 0) {
+                      appendReply(replyArea, reply, data.writers[reply.id], data.ratings[reply.id], commentId);
+                  }
+              }
+              reader.offset += data.replies.length;
+              console.log('reader =', reader);
+              if(reader.offset < reader.total) {
+                  replyArea.append("<div class='readmore-reply'><span class='tbutton-sm' style='cursor: pointer' onclick='onClickReadMoreReply(" + commentId + ", this)'>답글 더보기</span></div>");
+              }
+              let $body = $('#DetailViewModal').length > 0 ? $('#DetailViewModal') : $([document.documentElement, document.body]);
+              scrollToElement(replyArea, $body, 150);
+          }
+      })
+  }
+  function toggleReplyViewing(commentId, callback) {
+      console.log('readReplies');
+      var replyviewing = $('#comment-' + commentId + '-replyviewing');
+      console.log(replyviewing.text());
+
+      if(replyviewing.text().indexOf('숨기기') >= 0) {
+          console.log('숨기기 들어옴');
+          replyviewing.parent().next().css('display', 'none');
+          replyviewing.text(replyviewing.text().replace('숨기기', '보기'));
+      }
+      else if(replyviewing.text().indexOf('보기') >= 0) {
+          var replyArea = $('#comment-' + commentId).children().last().children('.reply-area');
+          if(replyArea.length > 0) {
+              replyArea.css('display', 'block');
+              replyviewing.text(replyviewing.text().replace('보기', '숨기기'));
+          } else {
+              callback(replyviewing);
+          }
+      }
+  }
+  function readReplies(commentId) {
+      toggleReplyViewing(commentId, replyviewing => {
+          var spinColor = 'black';
+          if(pathName == "timeline")  spinColor = 'white';
+          replyviewing.parent().append("<div style=\"text-align: center;\"><i class=\"fas fa-sync-alt fa-spin\" style=\"font-size: 2rem; color: " + spinColor + "\"></i></div>");
+          let reader = replyReaders.get(replyviewing.attr('id'));
+          console.log('reply reader =', reader);
+          requestPost(generateAjaxUrl('readReplies'), {commentId: commentId, total: reader.total, limit: reader.limit, offset: reader.offset}, data => {
+              replyviewing.parent().children().last().remove();
+              console.log('readReplies data =', data);
+              if(data.result) {
+                  var replyArea = $("<div class=\"reply-area\"></div>");
+                  for(var reply of data.replies) {
+                      appendReply(replyArea, reply, data.writers[reply.id], data.ratings[reply.id], commentId);
+                  }
+                  reader.offset += data.replies.length;
+                  if(data.last == false && reader.total > reader.offset) {
+                      replyArea.append("<div><span class='tbutton-sm' style='cursor: pointer' onclick='onClickReadMoreReply(" + commentId + ", this)'>답글 더보기</span></div>");
+                  }
+                  replyArea.appendTo(replyviewing.parent().parent());
+                  replyviewing.text(replyviewing.text().replace('보기', '숨기기'));
+
+                  let $body = $('#DetailViewModal').length > 0 ? $('#DetailViewModal') : $([document.documentElement, document.body]);
+                  scrollToElement(replyArea, $body, 150);
+              }
+          })
+      })
+  }
+  <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+  function cancelModifyComment(commentId, obj) {
+      let parent = $(obj).parent().parent();
+      let content = parent.data('origin');
+      if(typeof content !== 'string') {
+          content = content.toString();
+      }
+      parent.empty();
+      parent.attr('class', 'comment-text');
+      parent.css('display' , 'block');
+      parent.html(content.replace(/\n/gi, '<br>'));//html로 입력해야 줄바꿈이 들어간다. '\n' => '<br>'
+  }
+
+  function confirmModifyComment(commentId, obj) {
+      let parent = $(obj).parent().parent();
+      jQuery.ajax({
+          url: generateAjaxUrl('modifyComment'),// '/gallery/modifyComment',
+          type: 'post',
+          data: {
+              userId: <%= session[:user]['id'] %>,
+              commentId: commentId,
+              content: parent.children('textarea').first().val()
+          },
+          success: function(data) {
+              if(data.result == true) {
+                  parent.empty();
+                  parent.attr('class', 'comment-text');
+                  parent.css('display' , 'block');
+                  parent.html(data.content.replace(/\n/gi, '<br>'));//html로 입력해야 줄바꿈이 들어간다. '\n' => '<br>'
+              } else {
+                  showAlert('danger', data.message, $('.content'));
+              }
+          },
+          error: function(request, status, error) {
+              console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+          }
+      });
+  }
+  function onClickModifyComment(commentId, obj) {
+      // var commentObj = $(obj).prev('span').prev('i').prev('div');
+      let commentObj = $(obj).parent().children('.comment-text').first();
+      if(commentObj.attr('class') == 'comment-text') {
+          var prevComment = $(commentObj).html();//이걸로 받아야 <br>이 넘어온다 .text()로 받으면 안넘어옴
+          console.log(prevComment);
+
+          var content = prevComment.replace(/<br>/gi, '\n');
+          var contentRows = content.split('\n').length;
+          console.log('줄바꿈 count =', contentRows);
+
+          commentObj.empty();
+          commentObj.attr('class', 'comment-edit');
+          commentObj.attr('data-origin', prevComment);
+          commentObj.css({'display': 'flex', 'flex-direction': 'column'});
+
+          var $textArea = $("<textarea class=\"form-control autosize\" style=\"margin-right: 5px;\" rows=\"" + contentRows +"\" placeholder=\"댓글을 입력하세요\" maxlength='512'>" + content + "</textarea>");
+          commentObj.append($textArea);
+          let below = $('<div style="display: flex; justify-content: flex-end; margin-top: 5px"></div>');
+          below.append("<button type=\"button\" class=\"btn btn-secondary\" style=\"margin-right: 5px\" onclick=\"cancelModifyComment(" + commentId + ", this)\">취소</button>");
+          let $button = $("<button type=\"button\" class=\"btn btn-primary\" onclick=\"confirmModifyComment(" + commentId + ", this)\">등록</button>");
+          $button.hover(function () {
+              if($textArea.is(':focus')) {
+                  $textArea.blur();
+              }
+          })
+          below.append($button);
+          commentObj.append(below);
+          handleAutoModifyTextarea(commentObj, $textArea, contentRows, $button);
+      } else {
+          console.log('%c already exist', 'background-color: yellow; color: red');
+      }
+  }
+  <% end %>//if session[:logined]
+  function readComments(entityId) {
+      ajaxCommentLoading = true;
+      var spinColor = 'black';
+      if(pathName == "timeline")  spinColor = 'white';
+      $('#comments-area').append("<div style=\"text-align: center;\"><i class=\"fas fa-sync-alt fa-spin\" style=\"font-size: 2rem; color: " + spinColor + "\"></i></div>");
+
+      jQuery.ajax({//masonry와 충돌발생하는것 같음
+          url: generateAjaxUrl('readComments'),// '/gallery/readComments',
+          type: 'post',
+          data: {
+              entityId: entityId,
+              limit: commentSize,
+              offset: commentOffset*commentSize
+          },
+          success: function(data) {
+              console.log(data);
+              $('#comments-area').children().last().remove();
+              if(data.result == true) {
+                  if(data.commentCount == 0) {
+                      allLoadingComment = true;
+                  }
+                  else if(data.commentCount > 0) {
+                      var commentArea = $('#comments-area');
+                      for(var comment of data.comments) {
+                          appendComment(commentArea, comment, data.writers[comment.id], data.ratings[comment.id], data.replies[comment.id]);
+                      }
+                      assert(data.comments.length <= commentSize, 'data.commentCount > commentSize');
+                      commentOffset++;
+                      console.log('commentOffset = ' + commentOffset);
+                  }
+              }
+              ajaxCommentLoading = false;
+          },
+          error: function(request, status, error) {
+              console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+          }
+      });
+  }
+  <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+  function updateCommentCount(timelineId, count) {
+      let updateMark = function(commentMark) {
+          if(commentMark.length > 0) {
+              let markCount = parseInt(commentMark.next('span').text())+count;
+              commentMark.next('span').text(markCount);
+          }
+      }
+      let $commentMark = $('#timeline-rating-mark').children('.fa-comment').first();
+      updateMark($commentMark);
+      if(pathName == 'gallery') {
+          let timelineCard = $('#card-timeline-' + timelineId);
+          if(timelineCard.length > 0) {
+              let hcv = timelineCard.children('.hcv').first();
+              updateMark(hcv.children('.fa-comment').first());
+          }
+      } else if(pathName == 'timeline') {
+          let timelineCard = $('#content-timeline-' + timelineId);
+          if(timelineCard.length > 0) {
+              console.log('timelineCard =', timelineCard);
+              let hcv = timelineCard.children('.cd-timeline-subcontent').first().children('.hcv').first();
+              updateMark(hcv.children('.fa-comment').first());
+          }
+      }
+  }
+  function onClickComment(entityId, userId) {
+      let content = $('#comment').val();
+      if(content.length > 0) {
+          jQuery.ajax({
+              url: generateAjaxUrl('createComment'),// '/gallery/createComment',
+              type: 'post',
+              data: {
+                  entityId: entityId,
+                  userId: userId,
+                  content: content
+              },
+              success: function(data) {
+                  console.log(data);
+                  if(data.result) {
+                      buildCommentHtml($('#comments-area'), data.comment, data.user);
+                      $('#comment').val("");
+                      $('#comment').next('div').children('button').attr('disabled', true);
+                      updateCommentCount(entityId, 1);
+                      let $body = $('#DetailViewModal').length > 0 ? $('#DetailViewModal') : $([document.documentElement, document.body]);
+                      scrollToElement($('#comment-' + data.comment.id), $body, 150, 3);
+                  } else {
+                      showAlert('danger', data.message, $('.content'));
+                  }
+              },
+              error: function(request, status, error) {
+                  console.log("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+              }
+          });
+      }
+  }
+
+  function onClickTimelineRating(timelineId, obj) {
+      requestPost('/user/rateTimeline', {timelineId: timelineId}, data => {
+          if(data.rating) {
+              if(data.rating.rating == 1) {
+                  $(obj).attr('class', 'fas fa-heart');
+                  $(obj).attr('onclick', 'onClickTimelineRating(' + timelineId + ', this)');
+              } else {
+                  $(obj).attr('class', 'far fa-heart');
+                  $(obj).attr('onclick', 'onClickTimelineRating(' + timelineId + ', this)');
+              }
+              //in gallery.html
+              $(obj).next('span').text(data.likeCount);
+              let $cardTimeline = $('#card-timeline-' + timelineId);
+              if($cardTimeline.length > 0) {
+                  $cardTimeline.find('.fa-heart').each(function () {
+                      $(this).next('span').text(data.likeCount);
+                  })
+              }
+              //in timeline.html
+              $cardTimeline = $('#content-timeline-' + timelineId);
+              if($cardTimeline.length > 0) {
+                  $cardTimeline.find('.fa-heart').each(function () {
+                      $(this).next('span').text(data.likeCount);
+                  })
+              }
+          }
+      });
+  }
+  <% end %>//if session[:logined]
+  function buildReply(reply, writer, myRating, commentId) {
+      var flexArea = $("<div id=\"reply-" + reply.id + "\" style=\"display: flex; align-items: flex-start; margin-top: 10px;\">");
+      if(writer.avatar_url == null) {
+          flexArea.append("<img class=\"img-thumbnail\" src=\"/motorcyclist.jpg\">");
+      } else {
+          flexArea.append("<img class=\"img-thumbnail\" src=\"" + writer.avatar_url + "\">");
+      }
+      var writerInfo = $("<div style=\"width: 100%; margin: auto; margin-left: 5px; margin-bottom: 7px;\">");
+      let writerName = $('<div style="font-weight: bold">' + writer.name + '</div>');
+      writerName.append(buildUserLevel(writer.titleOfLevel, '0.9rem'));
+      writerInfo.append(writerName);
+
+      let createdAt = new Date(reply.created_at);
+      let updatedAt = new Date(reply.updated_at);
+      if((updatedAt - createdAt) > 0) {
+          writerInfo.append("<div style=\"font-size: 0.8rem; color: darkgray\">" + getDateString(updatedAt) + "(수정됨)</div>");
+      } else {
+          writerInfo.append("<div style=\"font-size: 0.8rem; color: darkgray\">" + getDateString(createdAt) + "</div>");
+      }
+
+      var replyContent = $("<div class=\"reply-text\"></div>");
+      if(reply.content[0] === '@') {
+          let to = reply.content.substring(0, reply.content.indexOf(' '));
+          let content = reply.content.substring(reply.content.indexOf(' '), reply.content.length);
+          replyContent.html(content.replace(/\n/gi, '<br>'));
+          replyContent.prepend('<span style="color: #007bff">' + to + '</span>');
+      } else {
+          replyContent.html(reply.content.replace(/\n/gi, '<br>'));
+      }
+      writerInfo.append(replyContent);
+
+      <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+      let heart = (myRating == 1) ? "fas fa-heart" : "far fa-heart";
+      writerInfo.append("<i class=\"" + heart + "\" style=\"font-size: 0.8rem; color: #D6336C; cursor: pointer;\" onclick=\"onClickReplyRating(" + myRating + ", " + reply.id + ", this)\"></i>");
+      <% else %>
+      writerInfo.append(" <i class=\"far fa-heart\" style=\"font-size: 0.8rem; color: #D6336C;\"></i>");
+      <% end %>
+
+      writerInfo.append(" <span style=\"font-size: 0.7rem; color: darkgray; margin-left: -3px;\">" + reply.likeCount + "</span>");
+
+      <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+      if(reply.user_id == <%= session[:user]['id'] %>) {
+          writerInfo.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" onclick=\"onClickModifyReply(" + reply.id + ", this)\">수정</span>");
+          writerInfo.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" onclick=\"onClickDeleteReply(" + reply.id + ", this)\">삭제</span>");
+      }
+      writerInfo.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" onclick=\"onClickReply(" + commentId + ", " + reply.id + ", this)\">답글</span>");
+      writerInfo.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" data-toggle='modal' data-kind='reply' data-replyid='" + reply.id + "' data-target='#reportModal'>신고</span>");
+      <% end %>
+      flexArea.append(writerInfo);
+      return flexArea;
+  }
+  function appendReply(parent, reply, writer, myRating, commentId, prepend=false) {
+      var hrColor = 'white';
+      if(pathName == 'timeline' || pathName == 'mybike') {
+          hrColor = 'dimgray';
+      }
+      if(prepend) {
+          parent.prepend(buildReply(reply, writer, myRating, commentId));
+          parent.prepend("<hr style=\"margin: auto; margin-top: 5px; background: " + hrColor + ";\">");
+      } else {
+          parent.append("<hr style=\"margin: auto; margin-top: 5px; background: " + hrColor + ";\">");
+          parent.append(buildReply(reply, writer, myRating, commentId));
+      }
+  }
+  function afterReply(aboveReplyId, reply, writer, myRating, commentId) {
+      var hrColor = 'white';
+      if(pathName == 'timeline' || pathName == 'mybike') {
+          hrColor = 'dimgray';
+      }
+      let $aboveReply = $('#reply-' + aboveReplyId);
+      $aboveReply.after(buildReply(reply, writer, myRating, commentId));
+      $aboveReply.after("<hr style=\"margin: auto; margin-top: 5px; background: " + hrColor + ";\">");
+  }
+  <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+  function confirmDeleteComment(obj, commentId) {
+      buttonSpinner(obj, true, true);
+      requestPost(generateAjaxUrl('deleteComment'), {userId: <%= session[:user]['id'] %>, commentId: commentId}, data => {
+          if(data.result) {
+              if(data.state == 1) {
+                  //has deleted from record
+                  $('#comment-' + commentId).prev('hr').remove();
+                  $('#comment-' + commentId).remove();
+                  updateCommentCount(-1);
+              } else if(data.state == 2) {
+                  //if appended replies, disabled
+                  let $comment = $('#comment-' + commentId).children('div').last();
+                  $comment.children('i, span').remove();
+                  $comment.children('.comment-text').first().css({'color': 'dimgray', 'font-style': 'italic'}).text('작성자가 삭제한 댓글입니다.');
+              }
+          } else {
+              showAlert('danger', data.message, $('.content'));
+          }
+          buttonSpinner(obj, false, true);
+          $('#confirmModal').modal('hide');
+      })
+  }
+  function onClickDeleteComment(commentId, obj) {
+  }
+  <% end %>//if session[:logined]
+  function appendComment(parent, comment, writer, myRating, replyCount) {
+      var hrColor = 'white';
+      if(pathName == 'timeline' || pathName == 'mybike') {
+          hrColor = 'dimgray';
+      }
+
+      parent.append("<hr style=\"margin: auto; margin-top: 5px; background: " + hrColor + "\">");
+
+      var flexArea = $("<div id=\"comment-" + comment.id + "\" style=\"display: flex; align-items: flex-start; margin-top: 10px;\">");
+      if(writer.avatar_url == null) {
+          flexArea.append("<img class=\"img-thumbnail\" src=\"/motorcyclist.jpg\">");
+      } else {
+          flexArea.append("<img class=\"img-thumbnail\" src=\"" + writer.avatar_url + "\">");
+      }
+      var writerInfo = $("<div style=\"width: 100%; margin: auto; margin-left: 5px; margin-bottom: 7px;\">");
+      let writerName = $('<div style="font-weight: bold">' + writer.name + '</div>');
+      writerName.append(buildUserLevel(writer.titleOfLevel, '0.9rem'));
+      writerInfo.append(writerName);
+      let createdAt = new Date(comment.created_at);
+      let updatedAt = new Date(comment.updated_at);
+      if((updatedAt - createdAt) > 0) {
+          writerInfo.append("<div style=\"font-size: 0.8rem; color: darkgray\">" + getDateString(updatedAt) + "(수정됨)</div>");
+      } else {
+          writerInfo.append("<div style=\"font-size: 0.8rem; color: darkgray\">" + getDateString(createdAt) + "</div>");
+      }
+      var commentContent = $("<div class=\"comment-text\"></div>");
+      if(comment.state == 1) {
+          commentContent.html(comment.content.replace(/\n/gi, '<br>'));
+      } else if(comment.state == 2) {
+          //유저가 삭제한 댓글
+          commentContent.css({'color': 'dimgray', 'font-style': 'italic'}) .html('작성자가 삭제한 댓글입니다.');
+      }
+      writerInfo.append(commentContent);
+
+      if(comment.state == 1) {
+          <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+          let heart = (myRating == 1) ? "fas fa-heart" : "far fa-heart";
+          writerInfo.append("<i class=\"" + heart + "\" style=\"font-size: 0.8rem; color: #D6336C; cursor: pointer;\" onclick=\"onClickCommentRating(" + myRating + ", " + comment.id + ", this)\"></i>");
+          <% else %>
+          writerInfo.append(" <i class=\"far fa-heart\" style=\"font-size: 0.8rem; color: #D6336C;\"></i>");
+          <% end %>
+          writerInfo.append(" <span style=\"font-size: 0.7rem; color: darkgray; margin-left: -3px;\">" + comment.likeCount + "</span>");
+
+          <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+          if(comment.user_id == <%= session[:user]['id'] %>) {
+              writerInfo.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" onclick=\"onClickModifyComment(" + comment.id + ", this)\">수정</span>");
+              writerInfo.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" data-toggle='modal' data-kind='deleteComment' data-commentid='" + comment.id + "' data-target='#confirmModal'>삭제</span>");
+          }
+          writerInfo.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" onclick=\"onClickReply(" + comment.id + ", " + null + ", this)\">답글</span>");
+          writerInfo.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" data-toggle='modal' data-kind='comment' data-commentid='" + comment.id + "' data-target='#reportModal'>신고</span>");
+          <% end %>
+      }
+
+      if(replyCount > 0) {
+          let replyviewing = 'comment-' + comment.id + '-replyviewing';
+          replyReaders.set(replyviewing, {total: replyCount, limit: 6, offset: 0});
+          // var replyviewing = $("<span id=\"comment-" + comment.id + "-replyviewing\" style=\"font-size: 0.8rem; cursor: pointer\" onclick=\"readReplies(" + comment.id + ")\">댓글" + replyCount + "개 보기</span>");
+          writerInfo.append("<div><span id=\"" + replyviewing + "\" class='tbutton-sm' style=\"cursor: pointer\" onclick=\"readReplies(" + comment.id + ")\">답글" + replyCount + "개 보기</span></div>");
+          console.log('replyReaders =', replyReaders);
+      }
+
+      flexArea.append(writerInfo);
+      parent.append(flexArea);
+  }
+
+  function buildCommentHtml(parent, comment, user) {
+      // parent.append("<hr style=\"margin: auto; margin-top: 5px; background: white;\">");
+      // var id = comment.id;
+      // parent.append("<div id=\"comment-" + id + "\" style=\"display: flex; align-items: flex-start; margin-top: 10px;\">");
+      // var proper = parent.children('#' + 'comment-' + id);
+
+      var proper = $("<div id=\"comment-" + comment.id + "\" style=\"display: flex; align-items: flex-start; margin-top: 10px;\">");
+      if(user.avatar == null) {
+          proper.append(" <img class=\"img-thumbnail\" src=\"/motorcyclist.jpg\">");
+      } else {
+          proper.append(" <img class=\"img-thumbnail\" src=\"" + user.avatar + "\">");
+      }
+      proper.append(" <div style=\"width: 100%; margin: auto; margin-left: 5px; margin-bottom: 7px;\">");
+
+      var content = proper.children().last();
+      var writerInfo = $("<div style=\"width: 100%; margin: auto;\">");
+      let writerName = $('<div style="font-weight: bold">' + user.name + '</div>');
+      writerName.append(buildUserLevel(user.titleOfLevel, '0.9rem'));
+      writerInfo.append(writerName);
+      content.append(writerInfo);
+      content.append(" <div style=\"font-size: 0.8rem; color: darkgray\">" + getDateString(new Date(comment.created_at)) + "</div>");
+      content.append(" <div class='comment-text'>" + comment.content.replace(/\n/gi, '<br>') + "</div>");
+      content.append(" <i class=\"far fa-heart\" style=\"font-size: 0.8rem; color: #D6336C; cursor: pointer;\" onclick=\"onClickCommentRating(1, " + comment.id + ', ' + user.id + ", this)\"></i>");
+      content.append(" <span class='tbutton-sm' style=\"font-size: 0.7rem; margin-left: -3px;\">0</span>");
+      content.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" onclick=\"onClickModifyComment(" + comment.id + ", this)\">수정</span>");
+      content.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" data-toggle='modal' data-kind='deleteComment' data-commentid='" + comment.id + "' data-target='#confirmModal'>삭제</span>");
+      content.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" onclick=\"onClickReply(" + comment.id + ", " + null + ", this)\">답글</span>");
+      content.append(" <span class='tbutton-sm' style=\"margin-left: 10px; cursor: pointer;\" data-toggle='modal' data-kind='comment' data-commentid='" + comment.id + "' data-target='#reportModal'>신고</span>");
+
+      parent.prepend(proper);
+      parent.prepend("<hr style=\"margin: auto; margin-top: 5px; background: white;\">");
+  }
+  <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+  function confirmReportComment(commentId, obj) {
+      var checkedContent = getReportItemContent();
+      if(checkedContent == null) {
+          console.log("There isn't checked item!");
+          alert("신고 내용을 선택해 주세요");
+      } else {
+          let params = {
+              userId: <%= session[:user]['id'] %>,
+              commentId: commentId,
+              itemContent: checkedContent,
+              content: $('#reportModal').find('.modal-body').children('textarea').val()
+          };
+          buttonSpinner(obj, true, true);
+          requestPost(generateAjaxUrl('reportComment'), params, data => {
+              buttonSpinner(obj, false, true);
+              refreshReportModal(data.message);
+          });
+      }
+  }
+  function confirmReportReply(replyId, obj) {
+      var checkedContent = getReportItemContent();
+      if(checkedContent == null) {
+          console.log("There isn't checked item!");
+          alert("신고 내용을 선택해 주세요");
+      } else {
+          let params = {
+              userId: <%= session[:user]['id'] %>,
+              replyId: replyId,
+              itemContent: checkedContent,
+              content: $('#reportModal').find('.modal-body').children('textarea').val()
+          };
+          buttonSpinner(obj, true, true);
+          requestPost(generateAjaxUrl('reportReply'), params, data => {
+              buttonSpinner(obj, false, true);
+              refreshReportModal(data.message);
+          });
+      }
+  }
+  function getReportItemContent() {
+      var result = null;
+      $('#report-items').children().each(function () {
+          var content = $(this).children().last().text();
+          var checked = $(this).children().first().prop('checked');
+          if(checked == true) {
+              result = content;
+          }
+      });
+      return result;
+  }
+  function refreshReportModal(message) {
+      let modalBody = $('#reportModal').find('.modal-body');
+      modalBody.empty();
+      modalBody.append('<p>' + message + '</p>');
+      let modalFooter = $('#reportModal').find('.modal-footer');
+      modalFooter.empty();
+      modalFooter.append('<button type="button" class="btn btn-primary" data-dismiss="modal">확인</button>');
+  }
+  <% end %>//if session[:logined]
+  <% end %>//session[:enable_comment] == true
+
+  <% if session[:enable_detailview] == true %>
+  function onClickCloseDetailView(obj) {
+      $('#DetailViewModal').modal('toggle');
+      console.log('close detailview');
+  }
+  function onClickHashtag(obj) {
+      console.log('onClickHashtag id =', $(obj).data('hashtagid'));
+      window.open('/gallery/gallery?hashtag=' + $(obj).text().replace(/#/gi, ''), '_blank');
+  }
+  function buildDetailView(timeline, attachments, comment_count, myRating, writer, mybikeId, timelineLocation, hashtags, modal) {
+
+      var hrColor = 'white';
+      if(pathName == 'timeline' || pathName == 'mybike') {
+          hrColor = 'dimgray';
+      }
+
+      var body = modal.find('.modal-body');
+      <% if @mobileDevice %>
+      body.css('padding', '0.625rem');
+      <% end %>
+
+      let contentWidth = <%= @mobileDevice ? 90 : 80 %>;
+      if(timeline.kind == 1) {//photo
+          var $carousel = $("<div id=\"carouselTimelineIndicators\" class=\"carousel slide\" data-ride=\"carousel\" data-interval=\"false\" style=\"width: " + contentWidth + "%; margin: auto auto auto auto;\">");
+          $carousel.append("<ol class=\"carousel-indicators\">");
+          var ol = $carousel.children().last();
+          if(attachments.length > 0) {
+              ol.append("<li data-target=\"#carouselTimelineIndicators\" data-slide-to=\"0\" class=\"active\"></li>");
+              for(var i=1; i<attachments.length; i++) {
+                  ol.append("<li data-target=\"#carouselTimelineIndicators\" data-slide-to=\"" + i + "\"></li>");
+              }
+          }
+
+          $carousel.append("<div class=\"carousel-inner\">");
+          if(attachments.length > 0) {
+              var inner = $carousel.children().last();
+
+              let onAttachmentLoad = function () {
+                  console.log('onAttachmentLoad');
+                  var dialog = $('#DetailViewModal').find('.modal-dialog');
+                  $('#close-detailView').css('left', dialog.offset().left + dialog.outerWidth() - $('#close-detailView').outerWidth());
+              }
+
+              inner.append("<div class=\"carousel-item active\">");
+              inner.children().last().append(" <img class=\"d-block\" src=\"" + attachments[0].original + "\" onload='" + onAttachmentLoad() + "'  alt=\"First slide\">");
+              for(var i=1; i<attachments.length; i++) {
+                  inner.append("<div class=\"carousel-item\">");
+                  inner.children().last().append(" <img class=\"d-block\" src=\"" + attachments[i].original + "\" alt=\"First slide\">");
+              }
+          }
+
+          $carousel.append(" <a class=\"carousel-control-prev\" href=\"#carouselTimelineIndicators\" role=\"button\" data-slide=\"prev\">");
+          var carouselPrev = $carousel.children().last();
+          carouselPrev.append(" <span class=\"carousel-control-prev-icon\" aria-hidden=\"true\"></span>");
+          carouselPrev.append(" <span class=\"sr-only\">Previous</span>");
+
+          $carousel.append("<a class=\"carousel-control-next\" href=\"#carouselTimelineIndicators\" role=\"button\" data-slide=\"next\">");
+          var carouselNext = $carousel.children().last();
+          carouselNext.append(" <span class=\"carousel-control-next-icon\" aria-hidden=\"true\" style=\"color: black\"></span>");
+          carouselNext.append(" <span class=\"sr-only\">Next</span>");
+
+          body.append($carousel);
+      } else if(timeline.kind == 2) {//youtube link
+          //https://www.youtube.com/watch?v=woC_MUZik1w
+          let $iframe = $('<iframe id="ytplayer" type="text/html" width="640" height="360"\n' +
+              '  src="https://www.youtube.com/embed/' + attachments[0].original + '?enablejsapi=1&version=3&playerapiid=ytplayer&autoplay=0&origin=http://<%= ENV['host_ip'] %>"\n' +
+              '  frameborder="0"allowfullscreen="allowfullscreen"></iframe>');
+          body.append($('<div style="display: flex; justify-content: center; max-width: 100%; max-height: 100vh"></div>').append($iframe));
+      } else if(timeline.kind == 3) {//video clip from firebase
+          let $source = $('<video id="video-player" src="' + attachments[0].original + '" type="video/mp4" codecs="avc1, mp4a" style="max-width: 100%" controls>');
+          body.append($('<div style="display: flex; justify-content: center; max-width: 100%; max-height: 100vh"></div>').append($source));
+      }
+
+      var $content = $("<div style=\"width: " + contentWidth + "%; margin: auto; margin-top: 30px;\">");
+
+      if(timelineLocation) {
+          let $title = $('<div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center"></div>');
+          $title.append("<h3 style='max-width: 72%; word-wrap: break-word;'>" + timeline.title + "</h3>");
+          $title.append('<button type="button" class="btn btn-info btn-sm" onclick="window.open(\'/gallery/mapview?timelineLocationId=' + timelineLocation.id + '\', \'_blank\')">위치보기</button>');
+          $content.append($title);
+      } else {
+          $content.append("<h3>" + timeline.title + "</h3>");
+      }
+      $content.append("<div style=\"display: flex; align-items: flex-start; justify-content: space-between\">");
+      var flexArea = $content.children().last();
+      // if(writer.avatar == null) {
+      //     flexArea.append("<img class=\"img-thumbnail\" src=\"/motorcyclist.jpg\" style=\"width: 65px; height: 65px;\">");
+      // } else {
+      //     flexArea.append("<img class=\"img-thumbnail\" src=\"" + writer.avatar + "\" style=\"width: 65px; height: 65px;\">");
+      // }
+
+      var writerArea = $("<div style=\"margin-left: 5px; margin-bottom: 5px; display: flex\">");
+      if(writer.avatar == null) {
+          writerArea.append("<img class=\"img-thumbnail\" src=\"/motorcyclist.jpg\">");
+      } else {
+          writerArea.append("<img class=\"img-thumbnail\" src=\"" + writer.avatar + "\">");
+      }
+
+      var writerInfo = $("<div style=\"margin-left: 5px; margin-bottom: 5px; display: flex; flex-direction: column; align-self: flex-end;\">");
+      let writerName = $("<div style=\"font-weight: bold\">" + writer.name + "</div>");
+      let levelElement = buildUserLevel(writer.titleOfLevel, '0.9rem');
+      writerName.append(levelElement);
+      writerInfo.append(writerName);
+      writerInfo.append("<div style=\"font-size: 0.8rem; color: darkgray\">게시일: " + getDateString(new Date(timeline.created_at)) + "</div>");
+      writerInfo.appendTo(writerArea);
+      writerArea.appendTo(flexArea);
+
+      if(pathName == '<%= ENV['host_ip'] %>' || pathName == "gallery" || pathName == 'rankings' || pathName == 'mapview') {
+          // var subscribe = $("<div style='display: flex; flex-grow: 8; align-items: stretch; flex-direction: row-reverse;'></div>");
+          var subscribe = $("<div style='display: flex'></div>");
+          // subscribe.append("<button type='button' id='goto-timeline-" + timeline.id + "' class='btn btn-warning btn-sm' onclick=\"window.location='/user/timeline?bikeId=" + mybikeId + "'\">타임라인보기</button>");
+          subscribe.append("<button type='button' id='goto-timeline-" + timeline.id + "' class='btn btn-warning btn-sm' onclick=\"window.open('/user/timeline?bikeId=" + mybikeId + "&guest=true', '_blank')\">타임라인보기</button>");
+          subscribe.appendTo(flexArea);
+      }
+
+      var rmInfo = $("<div id=\"timeline-rating-mark\">");
+
+      <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+      let heart = myRating == 0 ? 'far fa-heart' : 'fas fa-heart';
+      rmInfo.append(" <i class=\"" + heart + "\" style=\"font-size: 1.25rem; color: #D6336C; cursor: pointer;\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"좋아요\" onclick=\"onClickTimelineRating(" + timeline.id + ", this)\"></i>");
+      <% else %>
+      rmInfo.append(" <i class=\"far fa-heart\" style=\"color: #D6336C\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"좋아요\"></i>");
+      <% end %>
+
+      rmInfo.append(" <span style=\"color: darkgray; font-size: 1rem; margin-right: 1.25rem;\">" + numberWithCommas(timeline.likeCount) + "</span>");
+      rmInfo.append(" <i class=\"far fa-comment\" style=\"font-size: 1.25rem; color: darkgray\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"댓글수\"></i>");
+      rmInfo.append(" <span style=\"font-size: 1rem; color: darkgray; margin-right: 1.25rem\">" + numberWithCommas(timeline.commentCount) + "</span>");
+      rmInfo.append(" <i class=\"far fa-eye\" style=\"font-size: 1.25rem; color: darkgray\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"조회수\"></i>");
+      rmInfo.append(" <span style=\"font-size: 1rem; color: darkgray\">" + numberWithCommas(timeline.viewCount) + "</span>");
+      let updateFaEyeViewCount = function($viewCount) {
+          if(parseInt($viewCount.text()) < timeline.viewCount) {
+              $viewCount.text(numberWithCommas(timeline.viewCount));
+          }
+      }
+      let $cardTimeline = $('#card-timeline-' + timeline.id);
+      if($cardTimeline.length > 0) {
+          $cardTimeline.find('.fa-eye').each(function () {
+              updateFaEyeViewCount($(this).next('span'));
+          })
+      }
+      $cardTimeline = $('#content-timeline-' + timeline.id);
+      if($cardTimeline.length > 0) {
+          $cardTimeline.find('.fa-eye').each(function () {
+              updateFaEyeViewCount($(this).next('span'));
+          })
+      }
+
+
+      flexArea = $("<div style=\"display: flex; flex-direction: row-reverse\">");
+      flexArea.append(rmInfo);
+      $content.append(flexArea);
+
+      $content.append("<hr style=\"margin: auto; background: " + hrColor + ";\">");
+
+      var desc = $("<p></p>");
+      desc.html(timeline.desc.replace(/\n/gi, '<br>'));
+      $content.append(desc);
+
+      if(hashtags.length > 0) {
+          let $hashtagArea = $('<div class="hashtag-area" style="display: flex; flex-wrap: wrap;"></div>');
+          hashtags.forEach(hashtag => {
+              $hashtagArea.append('<span class="hashtag-span" data-hashtagid="' + hashtag[0] + '" onclick="onClickHashtag(this)">#' + hashtag[1] + '</span>');
+          })
+          $content.append($hashtagArea);
+      }
+
+      $content.append("<hr style=\"margin: auto; background: " + hrColor + ";\">");
+
+      <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+      var commentArea = $("<div style=\"margin-top: 5px;\">");
+      var textArea = $("<textarea class=\"form-control autosize\" id=\"comment\" style='overflow: hidden' rows=\"1\" placeholder=\"댓글을 입력하세요\" maxlength='512'></textarea>");
+      textArea.on('change keyup paste', function () {
+          $(this).next('div').children('button').first().attr('disabled', $(this).val() == "" ? true : false);
+          // var fontSize = getNumberFromString(getComputedStyle(document.documentElement).fontSize);
+          $(this).css('height', 'auto').css('height', this.scrollHeight);
+          scrollToElement(commentArea, $('#DetailViewModal'), 0, 3);
+      });
+      commentArea.append(textArea);
+      let buttonArea = $('<div style="display: flex; flex-direction: row-reverse; margin-top: 5px; align-items: flex-end">');
+      let $commentButton = $("<button type=\"button\" class=\"btn btn-primary\" style=\"margin-top: 5px;\" disabled onclick=\"onClickComment(" + timeline.id + ", <%= session[:user]['id'] %>)\">등록</button>");
+      $commentButton.hover(function () {
+          if(textArea.is(':focus')) {
+              textArea.blur();
+          }
+      })
+      buttonArea.append($commentButton);
+      commentArea.append(buttonArea);
+      $content.append(commentArea);
+      $content.append("<button type='button' class='btn btn-danger btn-sm' style='margin-top: 5px' data-toggle='modal' data-kind='timeline' data-timelineid='" + timeline.id + "' data-title='" + timeline.title + "' data-target='#reportModal'>신고하기</button>");
+      <% end %>
+
+      $content.append("<div id=\"comments-area\">");
+
+      // commentArea = $("<div id=\"comment-area\">");
+      // commentArea.append("<hr style=\"margin: auto; margin-top: 5px; background: white;\">");
+      //
+      // for(var comment in comments) {
+      //     flexArea = $("<div id=\"comment-" + comment.id + "\" style=\"display: flex; align-items: flex-start; margin-top: 10px;\">");
+      // }
+
+      // $content.append("<div style=\"display: flex; flex-direction: row-reverse\">");
+      // var $info = $("<div id=\"timeline-rating-mark\">");
+      // $info.appendTo($content.children().last());
+
+      body.append($content);
+  }
+  <% if session[:logined] %>
+  function confirmReportTimeline(timelineId, obj) {
+      //TimelineReport : 신고자, 타임라인, 항목, 추가내용, 처리상태
+      console.log('confirmReportTimeline = ' + timelineId);
+      var checkedContent = getReportItemContent();
+      if(checkedContent == null) {
+          console.log("There isn't checked item!");
+          alert("신고 내용을 선택해 주세요");
+      } else {
+          console.log("checked itemName = " + checkedContent);
+          console.log("add text = " + $('#reportModal').find('.modal-body').children('textarea').val());
+
+          let params = {
+              userId: <%= session[:user]['id'] %>,
+              timelineId: timelineId,
+              itemContent: checkedContent,
+              content: $('#reportModal').find('.modal-body').children('textarea').val()
+          };
+          buttonSpinner(obj, true, true);
+          requestPost('/user/reportTimeline', params, data => {
+              buttonSpinner(obj, false, true);
+              refreshReportModal(data.message);
+          });
+      }
+  }
+  <% end %>
+  <% end %>
+</script>
+

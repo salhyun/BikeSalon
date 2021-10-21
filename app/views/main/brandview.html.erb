@@ -1,0 +1,557 @@
+<style>
+	body {
+		background-color: floralwhite
+	}
+	.brand_logo {
+		padding: 10px;
+		width: <%= @mobileDevice ? 100 : 150 %>px;
+	}
+  .card {
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  }
+  <% unless @mobileDevice %>
+  .card:hover {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  }
+  <% end %>
+  .circular-chart {
+    display: block;
+    margin: 10px auto;
+    max-width: 95%;
+    max-height: 250px;
+  }
+
+  .circle-bg {
+    fill: none;
+    stroke: #eee;
+    stroke-width: 3.8;
+  }
+
+  .circle {
+    fill: none;
+    stroke-width: 2.8;
+    stroke-linecap: round;
+    animation: progress 1s ease-out forwards;
+  }
+  @keyframes progress {
+    0% {
+      stroke-dasharray: 0 100;
+    }
+  }
+  .circular-chart.perfect .circle {
+    stroke: #000000;
+  }
+  .circular-chart.high .circle {
+    stroke: #dc3545;
+  }
+  .circular-chart.mid .circle {
+    stroke: #ffc107;
+  }
+  .circular-chart.low .circle {
+    stroke: #A0DE21;
+  }
+  .percentage {
+    fill: #666;
+    font-size: 0.58em;
+    text-anchor: middle;
+  }
+  .ratingRibbon {
+    display: inline;
+    position: absolute;
+    left: -1px;
+    top: 0.75rem;
+    text-align: center;
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+  }
+
+  .news-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    min-width: 230px;
+    height: 130px;
+    margin: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(0,0,0,.125);
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  }
+  <% unless @mobileDevice%>
+  .news-card:hover {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.25), 0 5px 6px rgba(0,0,0,0.22);
+  }
+  <% end %>
+  #news-list {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 1rem;
+  }
+  .news-title {
+    margin: 0.5rem 0;
+    text-align: left;
+  }
+  .news-thumb {
+    width: 40%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0.35rem;
+  }
+  .news-desc {
+    display: -webkit-box;
+    width: 60%;
+    height: 100%;
+    font-size: 0.8rem;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+</style>
+
+<script>
+    function initializeLazyload() {
+        let lazyLoad=null;
+        let lazyLoadImages=null;
+        let lazyImages = [].slice.call(document.querySelectorAll("img.lazy"));
+        let containers = new Array();
+        <% for i in 0..@styleNames.length-1 %>
+          <% bikes = @brandBikes.where(style_id: @styleIds[i]).order(year: :desc) %>
+          <% if bikes.empty? == false %>
+          containers.push({button: $('#<%= "style-".concat i.to_s %>'), header: $('#<%= "styleList".concat i.to_s %>')[0], content: $('#<%= "styleList".concat i.to_s %>').children('div').first()});
+          <% end %>
+        <% end %>
+        console.log('containers =', containers);
+        let t1 = performance.now();
+        containers[0].content.find('.lazy').each(function () {
+            console.log('img.lazy src =', $(this).attr('src'));
+        });
+        console.log('interval =', performance.now()-t1);
+
+        let active = false;
+
+        lazyLoadImages = function(content) {
+            content.find('.lazy').each(function () {
+                let lazyImage = $(this)[0];
+                let lazyImageRect = lazyImage.getBoundingClientRect();
+                if((lazyImageRect.top <= window.innerHeight && lazyImageRect.bottom >= 0) && getComputedStyle(lazyImage).display !== "none" && $('#' + lazyImage.dataset.style).css('display') !== 'none') {
+                    if(lazyImage.dataset.src.length > 0) {
+                        lazyImage.src = lazyImage.dataset.src;
+                        $(lazyImage).load(function () {
+                            $(this).css('width', '70%');
+                        });
+                    } else {
+                        lazyImage.src = '/NoImageAvailable.png';// gStyles.get(lazyImage.dataset.style).icon;
+                        $(lazyImage).css({'width': '80px', 'height': '80px'});
+                    }
+                    // lazyImage.srcset = lazyImage.dataset.srcset;
+                    lazyImage.classList.remove("lazy");
+
+                    lazyImages = lazyImages.filter(function(image) {
+                        return image !== lazyImage;
+                    });
+
+                    if (lazyImages.length === 0) {
+                        document.removeEventListener("scroll", lazyLoad);
+                        window.removeEventListener("resize", lazyLoad);
+                        window.removeEventListener("orientationchange", lazyLoad);
+                    }
+                }
+            });
+        }
+        lazyLoad = function() {
+            if (active === false) {
+                active = true;
+                setTimeout(function() {
+                    containers.forEach(container => {
+                        let headerRect = container.header.getBoundingClientRect();
+                        if ((headerRect.top <= window.innerHeight && headerRect.bottom >= 0)) {
+                            lazyLoadImages(container.content);
+                        }
+                    });
+                    active = false;
+                }, 200);
+            }
+        };
+        containers.forEach((container, index) => {
+            container.button.click(function () {
+                let header = $(container.header);
+                if(header.is(':visible')) {
+                    header.slideUp('fast', function () {
+                        let next = index+1;
+                        if(next < containers.length) {
+                            console.log('next container id =', containers[next].button.attr('id'));
+                            lazyLoadImages(containers[next].content);
+                        }
+                    });
+                } else {
+                    header.slideDown('fast', function () {
+                    });
+                }
+                return false;//이거 안하면 스크롤이 덜덜덜 거림.
+            });
+        });
+        document.addEventListener("scroll", lazyLoad);
+        window.addEventListener("resize", lazyLoad);
+        window.addEventListener("orientationchange", lazyLoad);
+        lazyLoad();
+    }
+
+    $(document).ready(function() {
+        $('.content').css('margin-top', $('.navbar')[0].clientHeight);
+        documentReady();
+
+        gStyles = new Map();
+        <% @styleIds.each_with_index do |styleId, index| %>
+        gStyles.set('styleList' + '<%= index %>', {id: <%= @styles[styleId-1].id %>, name: '<%= @styles[styleId-1].name %>', icon: '<%= @styles[styleId-1].icon %>'});
+        <% end %>
+        //console.log('gStyles =', gStyles);
+
+        $('#toggle_brand_contents').click(function() {
+            if($(this).text() == "더 보기") {
+                $(this).text("요약 보기");
+                $('#brand_content').slideDown();
+            } else {
+                $(this).text("더 보기");
+                $('#brand_content').slideUp();
+            }
+            return false;//이거 안하면 스크롤이 덜덜덜 거림.
+        });
+
+        $('.card').click(function() {
+            console.log('click card');
+        });
+
+        $('#modal-brandRating').on('show.bs.modal', function (event) {
+            var modal = $(this);
+            requestPost('/main/checkBrandRating', {brandId: <%=@brand.id %>}, data => {
+                console.log('checkBrandRating data =', data);
+                if(data.result == true) {
+                    var body = modal.find('.modal-body');
+                    body.empty();
+                    body.append("<p>아래와 같이 평가 한적이 있습니다.<br>다시 평가하시겠습니까?</p>");
+                    buildRatingForm(body, data.rating);
+                } else {
+                    var body = modal.find('.modal-body');
+                    body.empty();
+                    body.append("<p>아직 평가 한적이 없습니다.<br>평가하시겠습니까?</p>");
+                    buildRatingForm(body, 5);
+                }
+            });
+        });
+        initializeLazyload();
+
+        // $('.card').mouseover(function() {
+        //    console.log("mouseOver");
+        //    $(this).css("border-color", "blueviolet");
+        // });
+        // $('.card').mouseleave(function() {
+        // 	console.log("mouseLeave");
+        // 	$(this).css("border-color", "rgba(0, 0, 0, .125)");
+        // });
+        // $('.card').mouseup(function() {
+        // 	console.log("mouseUp");
+        // 	$(this).css("border-color", "rgba(0, 0, 0, .125)");
+        // });
+
+        //리사이즈 발생할때
+        // resizeCardfont();
+        // $(window).bind('resize', resizeCardfont);
+        // function resizeCardfont() {
+        // 	$('.card-body').each(function(index) {
+        // 		var s = $(this).width()/140;
+        // 		var fs = s.toString() + 'rem';
+        // 		$(this).children('.card-title').css('font-size', fs);
+        // 		s = $(this).width()/200;
+        // 		fs = s.toString() + 'rem';
+        // 		$(this).children('.card-text').css('font-size', fs);
+        // 	});
+        // }
+
+        searchNaverAPI();
+    });//$(document).ready
+
+    function appendNewsCard(parent, newslink) {
+        let $card = $('<div class="news-card" onclick="window.open(\'' + newslink.url + '\', \'_blank\')"></div>');
+
+        $card.append('<div class="news-title text-ellipsis">' + newslink.title + '</div>');
+        let $contentArea = $('<div style="display: flex; flex-direction: row; width: 100%; max-height: 60%;"></div>');
+        $contentArea.append('<img class="news-thumb" src="' + newslink.thumb + '" onerror="this.src=\'/NoImageAvailable.png\';">');
+        $contentArea.append('<div class="news-desc">' + newslink.desc + '</div>');
+        $card.append($contentArea);
+        parent.append($card);
+    }
+    function buildNewsAreaFromNaver(newsLinks) {
+        newsLinks.forEach(news => {
+            appendNewsCard($('#news-area').children('#news-list:first'), news);
+        })
+    }
+    function searchNaverAPI() {
+        let $faSyncAlt = $('#news-list').find('.fa-sync-alt');
+        if($faSyncAlt.length <= 0) {
+            $('#news-list').append('<div style="display: flex; justify-content: center; height: 100%; padding: 0 1rem;"><i class="fas fa-sync-alt fa-spin" style="font-size: 3rem; margin-top: 0.5rem"></i></div>');
+        }
+
+        // let eee = {category: 'news', searchWord: '두카티 모터사이클', limit: 3, offset: 1, sort: 'sim'};
+        // requestPost('/main/requestNaverSearch', eee, data => {
+        //     console.log('data =', data);
+        // });
+        // return;
+
+        requestPost('/main/readNewslinks', {brandId: <%= @brand.id %>, searchWord: '<%= @brand.name_kr %> 모터사이클'}, data => {
+            // console.log('data =', data);
+            if(data.result) {
+                $faSyncAlt = $('#news-list').find('.fa-sync-alt');
+                console.log('$faSyncAlt length =', $faSyncAlt);
+                if($faSyncAlt.length > 0) {
+                    if($('#news-list').css('justify-content') !== 'flex-start') {
+                        $('#news-list').css('justify-content', 'flex-start');
+                    }
+                    $faSyncAlt.parent().remove();
+                }
+                if(data.newslinks.length > 0) {
+                    buildNewsAreaFromNaver(data.newslinks);
+                }
+            }
+        });
+    }
+    function buildRatingForm(body, defaultScore) {
+        var flexArea = $("<div style='display: flex; justify-content: center'></div>");
+        var formGroup = $("<div class='form-group' style='margin: 5px; text-align: center; flex-basis: 50%'></div>");
+        let id = 'rating-brand';
+        formGroup.append("<label for=\"" + id + "\"><%= @brand.name_kr %></label>");
+        var selector = $("<select class=\"form-control\" id=\"" + id + "\">");
+        for(var n=1; n<11; n++) {
+            selector.append("<option value='" + n +"'>" + n + "</option>");
+        }
+        selector.val(defaultScore);
+        flexArea.append(formGroup.append(selector));
+        body.append(flexArea);
+    }
+    function confirmRating(obj) {
+        buttonSpinner(obj, true, true);
+        requestPost('/main/rateBrand', {brandId: <%= @brand.id %>, rating: $('#rating-brand').val()}, data => {
+            console.log('rateBrand data =', data);
+            if(data.result) {
+                showAlert('success', '평가가 성공적으로 반영되었습니다!', $('.content'));
+                if($('#svg-brand-rating').length > 0) {
+                    let chartColor = 'circular-chart low';
+                    if(data.rating >= 10) {
+                        chartColor = 'circular-chart perfect';
+                    } else if(data.rating > 6) {
+                        chartColor = 'circular-chart high';
+                    } else if(data.rating > 3) {
+                        chartColor = 'circular-chart mid';
+                    }
+                    $('#svg-brand-rating').attr('class', chartColor);
+                    let children = $('#svg-brand-rating').children();
+                    children.eq(1).attr('stroke-dasharray', (data.rating*10).toFixed(1) + ', 100');
+                    children.eq(2).text(data.rating >= 10 ? parseInt(data.rating) : data.rating.toFixed(1));
+                }
+            } else {
+                showAlert('danger', data.message, $('.content'));
+            }
+            $('#modal-brandRating').modal('toggle');
+            buttonSpinner(obj, false, true);
+        })
+    }
+    function onClickStyle(obj) {
+        let text = $(obj).text();
+        let chevron = $(obj).children('i').first();
+        if(chevron.hasClass('fa-chevron-down')) {
+            $(obj).empty().text(text).append('<i class="fas fa-chevron-up" style="padding-left: 0.25rem"></i>');
+        } else {
+            $(obj).empty().text(text).append('<i class="fas fa-chevron-down" style="padding-left: 0.25rem"></i>');
+        }
+    }
+</script>
+
+<div class="modal fade" id="modal-brandRating" tabindex="-1" role="dialog" aria-labelledby="modal-brandRating-Label" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modal-brandRating-Label">평가하기</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Will you rating?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+        <button type="button" class="btn btn-primary" onclick="confirmRating(this)">평가하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="content">
+  <% if @mobileDevice %>
+  <div style="width: 90%; margin: auto; text-align: left; padding: 10px;">
+    <div style="display: flex; flex-direction: column;">
+      <div style="font-size: 1.75rem; font-weight: 500; line-height: 1.2"><%= @brand.name_kr + ' ' + @brand.name %></div>
+      <div style="margin-left: 0.5rem; display: flex; flex-direction: row; justify-content: space-between; align-items: flex-end">
+        <% if @brand.brand_ratings.count > 0 %>
+          <div style="width: 2.75rem">
+            <% if @brand.rating >= 10 %>
+            <svg id="svg-brand-rating" viewBox="0 0 36 36" class="circular-chart perfect">
+            <% elsif @brand.rating > 6 %>
+            <svg id="svg-brand-rating" viewBox="0 0 36 36" class="circular-chart high">
+            <% elsif @brand.rating > 3 %>
+            <svg id="svg-brand-rating" viewBox="0 0 36 36" class="circular-chart mid">
+            <% else %>
+            <svg id="svg-brand-rating" viewBox="0 0 36 36" class="circular-chart low">
+            <% end %>
+            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path class="circle" stroke-dasharray="<%= (@brand.rating*10).round(1) %>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <text x="18" y="22.35" class="percentage" style="font-size: 1rem; font-weight: bold"><%= @brand.rating >= 10 ? @brand.rating.to_i : @brand.rating.round(1) %></text>
+            </svg>
+          </div>
+        <% else %>
+          <div class="alert-success" style="border-radius: 0.25rem; font-size: 0.9rem; padding: 0.125rem">
+            <div class="alert-heading">아직 평가가<br>충분하지 않습니다.</div>
+          </div>
+        <% end %>
+        <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+          <div>
+            <button type="button" class="btn btn-info btn-sm" style="min-width: 73px" data-toggle="modal" data-target="#modal-brandRating">평가하기</button>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <% else %>
+  <div style="width: 90%; margin: auto; text-align: left; padding: 10px;">
+    <div style="display: flex; flex-direction: row; justify-content: left; align-items: center">
+      <div style="font-size: 1.75rem; font-weight: 500; line-height: 1.2"><%= @brand.name_kr + ' ' + @brand.name %></div>
+      <div style="margin-left: 0.5rem; display: flex; flex-direction: row; align-items: center">
+        <% if @brand.brand_ratings.count > 0 %>
+        <div style="width: 2.75rem">
+          <% if @brand.rating >= 10 %>
+          <svg id="svg-brand-rating" viewBox="0 0 36 36" class="circular-chart perfect">
+          <% elsif @brand.rating > 6 %>
+          <svg id="svg-brand-rating" viewBox="0 0 36 36" class="circular-chart high">
+          <% elsif @brand.rating > 3 %>
+          <svg id="svg-brand-rating" viewBox="0 0 36 36" class="circular-chart mid">
+          <% else %>
+          <svg id="svg-brand-rating" viewBox="0 0 36 36" class="circular-chart low">
+          <% end %>
+          <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+          <path class="circle" stroke-dasharray="<%= (@brand.rating*10).round(1) %>, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+          <text x="18" y="22.35" class="percentage" style="font-size: 1rem; font-weight: bold"><%= @brand.rating >= 10 ? @brand.rating.to_i : @brand.rating.round(1) %></text>
+          </svg>
+        </div>
+        <% else %>
+        <div class="alert-success" style="border-radius: 0.25rem; font-size: 0.9rem; padding: 0.125rem">
+          <div class="alert-heading">아직 평가가<br>충분하지 않습니다.</div>
+        </div>
+        <% end %>
+      </div>
+    </div>
+    <% if session[:logined] and session[:user]['state'].eql? 'normal' %>
+      <div style="width: 100%; margin-left: auto; margin-right: auto; margin-top: -1.65rem; text-align: right">
+        <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#modal-brandRating">평가하기</button>
+      </div>
+    <% end %>
+  </div>
+  <% end %>
+	<div class="shadow-sm p-3 mb-3 bg-white rounded" style="width: 90%; height: auto; text-align: left; margin: auto">
+		<% nDescSummary = @mobileDevice ? 24 : 36 %>
+		<h5><%= @brand.name_kr %>에 대하여</h5>
+		<p id="brand_summary" style="display: inline">
+			<%= @brand.desc[0, nDescSummary] %>
+		</p>
+		<p id="brand_content" style="display: none">
+			<%= @brand.desc[nDescSummary, @brand.desc.length] %>
+		</p>
+		<button id="toggle_brand_contents" type="button" class="btn btn-link">더 보기</button>
+	</div>
+  <div id="news-area" class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto;">
+    <div style="text-align: left;">관련 뉴스들</div>
+    <hr style="margin-top: 0.125rem">
+    <div id="news-list">
+      <div style="display: flex; justify-content: center; height: 100%;"><i class="fas fa-sync-alt fa-spin" style="font-size: 3rem; margin-top: 0.5rem"></i></div>
+    </div>
+  </div>
+	<div id="style-list" class="shadow-sm p-3 mb-5 bg-white rounded" style="width:90%; height:auto; text-align: center; margin: auto">
+		<% for i in 0..@styleNames.length-1 %>
+			<% bikes = @brandBikes.where(style_id: @styleIds[i]).order(year: :desc) %>
+			<% if bikes.empty? == true %><% next %>
+			<% end %>
+			<button id="<%= "style-".concat i.to_s %>" type="button" class="btn btn-light btn-block" style="background-color:#323c42; color: ghostwhite;" onclick="onClickStyle(this)"><%= @styleNames[i] %><i class="fas fa-chevron-down" style="padding-left: 0.25rem"></i></button>
+			<div class="container-fluid">
+        <div id="<%= "styleList".concat i.to_s %>" style="margin-top: 10px; ">
+          <% if @mobileDevice %>
+          <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 10px;">
+          <% else %>
+          <div style="margin: 10px; text-align: center;">
+          <% end %>
+            <% def colorRating(rating) %>
+              <% if rating >= 10 %>
+                <% return {'backgroundColor': '#000000', 'color': 'white'} %>
+              <% elsif rating > 6 %>
+                <% return {'backgroundColor': '#dc3545', 'color': 'white'} %>
+              <% elsif rating > 3 %>
+                <% return {'backgroundColor': '#ffc107', 'color': 'black'} %>
+              <% else %>
+                <% return {'backgroundColor': '#A0DE21', 'color': 'black'} %>
+              <% end %>
+            <% end %>
+            <% bikes.each do |bike| %>
+              <% if @mobileDevice %>
+              <a href="javascript:void(0)" onclick="location.href='/main/bikeview?bikeId=<%= bike.id %>'" link="windowText" hover="windowText" active="windowText" style="text-decoration: none">
+              <% else %>
+              <a href="javascript:void(0)" onclick="window.open('/main/bikeview?bikeId=<%= bike.id %>', '_blank')" link="windowText" hover="windowText" active="windowText" style="text-decoration: none">
+              <% end %>
+                <div id="<%= "bikeNo ".concat bike.id.to_s %>" class="card" style="width: 16rem; display: inline-block; margin: 7px; vertical-align: top; border-color: rgba(0, 0, 0, .125)">
+                  <% bikeNo = bike.id.to_s.concat ".png" %>
+                  <% if bike.ratingCount > 0 %>
+                  <% style = colorRating(bike.totalRating) %>
+                  <div class="ratingRibbon" style="background-color: <%= style[:backgroundColor] %>; color: <%= style[:color] %>;">
+                    <div style="margin: 0 0.5rem"><%= bike.totalRating.round(1) %></div>
+                  </div>
+                  <% end %>
+                  <img class="lazy" src="/imgLoading.svg" data-src="<%= bike.url %>" data-style="<%= "styleList".concat i.to_s %>" style="width: 64px; height: auto; display: block; margin: 0.3rem auto auto auto;" alt="<%= bikeNo %>">
+                  <div class="card-body">
+                    <h4 class="card-title" style="color: windowText; text-align: left;"><%= bike.year + " " + bike.name %></h4>
+                    <p class="card-text" style="color: windowText; text-align: left; margin-bottom: -4px"><%= bike.displacement %>cc</p>
+                    <p class="card-text" style="color: rgba(0, 0, 0, .3); text-align: left; margin-bottom: 3px">
+                      <%= bike.maxpower[0..(bike.maxpower.index('(').nil? ? bike.maxpower.length : bike.maxpower.index('('))-1] %><br>
+                      <%= bike.maxtorque[0..(bike.maxtorque.index('(').nil? ? bike.maxtorque.length : bike.maxtorque.index('('))-1] %><br>
+                      <%= bike.dry_weight %></p>
+                    <p class="card-text" style="color: windowText; text-align: left;"><%= bike.price %></p>
+                  </div>
+                </div>
+              </a>
+            <% end %>
+          </div>
+          <!-- <div class="row equal" style="width: 100%; margin: auto">
+					<% bikes.each do |bike| %>
+					<div class="col-lg-2 col-md-3 col-sm-6 col-xs-12 pb-3">
+						<div id="<%= "bikeNo ".concat bike.id %>" class="card">
+							<% bikeNo = bike.id.to_s.concat ".png" %>
+							<a href="bikeview?bikeId=<%= bike.id %>">
+								<img src="<%=asset_path "bikeThumbs/No".concat bikeNo %>" style="width: 100%; height: auto; padding: 5px" alt="<%= bikeNo %>">
+							</a>
+							<div class="card-body">
+								<h4 class="card-title" style="text-align: left;"><%= bike.year + " " + bike.name %></h4>
+								<p class="card-text" style="text-align: left; margin-bottom: -4px"><%= bike.displacement %></p>
+								<p class="card-text" style="color: rgba(0, 0, 0, .3); text-align: left; margin-bottom: 3px"><%= bike.maxpower %><br><%= bike.maxtorque %><br><%= bike.dry_weight %></p>
+								<p class="card-text" style="text-align: left;"><%= bike.price %></p>
+							</div>
+						</div>
+					</div>
+					<% end %>
+				</div> -->
+        </div>
+			</div>
+		<% end %>
+	</div>
+</div>
+<button type="button" class="btn btn-link scrollTop" style="width: 42px; border: 1px solid #ced4da;" onclick="scrollToTop()"><i class="fas fa-angle-double-up" style="font-size: 1.25rem;"></i></button>
