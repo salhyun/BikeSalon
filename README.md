@@ -1,5 +1,5 @@
 # 바이크살롱
-ails, Javascript, ruby, AWS, Firebase, Google cloud
+Rails, Javascript, ruby, AWS, Firebase, Google cloud
 
 ## 페이지 소스들
 1. 모든페이지 공통 소스 => app/views/layouts/application.html.erb
